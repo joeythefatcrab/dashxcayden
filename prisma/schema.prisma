@@ -1,0 +1,286 @@
+// Homeschool SaaS Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Auth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// User & Role Management
+enum Role {
+  PARENT
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(PARENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  students      Student[]
+  curricula     Curriculum[] @relation("CurriculumCreator")
+
+  // Parent settings
+  digestFrequency String @default("daily") // daily, weekly, none
+  notifyEmail     Boolean @default(true)
+  notifySms       Boolean @default(false)
+  phoneNumber     String?
+
+  @@index([email])
+}
+
+// Student Profile
+model Student {
+  id           String       @id @default(cuid())
+  name         String
+  userId       String?      // Optional: student may have own login
+  parentId     String       // Link to parent user
+  grade        Int?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  parent       User         @relation("StudentParent", fields: [parentId], references: [id], onDelete: Cascade)
+  enrollments  Enrollment[]
+  attempts     Attempt[]
+  activities   Activity[]
+
+  @@index([parentId])
+  @@index([userId])
+}
+
+// Curriculum Structure
+model Curriculum {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  provider    String?
+  grade       Int?
+  subject     String?
+
+  createdById String
+  createdBy   User     @relation("CurriculumCreator", fields: [createdById], references: [id])
+
+  rawFileUrl  String?  // Original uploaded file
+  rawData     Json?    // Parsed JSON before mapping
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  units       Unit[]
+  enrollments Enrollment[]
+
+  @@index([createdById])
+}
+
+model Unit {
+  id           String     @id @default(cuid())
+  curriculumId String
+  title        String
+  description  String?    @db.Text
+  order        Int
+
+  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  lessons      Lesson[]
+
+  @@index([curriculumId])
+  @@unique([curriculumId, order])
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  unitId      String
+  title       String
+  description String?  @db.Text
+  contentMd   String   @db.Text
+
+  // Adaptive gating
+  threshold   Int      @default(70) // Minimum score to unlock next lesson
+  order       Int
+
+  // Learning objectives/standards
+  objectives  String[] // Array of learning objective codes
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  unit        Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  items       Item[]
+  attempts    Attempt[]
+
+  @@index([unitId])
+  @@unique([unitId, order])
+}
+
+// Assessment Items
+enum ItemType {
+  MCQ
+  SHORT_ANSWER
+  ESSAY
+  TRUE_FALSE
+}
+
+model Item {
+  id        String   @id @default(cuid())
+  lessonId  String
+  type      ItemType
+  order     Int
+
+  prompt    String   @db.Text
+
+  // For MCQ/True-False: JSON array of choices
+  choices   Json?
+
+  // Answer key - flexible structure based on type
+  // MCQ: { "correct": [0, 2] } for indices
+  // SHORT_ANSWER: { "patterns": ["exact match", "/regex/i"] }
+  answerKey Json
+
+  points    Int      @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
+  @@unique([lessonId, order])
+}
+
+// Glossary for hover definitions
+model GlossaryTerm {
+  id          String   @id @default(cuid())
+  term        String   @unique
+  definition  String   @db.Text
+  derivation  String?  @db.Text
+  mediaUrl    String?  // Optional image/video URL
+  mediaType   String?  // "image" | "video"
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([term])
+}
+
+// Student Progress Tracking
+model Enrollment {
+  id           String   @id @default(cuid())
+  studentId    String
+  curriculumId String
+
+  // Progress tracking per lesson
+  // { "lessonId": { "unlocked": true, "score": 85, "completedAt": "ISO date" } }
+  progress     Json     @default("{}")
+
+  enrolledAt   DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  student      Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  curriculum   Curriculum  @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, curriculumId])
+  @@index([studentId])
+  @@index([curriculumId])
+}
+
+// Assessment Attempts
+model Attempt {
+  id        String   @id @default(cuid())
+  studentId String
+  lessonId  String
+
+  score     Int      // Percentage 0-100
+  maxScore  Int      // Total points possible
+  earned    Int      // Points earned
+
+  // Detailed responses: { "itemId": { "answer": ..., "correct": bool, "points": ... } }
+  detail    Json
+
+  timeSpent Int?     // Seconds
+  createdAt DateTime @default(now())
+
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([lessonId])
+  @@index([createdAt])
+}
+
+// Activity Log for parent digests
+model Activity {
+  id        String   @id @default(cuid())
+  studentId String
+  type      String   // "lesson_started", "lesson_completed", "assignment_graded"
+  lessonId  String?
+  metadata  Json?    // Extra context
+  createdAt DateTime @default(now())
+
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, createdAt])
+}
+
+// Digest History (track what was sent)
+model DigestLog {
+  id        String   @id @default(cuid())
+  parentId  String
+  type      String   // "daily" | "weekly"
+  sentAt    DateTime @default(now())
+
+  // Summary stats included in digest
+  summary   Json
+
+  @@index([parentId, sentAt])
+}

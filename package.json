@@ -65,8 +65,7 @@
     "@types/pdf-parse": "^1.1.4"
   },
   "engines": {
-    "node": ">=18.17.0",
-    "pnpm": ">=8.0.0"
+    "node": "20.x"
   },
-  "packageManager": "pnpm@8.15.0"
+  "packageManager": "pnpm@9.1.0"
 }

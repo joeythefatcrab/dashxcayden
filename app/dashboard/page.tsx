@@ -59,23 +59,29 @@ function StudentDashboard() {
     <div className="space-y-6">
       <div className="rounded-lg border bg-card p-6">
         <h3 className="mb-4 text-xl font-semibold">My Lessons</h3>
-        <p className="text-muted-foreground">
-          You haven't been enrolled in any curriculum yet. Ask your parent or teacher to enroll you.
+        <p className="mb-4 text-muted-foreground">
+          Access your courses and continue learning.
         </p>
+        <a
+          href="/my-courses"
+          className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          Go to My Courses
+        </a>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-lg border bg-card p-6">
           <h3 className="mb-2 text-lg font-semibold">Current Progress</h3>
           <p className="text-sm text-muted-foreground">
-            No lessons in progress.
+            Check your courses to see progress.
           </p>
         </div>
 
         <div className="rounded-lg border bg-card p-6">
           <h3 className="mb-2 text-lg font-semibold">Recent Scores</h3>
           <p className="text-sm text-muted-foreground">
-            No scores yet. Complete a lesson to see your results!
+            Complete a lesson to see your results!
           </p>
         </div>
       </div>

@@ -63,7 +63,7 @@ export async function POST(req: Request) {
                     type: item.type,
                     prompt: item.prompt,
                     order: item.order,
-                    choices: item.choices || null,
+                    choices: item.choices ?? undefined,
                     answerKey: item.answerKey,
                     points: item.points || 1,
                   })),

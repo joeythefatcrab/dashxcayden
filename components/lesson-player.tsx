@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Lock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
+import { GlossaryMarkdown } from "./glossary-markdown";
 
 interface LessonPlayerProps {
   lesson: any;
@@ -236,7 +236,7 @@ export function LessonPlayer({
             <CardTitle>Lesson Content</CardTitle>
           </CardHeader>
           <CardContent className="prose prose-sm max-w-none">
-            <ReactMarkdown>{lesson.contentMd}</ReactMarkdown>
+            <GlossaryMarkdown content={lesson.contentMd} />
           </CardContent>
         </Card>
       )}

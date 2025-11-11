@@ -14,12 +14,14 @@ export default async function MyCoursesPage() {
   }
 
   // Get student profile
+  const orConditions = [{ userId: session.user.id }];
+  if (session.user.email) {
+    orConditions.push({ parent: { email: session.user.email } });
+  }
+
   const student = await db.student.findFirst({
     where: {
-      OR: [
-        { userId: session.user.id },
-        { parent: { email: session.user.email } },
-      ],
+      OR: orConditions,
     },
   });
 

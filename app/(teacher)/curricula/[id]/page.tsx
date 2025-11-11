@@ -9,8 +9,9 @@ import Link from "next/link";
 export default async function CurriculumDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await auth();
 
   if (!session?.user || !["TEACHER", "ADMIN"].includes(session.user.role)) {
@@ -18,7 +19,7 @@ export default async function CurriculumDetailPage({
   }
 
   const curriculum = await db.curriculum.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       units: {
         include: {

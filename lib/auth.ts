@@ -10,7 +10,7 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
-  adapter: PrismaAdapter(db),
+  adapter: PrismaAdapter(db) as any,
   providers: [
     Resend({
       from: process.env.RESEND_FROM_EMAIL || "noreply@example.com",

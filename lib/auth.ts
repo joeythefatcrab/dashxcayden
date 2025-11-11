@@ -10,7 +10,8 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
-  adapter: PrismaAdapter(db) as any,
+  // @ts-expect-error - Type mismatch between next-auth and @auth/prisma-adapter versions
+  adapter: PrismaAdapter(db),
   providers: [
     Resend({
       from: process.env.RESEND_FROM_EMAIL || "noreply@example.com",

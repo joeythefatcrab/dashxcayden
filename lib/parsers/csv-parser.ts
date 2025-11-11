@@ -52,7 +52,7 @@ export async function parseCSV(fileUrl: string): Promise<ParsedCurriculum> {
           reject(error);
         }
       },
-      error: (error) => {
+      error: (error: Error) => {
         reject(error);
       },
     });

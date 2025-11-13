@@ -20,6 +20,7 @@ export function DashboardNav() {
     { name: "Reports", href: "/teacher/reports", icon: FileText, roles: ["TEACHER", "ADMIN"] },
     { name: "My Lessons", href: "/student/lessons", icon: BookOpen, roles: ["STUDENT"] },
     { name: "My Students", href: "/parent/students", icon: Users, roles: ["PARENT"] },
+    { name: "Reports", href: "/reports", icon: FileText, roles: ["PARENT"] },
     { name: "Settings", href: "/settings", icon: Settings, roles: ["PARENT"] },
   ];
 

@@ -16,11 +16,16 @@ export const {
     Resend({
       from: process.env.RESEND_FROM_EMAIL || "noreply@example.com",
     }),
-    GoogleProvider({
-      clientId: process.env.AUTH_GOOGLE_ID!,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
-    }),
+    ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.AUTH_GOOGLE_ID,
+            clientSecret: process.env.AUTH_GOOGLE_SECRET,
+          }),
+        ]
+      : []),
   ],
+  trustHost: true,
   pages: {
     signIn: "/sign-in",
     verifyRequest: "/verify-request",

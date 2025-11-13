@@ -78,9 +78,12 @@ export default async function MyCoursesPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Contact your teacher or parent to get enrolled in a course.
+            <p className="mb-4 text-sm text-muted-foreground">
+              You haven't enrolled in any courses yet. Browse available courses to get started!
             </p>
+            <Link href="/browse-courses">
+              <Button>Browse Courses</Button>
+            </Link>
           </CardContent>
         </Card>
       ) : (

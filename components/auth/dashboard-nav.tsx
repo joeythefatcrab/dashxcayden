@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings } from "lucide-react";
+import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search } from "lucide-react";
 import { useState } from "react";
 
 export function DashboardNav() {
@@ -15,10 +15,11 @@ export function DashboardNav() {
   const role = session.user.role;
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: Home, roles: ["PARENT", "STUDENT", "TEACHER", "ADMIN"] },
+    { name: "Dashboard", href: "/dashboard", icon: Home, roles: ["PARENT", "TEACHER", "ADMIN"] },
+    { name: "My Courses", href: "/my-courses", icon: BookOpen, roles: ["STUDENT"] },
+    { name: "Browse Courses", href: "/browse-courses", icon: Search, roles: ["STUDENT"] },
     { name: "Curricula", href: "/teacher/curricula", icon: BookOpen, roles: ["TEACHER", "ADMIN"] },
     { name: "Reports", href: "/teacher/reports", icon: FileText, roles: ["TEACHER", "ADMIN"] },
-    { name: "My Lessons", href: "/student/lessons", icon: BookOpen, roles: ["STUDENT"] },
     { name: "My Students", href: "/parent/students", icon: Users, roles: ["PARENT"] },
     { name: "Reports", href: "/reports", icon: FileText, roles: ["PARENT"] },
     { name: "Settings", href: "/settings", icon: Settings, roles: ["PARENT"] },

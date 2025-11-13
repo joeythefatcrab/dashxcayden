@@ -39,6 +39,17 @@ export async function POST(req: Request) {
       },
     });
 
+    // If student, auto-create student profile
+    if (role.toUpperCase() === "STUDENT") {
+      await db.student.create({
+        data: {
+          name: name || email.split("@")[0],
+          userId: user.id,
+          parentId: user.id, // Self-managed student
+        },
+      });
+    }
+
     return NextResponse.json(
       {
         success: true,

@@ -1,7 +1,6 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import GoogleProvider from "next-auth/providers/google";
-import Resend from "next-auth/providers/resend";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
@@ -50,9 +49,6 @@ export const {
           role: user.role,
         };
       },
-    }),
-    Resend({
-      from: process.env.RESEND_FROM_EMAIL || "noreply@example.com",
     }),
     ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
       ? [

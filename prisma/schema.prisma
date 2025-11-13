@@ -111,6 +111,10 @@ model Curriculum {
   grade       Int?
   subject     String?
 
+  // Course code for enrollment (like "ABC-123")
+  courseCode  String?  @unique
+  isPublic    Boolean  @default(true) // If false, only accessible via course code
+
   createdById String
   createdBy   User     @relation("CurriculumCreator", fields: [createdById], references: [id])
 
@@ -124,6 +128,7 @@ model Curriculum {
   enrollments Enrollment[]
 
   @@index([createdById])
+  @@index([courseCode])
 }
 
 model Unit {

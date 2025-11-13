@@ -35,8 +35,11 @@ export default async function BrowseCoursesPage() {
     );
   }
 
-  // Get all available curricula
+  // Get all public curricula (isPublic = true)
   const allCurricula = await db.curriculum.findMany({
+    where: {
+      isPublic: true,
+    },
     include: {
       units: {
         include: {

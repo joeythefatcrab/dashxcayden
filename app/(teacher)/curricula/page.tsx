@@ -101,13 +101,18 @@ export default async function CurriculaPage() {
                           lessons
                         </div>
                       </div>
-                      {curriculum.subject && (
-                        <div className="mt-2">
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {curriculum.subject && (
                           <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
                             {curriculum.subject}
                           </span>
-                        </div>
-                      )}
+                        )}
+                        {curriculum.courseCode && (
+                          <span className="rounded-full bg-green-100 px-2 py-1 font-mono text-xs font-medium text-green-700">
+                            📋 {curriculum.courseCode}
+                          </span>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 </Link>

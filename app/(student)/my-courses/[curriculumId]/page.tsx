@@ -19,7 +19,9 @@ export default async function CurriculumPage({
   }
 
   // Get student profile
-  const orConditions = [{ userId: session.user.id }];
+  const orConditions: Array<{ userId?: string; parent?: { email: string } }> = [
+    { userId: session.user.id },
+  ];
   if (session.user.email) {
     orConditions.push({ parent: { email: session.user.email } });
   }

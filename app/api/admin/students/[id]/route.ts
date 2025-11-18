@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 // DELETE - Delete a student
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -14,7 +14,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const studentId = params.id;
+    const { id: studentId } = await params;
 
     // Verify this student belongs to a parent managed by this admin
     const student = await db.student.findFirst({

@@ -291,3 +291,31 @@ model DigestLog {
 
   @@index([parentId, sentAt])
 }
+
+// Student Invitations
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+model StudentInvitation {
+  id            String           @id @default(cuid())
+  parentId      String
+  studentEmail  String
+  studentName   String?
+  token         String           @unique
+  status        InvitationStatus @default(PENDING)
+
+  // Curricula to auto-enroll student in when they accept
+  curriculaIds  String[]         @default([])
+
+  expiresAt     DateTime
+  createdAt     DateTime         @default(now())
+  acceptedAt    DateTime?
+
+  @@index([parentId])
+  @@index([studentEmail])
+  @@index([token])
+  @@index([status])
+}

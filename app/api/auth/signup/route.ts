@@ -29,13 +29,14 @@ export async function POST(req: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Create user with auto-verified email
     const user = await db.user.create({
       data: {
         email,
         password: hashedPassword,
         name: name || null,
         role: role.toUpperCase(),
+        emailVerified: new Date(), // Auto-verify all users
       },
     });
 

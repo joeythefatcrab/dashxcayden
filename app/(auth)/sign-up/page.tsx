@@ -108,10 +108,8 @@ export default function SignUpPage() {
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="PARENT">Parent/Guardian</SelectItem>
                   <SelectItem value="STUDENT">Student</SelectItem>
-                  <SelectItem value="PARENT">Parent</SelectItem>
-                  <SelectItem value="TEACHER">Teacher</SelectItem>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>

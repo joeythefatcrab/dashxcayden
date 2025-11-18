@@ -52,7 +52,6 @@ model VerificationToken {
 enum Role {
   PARENT
   STUDENT
-  TEACHER
   ADMIN
 }
 

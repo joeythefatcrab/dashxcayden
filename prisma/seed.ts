@@ -33,15 +33,6 @@ async function main() {
     },
   });
 
-  // Create teacher
-  const teacher = await prisma.user.create({
-    data: {
-      email: "teacher@homeschool.com",
-      password: await bcrypt.hash("password123", 10),
-      name: "Ms. Johnson",
-      role: "TEACHER",
-    },
-  });
 
   // Create parent
   const parent = await prisma.user.create({
@@ -106,7 +97,7 @@ async function main() {
       subject: "History",
       grade: 8,
       provider: "American History Academy",
-      createdById: teacher.id,
+      createdById: parent.id,
       units: {
         create: [
           {
@@ -342,7 +333,7 @@ After Fort Sumter, President Lincoln called for 75,000 volunteers to put down th
   console.log("\n📧 Test Accounts:");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("Admin:   admin@homeschool.com    / password123");
-  console.log("Teacher: teacher@homeschool.com  / password123");
+  console.log("Parent: parent@homeschool.com  / password123");
   console.log("Parent:  parent@homeschool.com   / password123");
   console.log("\n📚 Created:");
   console.log("- 1 curriculum: U.S. History: The Civil War");

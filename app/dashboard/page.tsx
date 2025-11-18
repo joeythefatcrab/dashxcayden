@@ -18,7 +18,6 @@ export default async function DashboardPage() {
 
         {user.role === "PARENT" && <ParentDashboard />}
         {user.role === "STUDENT" && <StudentDashboard />}
-        {user.role === "TEACHER" && <TeacherDashboard />}
         {user.role === "ADMIN" && <AdminDashboard />}
       </div>
     </div>
@@ -89,46 +88,6 @@ function StudentDashboard() {
   );
 }
 
-function TeacherDashboard() {
-  return (
-    <div className="space-y-6">
-      <div className="rounded-lg border bg-card p-6">
-        <h3 className="mb-4 text-xl font-semibold">Curricula</h3>
-        <p className="mb-4 text-muted-foreground">
-          Upload and manage your curriculum files here.
-        </p>
-        <a
-          href="/teacher/curricula"
-          className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          Go to Curricula
-        </a>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="mb-2 text-lg font-semibold">Students</h3>
-          <p className="text-sm text-muted-foreground">
-            No students enrolled yet.
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="mb-2 text-lg font-semibold">Reports</h3>
-          <p className="text-sm text-muted-foreground">
-            Generate compliance reports for your students.
-          </p>
-          <a
-            href="/teacher/reports"
-            className="mt-2 inline-block text-sm text-primary hover:underline"
-          >
-            View Reports →
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function AdminDashboard() {
   return (

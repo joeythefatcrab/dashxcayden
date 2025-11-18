@@ -26,7 +26,7 @@ A complete homeschool management platform with adaptive learning, email digests,
 **Test Accounts** (from seed data):
 ```
 Admin:   admin@homeschool.com    / password123
-Teacher: teacher@homeschool.com  / password123
+
 Parent:  parent@homeschool.com   / password123
 ```
 
@@ -478,7 +478,7 @@ Password: password123
 Access: Full system access
 
 Teacher
-Email: teacher@homeschool.com
+Email: parent@homeschool.com
 Password: password123
 Access: Curriculum management, reports
 

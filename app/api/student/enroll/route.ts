@@ -31,11 +31,11 @@ export async function POST(req: Request) {
     // @ts-ignore
     const userRole = session.user.role;
 
-    // Check authorization: student themselves, their parent, or teacher/admin
+    // Check authorization: student themselves, their parent, or admin
     const isAuthorized =
       student.userId === session.user.id ||
       student.parentId === session.user.id ||
-      userRole === "TEACHER" ||
+      userRole === "PARENT" ||
       userRole === "ADMIN";
 
     if (!isAuthorized) {

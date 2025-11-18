@@ -14,7 +14,7 @@ export default async function CurriculumDetailPage({
   const { id } = await params;
   const session = await auth();
 
-  if (!session?.user || !["TEACHER", "ADMIN"].includes(session.user.role)) {
+  if (!session?.user || !["PARENT", "ADMIN"].includes(session.user.role)) {
     redirect("/dashboard");
   }
 
@@ -53,7 +53,7 @@ export default async function CurriculumDetailPage({
     <div className="px-4 py-8">
       <div className="container mx-auto max-w-5xl">
         <div className="mb-8">
-          <Link href="/curricula">
+          <Link href="/parent/curricula">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Curricula

@@ -9,7 +9,7 @@ import Link from "next/link";
 export default async function CurriculaPage() {
   const session = await auth();
 
-  if (!session?.user || !["TEACHER", "ADMIN"].includes(session.user.role)) {
+  if (!session?.user || !["PARENT", "ADMIN"].includes(session.user.role)) {
     redirect("/dashboard");
   }
 
@@ -39,7 +39,7 @@ export default async function CurriculaPage() {
               Upload and manage your curriculum files
             </p>
           </div>
-          <Link href="/curricula/new">
+          <Link href="/parent/curricula/new">
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
               Upload Curriculum
@@ -55,7 +55,7 @@ export default async function CurriculaPage() {
               <p className="mb-4 text-center text-sm text-muted-foreground">
                 Upload a PDF, DOCX, or CSV file to get started
               </p>
-              <Link href="/curricula/new">
+              <Link href="/parent/curricula/new">
                 <Button>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Upload Your First Curriculum

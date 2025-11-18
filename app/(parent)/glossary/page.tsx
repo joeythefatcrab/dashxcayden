@@ -9,7 +9,7 @@ import Link from "next/link";
 export default async function GlossaryPage() {
   const session = await auth();
 
-  if (!session?.user || !["TEACHER", "ADMIN"].includes(session.user.role)) {
+  if (!session?.user || !["PARENT", "ADMIN"].includes(session.user.role)) {
     redirect("/dashboard");
   }
 

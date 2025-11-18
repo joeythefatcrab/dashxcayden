@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     const isAuthorized =
       student.userId === session.user.id ||
       student.parentId === session.user.id ||
-      userRole === "TEACHER" ||
+      userRole === "PARENT" ||
       userRole === "ADMIN";
 
     if (!isAuthorized) {

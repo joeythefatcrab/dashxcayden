@@ -55,7 +55,7 @@ export default function NewCurriculumPage() {
     <div className="px-4 py-8">
       <div className="container mx-auto max-w-3xl">
         <div className="mb-8">
-          <Link href="/curricula">
+          <Link href="/parent/curricula">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Curricula
@@ -161,7 +161,7 @@ export default function NewCurriculumPage() {
               </Card>
 
               <div className="flex justify-end gap-4">
-                <Link href="/curricula">
+                <Link href="/parent/curricula">
                   <Button variant="outline">Cancel</Button>
                 </Link>
                 <Button

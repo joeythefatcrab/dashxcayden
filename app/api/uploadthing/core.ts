@@ -19,9 +19,9 @@ export const ourFileRouter = {
         throw new Error("Unauthorized");
       }
 
-      // Only teachers and admins can upload curricula
-      if (!["TEACHER", "ADMIN"].includes(session.user.role)) {
-        throw new Error("Only teachers and admins can upload curricula");
+      // Only parents and admins can upload curricula
+      if (!["PARENT", "ADMIN"].includes(session.user.role)) {
+        throw new Error("Only parents and admins can upload curricula");
       }
 
       return { userId: session.user.id, role: session.user.role };

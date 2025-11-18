@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { ParentManager } from "@/components/admin/ParentManager";
 
 export default async function AdminParentsPage() {
@@ -10,7 +10,7 @@ export default async function AdminParentsPage() {
   }
 
   // Fetch all parents managed by this admin
-  const parents = await prisma.user.findMany({
+  const parents = await db.user.findMany({
     where: {
       role: "PARENT",
       adminId: session.user.id,
@@ -20,7 +20,11 @@ export default async function AdminParentsPage() {
         include: {
           enrollments: {
             include: {
-              curriculum: true,
+              curriculum: {
+                select: {
+                  name: true,
+                },
+              },
             },
           },
         },
@@ -37,6 +41,12 @@ export default async function AdminParentsPage() {
     },
   });
 
+  // Serialize dates for client component
+  const serializedParents = parents.map(parent => ({
+    ...parent,
+    createdAt: parent.createdAt.toISOString(),
+  }));
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -46,7 +56,7 @@ export default async function AdminParentsPage() {
         </p>
       </div>
 
-      <ParentManager parents={parents} />
+      <ParentManager parents={serializedParents} />
     </div>
   );
 }

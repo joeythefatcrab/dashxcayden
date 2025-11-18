@@ -17,7 +17,7 @@ type Parent = {
   id: string;
   name: string | null;
   email: string;
-  createdAt: Date;
+  createdAt: string;
   children: Array<{
     id: string;
     name: string;

@@ -66,6 +66,11 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // Admin hierarchy: parents can belong to an admin
+  adminId       String?
+  admin         User?     @relation("AdminParents", fields: [adminId], references: [id], onDelete: SetNull)
+  parents       User[]    @relation("AdminParents")
+
   accounts      Account[]
   sessions      Session[]
   students      Student[]
@@ -79,6 +84,7 @@ model User {
   phoneNumber     String?
 
   @@index([email])
+  @@index([adminId])
 }
 
 // Student Profile

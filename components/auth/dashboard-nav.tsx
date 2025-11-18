@@ -19,10 +19,11 @@ export function DashboardNav() {
     { name: "My Courses", href: "/my-courses", icon: BookOpen, roles: ["STUDENT"] },
     { name: "Browse Courses", href: "/browse-courses", icon: Search, roles: ["STUDENT"] },
     { name: "Join with Code", href: "/join-course", icon: KeyRound, roles: ["STUDENT"] },
-    { name: "Curricula", href: "/parent/curricula", icon: BookOpen, roles: ["PARENT", "ADMIN"] },
-    { name: "My Students", href: "/parent/students", icon: Users, roles: ["PARENT"] },
-    { name: "Reports", href: "/parent/reports", icon: FileText, roles: ["PARENT"] },
-    { name: "Settings", href: "/parent/settings", icon: Settings, roles: ["PARENT"] },
+    { name: "Manage Parents", href: "/parents", icon: Users, roles: ["ADMIN"] },
+    { name: "Curricula", href: "/curricula", icon: BookOpen, roles: ["PARENT", "ADMIN"] },
+    { name: "My Students", href: "/students", icon: Users, roles: ["PARENT"] },
+    { name: "Reports", href: "/reports", icon: FileText, roles: ["PARENT", "ADMIN"] },
+    { name: "Settings", href: "/settings", icon: Settings, roles: ["PARENT", "ADMIN"] },
   ];
 
   const filteredNav = navigation.filter((item) => item.roles.includes(role));

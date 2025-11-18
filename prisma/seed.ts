@@ -34,24 +34,47 @@ async function main() {
   });
 
 
-  // Create parent
-  const parent = await prisma.user.create({
+  // Create parents linked to admin
+  const parent1 = await prisma.user.create({
     data: {
-      email: "parent@homeschool.com",
+      email: "parent1@homeschool.com",
       password: await bcrypt.hash("password123", 10),
       name: "Sarah Smith",
       role: "PARENT",
       digestFrequency: "daily",
+      adminId: admin.id,
+    },
+  });
+
+  const parent2 = await prisma.user.create({
+    data: {
+      email: "parent2@homeschool.com",
+      password: await bcrypt.hash("password123", 10),
+      name: "Michael Johnson",
+      role: "PARENT",
+      digestFrequency: "weekly",
+      adminId: admin.id,
+    },
+  });
+
+  const parent3 = await prisma.user.create({
+    data: {
+      email: "parent3@homeschool.com",
+      password: await bcrypt.hash("password123", 10),
+      name: "Emily Davis",
+      role: "PARENT",
+      digestFrequency: "daily",
+      adminId: admin.id,
     },
   });
 
   console.log("Creating students...");
 
-  // Create students
+  // Create students for parent1
   const student1 = await prisma.student.create({
     data: {
       name: "Emma Smith",
-      parentId: parent.id,
+      parentId: parent1.id,
       grade: 8,
     },
   });
@@ -59,8 +82,34 @@ async function main() {
   const student2 = await prisma.student.create({
     data: {
       name: "Noah Smith",
-      parentId: parent.id,
+      parentId: parent1.id,
       grade: 6,
+    },
+  });
+
+  // Create students for parent2
+  const student3 = await prisma.student.create({
+    data: {
+      name: "Olivia Johnson",
+      parentId: parent2.id,
+      grade: 7,
+    },
+  });
+
+  // Create student for parent3
+  const student4 = await prisma.student.create({
+    data: {
+      name: "Liam Davis",
+      parentId: parent3.id,
+      grade: 5,
+    },
+  });
+
+  const student5 = await prisma.student.create({
+    data: {
+      name: "Sophia Davis",
+      parentId: parent3.id,
+      grade: 9,
     },
   });
 
@@ -97,7 +146,7 @@ async function main() {
       subject: "History",
       grade: 8,
       provider: "American History Academy",
-      createdById: parent.id,
+      createdById: parent1.id,
       units: {
         create: [
           {
@@ -289,6 +338,14 @@ After Fort Sumter, President Lincoln called for 75,000 volunteers to put down th
     },
   });
 
+  const enrollment3 = await prisma.enrollment.create({
+    data: {
+      studentId: student3.id,
+      curriculumId: curriculum.id,
+      progress: {},
+    },
+  });
+
   // Get the first lesson
   const firstLesson = await prisma.lesson.findFirst({
     where: { unit: { curriculumId: curriculum.id } },
@@ -332,13 +389,16 @@ After Fort Sumter, President Lincoln called for 75,000 volunteers to put down th
   console.log("✅ Seed completed!");
   console.log("\n📧 Test Accounts:");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("Admin:   admin@homeschool.com    / password123");
-  console.log("Parent: parent@homeschool.com  / password123");
-  console.log("Parent:  parent@homeschool.com   / password123");
+  console.log("Admin:    admin@homeschool.com    / password123");
+  console.log("Parent 1: parent1@homeschool.com  / password123 (2 students)");
+  console.log("Parent 2: parent2@homeschool.com  / password123 (1 student)");
+  console.log("Parent 3: parent3@homeschool.com  / password123 (2 students)");
   console.log("\n📚 Created:");
+  console.log("- 1 admin managing 3 parent accounts");
+  console.log("- 5 students across 3 families");
   console.log("- 1 curriculum: U.S. History: The Civil War");
   console.log("- 2 units with 3 lessons total");
-  console.log("- 2 students enrolled");
+  console.log("- 3 students enrolled in curriculum");
   console.log("- 3 glossary terms");
   console.log("- Sample test data and attempts");
 }

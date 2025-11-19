@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, Users, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { CurriculumUploader } from "@/components/curriculum/CurriculumUploader";
+import { AICurriculumGenerator } from "@/components/curriculum/AICurriculumGenerator";
 import { AssignCurriculumDialog } from "@/components/curriculum/AssignCurriculumDialog";
 
 export default async function CurriculaPage() {
@@ -80,7 +81,10 @@ export default async function CurriculaPage() {
               Upload and manage your curriculum files
             </p>
           </div>
-          <CurriculumUploader />
+          <div className="flex gap-2">
+            <AICurriculumGenerator />
+            <CurriculumUploader />
+          </div>
         </div>
 
         {curricula.length === 0 ? (
@@ -89,9 +93,12 @@ export default async function CurriculaPage() {
               <BookOpen className="mb-4 h-12 w-12 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-semibold">No curricula yet</h3>
               <p className="mb-4 text-center text-sm text-muted-foreground">
-                Upload a CSV file to get started (PDF and DOCX coming soon)
+                Upload a CSV file or use AI to generate a curriculum
               </p>
-              <CurriculumUploader />
+              <div className="flex gap-2">
+                <AICurriculumGenerator />
+                <CurriculumUploader />
+              </div>
             </CardContent>
           </Card>
         ) : (

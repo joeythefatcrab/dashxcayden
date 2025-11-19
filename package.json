@@ -41,6 +41,7 @@
     "lucide-react": "^0.446.0",
     "next": "^15.0.3",
     "next-auth": "^5.0.0-beta.22",
+    "openai": "^4.73.0",
     "papaparse": "^5.4.1",
     "pdf-parse": "^1.1.1",
     "react": "^19.0.0",

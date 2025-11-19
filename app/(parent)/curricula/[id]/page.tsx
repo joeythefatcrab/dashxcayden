@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, BookOpen, FileText } from "lucide-react";
 import Link from "next/link";
+import { AIAssignmentGenerator } from "@/components/curriculum/AIAssignmentGenerator";
 
 export default async function CurriculumDetailPage({
   params,
@@ -99,7 +100,7 @@ export default async function CurriculumDetailPage({
                   {unit.lessons.map((lesson) => (
                     <div
                       key={lesson.id}
-                      className="flex items-start justify-between rounded-lg border p-4"
+                      className="flex items-start justify-between gap-4 rounded-lg border p-4"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -117,6 +118,14 @@ export default async function CurriculumDetailPage({
                           <span>{lesson.items.length} questions</span>
                           <span>Threshold: {lesson.threshold}%</span>
                         </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <AIAssignmentGenerator
+                          lessonId={lesson.id}
+                          lessonTitle={lesson.title}
+                          lessonDescription={lesson.description}
+                          currentQuestionCount={lesson.items.length}
+                        />
                       </div>
                     </div>
                   ))}

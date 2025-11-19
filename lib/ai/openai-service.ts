@@ -1,8 +1,12 @@
 import OpenAI from "openai";
 
 // Initialize OpenAI client
+if (!process.env.OPENAI_API_KEY) {
+  console.warn("OPENAI_API_KEY is not set. AI features will not work.");
+}
+
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || "dummy-key",
 });
 
 // Type definitions
@@ -57,6 +61,12 @@ export type AssignmentRequest = {
 export async function generateCurriculumFromWireframe(
   wireframe: CurriculumWireframe
 ): Promise<GeneratedCurriculum> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error(
+      "OpenAI API key is not configured. Please set OPENAI_API_KEY in your environment variables."
+    );
+  }
+
   const systemPrompt = `You are an expert curriculum designer for homeschool education.
 Your task is to create detailed, engaging curricula that follow best educational practices.
 
@@ -123,7 +133,7 @@ Response format: JSON only (no markdown code blocks)`;
     // If there's an image, use vision API
     if (wireframe.imageUrl) {
       const response = await openai.chat.completions.create({
-        model: "gpt-4-vision-preview",
+        model: "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
           {
@@ -150,7 +160,7 @@ Response format: JSON only (no markdown code blocks)`;
     } else {
       // Text-only generation
       const response = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
+        model: "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -178,6 +188,12 @@ Response format: JSON only (no markdown code blocks)`;
 export async function generateAssignment(
   request: AssignmentRequest
 ): Promise<any[]> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error(
+      "OpenAI API key is not configured. Please set OPENAI_API_KEY in your environment variables."
+    );
+  }
+
   const systemPrompt = `You are an expert educator creating assessment questions.
 
 IMPORTANT: You MUST respond with valid JSON only. No markdown, no code blocks, just raw JSON.
@@ -209,7 +225,7 @@ Response format: JSON array of question objects like this:
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -240,8 +256,14 @@ export async function enhanceLessonContent(
   topic: string,
   currentContent: string
 ): Promise<string> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error(
+      "OpenAI API key is not configured. Please set OPENAI_API_KEY in your environment variables."
+    );
+  }
+
   const response = await openai.chat.completions.create({
-    model: "gpt-4-turbo-preview",
+    model: "gpt-4o",
     messages: [
       {
         role: "system",

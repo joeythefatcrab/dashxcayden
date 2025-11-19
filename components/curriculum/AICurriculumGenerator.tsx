@@ -61,7 +61,10 @@ export function AICurriculumGenerator() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to generate curriculum");
+        const errorMsg = data.details
+          ? `${data.error}: ${data.details}`
+          : data.error || "Failed to generate curriculum";
+        throw new Error(errorMsg);
       }
 
       // Reset form

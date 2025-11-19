@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     // Save questions to the database
     const createdItems = await Promise.all(
       questions.map(async (question, index) => {
-        return db.assessmentItem.create({
+        return db.item.create({
           data: {
             lessonId: lesson.id,
             type: question.type || "SHORT_ANSWER",

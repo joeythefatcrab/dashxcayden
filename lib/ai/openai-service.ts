@@ -133,7 +133,7 @@ Response format: JSON only (no markdown code blocks)`;
     // If there's an image, use vision API
     if (wireframe.imageUrl) {
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-5-turbo",
         messages: [
           { role: "system", content: systemPrompt },
           {
@@ -160,7 +160,7 @@ Response format: JSON only (no markdown code blocks)`;
     } else {
       // Text-only generation
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-5-turbo",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -225,7 +225,7 @@ Response format: JSON array of question objects like this:
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5-turbo",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
@@ -263,7 +263,7 @@ export async function enhanceLessonContent(
   }
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-5-turbo",
     messages: [
       {
         role: "system",

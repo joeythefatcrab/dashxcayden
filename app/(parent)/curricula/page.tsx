@@ -3,8 +3,11 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, BookOpen, FileText } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, Users, BarChart3 } from "lucide-react";
 import Link from "next/link";
+import { CurriculumUploader } from "@/components/curriculum/CurriculumUploader";
+import { AssignCurriculumDialog } from "@/components/curriculum/AssignCurriculumDialog";
 
 export default async function CurriculaPage() {
   const session = await auth();
@@ -13,6 +16,7 @@ export default async function CurriculaPage() {
     redirect("/dashboard");
   }
 
+  // Fetch curricula created by this user
   const curricula = await db.curriculum.findMany({
     where: {
       createdById: session.user.id,
@@ -23,9 +27,46 @@ export default async function CurriculaPage() {
           lessons: true,
         },
       },
+      enrollments: {
+        select: {
+          studentId: true,
+          student: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          enrollments: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
+    },
+  });
+
+  // Fetch students for assignment
+  // For parents: their own students
+  // For admins: all students under their parents
+  const students = await db.student.findMany({
+    where:
+      session.user.role === "PARENT"
+        ? { parentId: session.user.id }
+        : {
+            parent: {
+              adminId: session.user.id,
+            },
+          },
+    select: {
+      id: true,
+      name: true,
+      grade: true,
+    },
+    orderBy: {
+      name: "asc",
     },
   });
 
@@ -39,12 +80,7 @@ export default async function CurriculaPage() {
               Upload and manage your curriculum files
             </p>
           </div>
-          <Link href="/parent/curricula/new">
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Upload Curriculum
-            </Button>
-          </Link>
+          <CurriculumUploader />
         </div>
 
         {curricula.length === 0 ? (
@@ -53,14 +89,9 @@ export default async function CurriculaPage() {
               <BookOpen className="mb-4 h-12 w-12 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-semibold">No curricula yet</h3>
               <p className="mb-4 text-center text-sm text-muted-foreground">
-                Upload a PDF, DOCX, or CSV file to get started
+                Upload a CSV file to get started (PDF and DOCX coming soon)
               </p>
-              <Link href="/parent/curricula/new">
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Upload Your First Curriculum
-                </Button>
-              </Link>
+              <CurriculumUploader />
             </CardContent>
           </Card>
         ) : (
@@ -72,50 +103,74 @@ export default async function CurriculaPage() {
               );
 
               return (
-                <Link
-                  key={curriculum.id}
-                  href={`/curricula/${curriculum.id}`}
-                >
-                  <Card className="h-full transition-shadow hover:shadow-md">
-                    <CardHeader>
-                      <CardTitle className="flex items-start justify-between">
-                        <span className="line-clamp-2">{curriculum.name}</span>
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                      </CardTitle>
-                      {curriculum.description && (
-                        <CardDescription className="line-clamp-2">
-                          {curriculum.description}
-                        </CardDescription>
+                <Card key={curriculum.id} className="flex h-full flex-col">
+                  <CardHeader>
+                    <CardTitle className="flex items-start justify-between">
+                      <span className="line-clamp-2">{curriculum.name}</span>
+                    </CardTitle>
+                    {curriculum.description && (
+                      <CardDescription className="line-clamp-2">
+                        {curriculum.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent className="flex flex-1 flex-col gap-4">
+                    {/* Stats */}
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div>
+                        <span className="font-medium">
+                          {curriculum.units.length}
+                        </span>{" "}
+                        units
+                      </div>
+                      <div>
+                        <span className="font-medium">{lessonCount}</span>{" "}
+                        lessons
+                      </div>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-2">
+                      {curriculum.subject && (
+                        <Badge variant="secondary">{curriculum.subject}</Badge>
                       )}
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div>
-                          <span className="font-medium">
-                            {curriculum.units.length}
-                          </span>{" "}
-                          units
-                        </div>
-                        <div>
-                          <span className="font-medium">{lessonCount}</span>{" "}
-                          lessons
-                        </div>
+                      {curriculum.courseCode && (
+                        <Badge variant="outline" className="font-mono">
+                          📋 {curriculum.courseCode}
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Enrollment Status */}
+                    {curriculum._count.enrollments > 0 && (
+                      <div className="flex items-center gap-2 rounded-md bg-green-50 p-2 text-sm">
+                        <Users className="h-4 w-4 text-green-600" />
+                        <span className="text-green-900">
+                          Assigned to {curriculum._count.enrollments} student
+                          {curriculum._count.enrollments > 1 ? "s" : ""}
+                        </span>
                       </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {curriculum.subject && (
-                          <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                            {curriculum.subject}
-                          </span>
+                    )}
+
+                    {/* Actions */}
+                    <div className="mt-auto flex gap-2">
+                      <Link href={`/curricula/${curriculum.id}`} className="flex-1">
+                        <Button variant="outline" className="w-full">
+                          <BarChart3 className="mr-2 h-4 w-4" />
+                          View Details
+                        </Button>
+                      </Link>
+                      <AssignCurriculumDialog
+                        curriculumId={curriculum.id}
+                        curriculumName={curriculum.name}
+                        students={students}
+                        assignedStudentIds={curriculum.enrollments.map(
+                          (e) => e.studentId
                         )}
-                        {curriculum.courseCode && (
-                          <span className="rounded-full bg-green-100 px-2 py-1 font-mono text-xs font-medium text-green-700">
-                            📋 {curriculum.courseCode}
-                          </span>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>

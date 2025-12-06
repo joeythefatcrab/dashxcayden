@@ -32,11 +32,12 @@ export function AIChatbot({ context }: AIChatbotProps) {
     {
       role: "assistant",
       content:
-        "Hi! I'm your AI tutor. I'm here to help you understand your coursework and guide you through challenging concepts. How can I help you today?",
+        "Hi! I'm Loopi, your AI tutor! I'm here to help you understand your coursework and guide you through challenging concepts. How can I help you today?",
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [threadId, setThreadId] = useState<string | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -61,6 +62,7 @@ export function AIChatbot({ context }: AIChatbotProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...messages, userMessage],
+          threadId,
           context,
         }),
       });
@@ -69,6 +71,11 @@ export function AIChatbot({ context }: AIChatbotProps) {
 
       if (!response.ok) {
         throw new Error(data.details || data.error || "Failed to get response");
+      }
+
+      // Store the threadId for conversation continuity
+      if (data.threadId) {
+        setThreadId(data.threadId);
       }
 
       const assistantMessage: Message = {
@@ -120,7 +127,7 @@ export function AIChatbot({ context }: AIChatbotProps) {
       <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-r from-blue-600 to-purple-600 p-4 text-white">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5" />
-          <h3 className="font-semibold">AI Tutor</h3>
+          <h3 className="font-semibold">Loopi - AI Tutor</h3>
         </div>
         <button
           onClick={() => setIsOpen(false)}

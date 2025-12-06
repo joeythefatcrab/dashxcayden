@@ -6,6 +6,65 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy-key",
 });
 
+// The Loopi Assistant ID
+const LOOPI_ASSISTANT_ID = "asst_bdBfXJGWtsRU35VLMgF0Dsqe";
+
+/**
+ * Run the Loopi Assistant with a user message
+ */
+async function runLoopi(userMessage: string, threadId?: string) {
+  let thread;
+
+  if (threadId) {
+    // Continue existing conversation
+    thread = { id: threadId };
+
+    // Add the new user message to the existing thread
+    await openai.beta.threads.messages.create(threadId, {
+      role: "user",
+      content: userMessage,
+    });
+  } else {
+    // Create a new thread with the user message
+    thread = await openai.beta.threads.create({
+      messages: [
+        {
+          role: "user",
+          content: userMessage,
+        },
+      ],
+    });
+  }
+
+  // Run the Loopi assistant on the thread
+  const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
+    assistant_id: LOOPI_ASSISTANT_ID,
+  });
+
+  if (run.status !== "completed") {
+    throw new Error(`Assistant run failed with status: ${run.status}`);
+  }
+
+  // Fetch all messages and find the latest assistant reply
+  const messages = await openai.beta.threads.messages.list(thread.id);
+  const latestAssistantMessage = messages.data.find((m) => m.role === "assistant");
+
+  if (!latestAssistantMessage) {
+    throw new Error("No assistant response found");
+  }
+
+  // Extract text from the message content
+  const text = latestAssistantMessage.content
+    .filter((part) => part.type === "text")
+    .map((part) => (part as any).text.value)
+    .join("\n");
+
+  return {
+    message: text || "Sorry, I couldn't generate a response.",
+    threadId: thread.id,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -25,47 +84,35 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { messages, context } = body;
+    const { messages, threadId } = body;
 
-    if (!messages || !Array.isArray(messages)) {
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json(
         { error: "Messages array is required" },
         { status: 400 }
       );
     }
 
-    // Build system prompt for educational assistant
-    const systemPrompt = `You are a friendly and helpful AI tutor for homeschool students. Your role is to:
+    // Get the latest user message
+    const latestUserMessage = messages[messages.length - 1];
 
-1. Help students understand their coursework and assignments
-2. Explain concepts in simple, age-appropriate language
-3. Ask guiding questions to help students think critically
-4. Encourage students and celebrate their progress
-5. Never give direct answers to homework - instead guide them to discover the answer
-6. Use examples and analogies to make complex topics easier to understand
+    if (!latestUserMessage || latestUserMessage.role !== "user") {
+      return NextResponse.json(
+        { error: "Last message must be from user" },
+        { status: 400 }
+      );
+    }
 
-Be supportive, patient, and encouraging. If a student is struggling, break down the problem into smaller steps.
-
-${context?.lessonTitle ? `The student is currently working on: ${context.lessonTitle}` : ""}
-${context?.lessonDescription ? `Lesson description: ${context.lessonDescription}` : ""}
-${context?.currentQuestion ? `Current question they're working on: ${context.currentQuestion}` : ""}`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...messages,
-      ],
-      max_tokens: 1000,
-      temperature: 0.7,
-    });
-
-    const assistantMessage = response.choices[0].message.content;
+    // Run the Loopi assistant
+    const { message, threadId: newThreadId } = await runLoopi(
+      latestUserMessage.content,
+      threadId
+    );
 
     return NextResponse.json({
       success: true,
-      message: assistantMessage,
-      usage: response.usage,
+      message,
+      threadId: newThreadId,
     });
   } catch (error) {
     console.error("Error in AI chat:", error);

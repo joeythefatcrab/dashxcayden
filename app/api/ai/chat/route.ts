@@ -51,7 +51,7 @@ ${context?.lessonDescription ? `Lesson description: ${context.lessonDescription}
 ${context?.currentQuestion ? `Current question they're working on: ${context.currentQuestion}` : ""}`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-3.5-turbo",
       messages: [
         { role: "system", content: systemPrompt },
         ...messages,

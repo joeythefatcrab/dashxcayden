@@ -39,6 +39,10 @@ export function AIChatbot({ context }: AIChatbotProps) {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    console.log("AIChatbot rendered, isOpen:", isOpen);
+  }, [isOpen]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -99,9 +103,19 @@ export function AIChatbot({ context }: AIChatbotProps) {
   if (!isOpen) {
     return (
       <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transition-all hover:scale-110 hover:shadow-xl"
+        onClick={() => {
+          console.log("Chatbot button clicked!");
+          setIsOpen(true);
+        }}
+        className="fixed bottom-6 right-6 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transition-all hover:scale-110 hover:shadow-xl"
         aria-label="Open AI Tutor Chat"
+        data-testid="ai-chatbot-button"
+        style={{
+          position: "fixed",
+          bottom: "1.5rem",
+          right: "1.5rem",
+          zIndex: 9999,
+        }}
       >
         <MessageCircle className="h-6 w-6" />
       </button>

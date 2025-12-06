@@ -1,7 +1,16 @@
 "use client";
 
 import { AIChatbot } from "./AIChatbot";
+import { useEffect } from "react";
 
 export function ChatbotWrapper() {
-  return <AIChatbot />;
+  useEffect(() => {
+    console.log("ChatbotWrapper mounted");
+  }, []);
+
+  return (
+    <div data-chatbot-wrapper="true">
+      <AIChatbot />
+    </div>
+  );
 }

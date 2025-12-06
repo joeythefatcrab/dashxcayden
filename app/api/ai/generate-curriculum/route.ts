@@ -105,10 +105,19 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error generating curriculum:", error);
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
+
+    // Return detailed error information
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const isOpenAIError = errorMessage.includes("OpenAI") || errorMessage.includes("API key");
+
     return NextResponse.json(
       {
         error: "Failed to generate curriculum",
-        details: error instanceof Error ? error.message : "Unknown error",
+        details: errorMessage,
+        suggestion: isOpenAIError
+          ? "Please make sure OPENAI_API_KEY is set in your environment variables"
+          : "Check server logs for more details",
       },
       { status: 500 }
     );

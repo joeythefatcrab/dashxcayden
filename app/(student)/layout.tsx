@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/auth/dashboard-nav";
+import { AIChatbot } from "@/components/student/AIChatbot";
 
 export default async function StudentLayout({
   children,
@@ -22,6 +23,7 @@ export default async function StudentLayout({
     <div className="flex min-h-screen flex-col">
       <DashboardNav />
       <main className="flex-1 bg-muted/30">{children}</main>
+      <AIChatbot />
     </div>
   );
 }

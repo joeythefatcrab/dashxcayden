@@ -7,7 +7,7 @@ export default async function SuperAdminDashboard() {
   const [userCount, orgCount, activityCount] = await Promise.all([
     db.user.count(),
     db.organization.count(),
-    db.activity.count({
+    db.userActivity.count({
       where: {
         createdAt: {
           gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days

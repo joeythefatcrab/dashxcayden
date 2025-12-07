@@ -103,6 +103,7 @@ model User {
   students      Student[]
   children      Student[] @relation("StudentParent")
   curricula     Curriculum[] @relation("CurriculumCreator")
+  userActivities UserActivity[]
 
   // Parent settings
   digestFrequency String @default("daily") // daily, weekly, none
@@ -311,6 +312,21 @@ model Activity {
   student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId, createdAt])
+}
+
+// Platform-wide user activity log for superadmin
+model UserActivity {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // LOGIN, LOGOUT, CREATE, UPDATE, DELETE, VIEW
+  description String   @db.Text
+  metadata    Json?    // Additional context
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([type])
 }
 
 // Digest History (track what was sent)

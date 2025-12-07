@@ -22,7 +22,7 @@ export default async function ActivityPage({ searchParams }: PageProps) {
   const days = parseInt(params.days || "7");
 
   // Fetch recent activity
-  const activities = await db.activity.findMany({
+  const activities = await db.userActivity.findMany({
     where: {
       createdAt: {
         gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000),

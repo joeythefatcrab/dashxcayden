@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/accept-invite?code=${inviteCode}&email=${encodeURIComponent(email)}`;
+    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+    const inviteUrl = `${baseUrl}/accept-invite?code=${inviteCode}&email=${encodeURIComponent(email)}`;
 
     return NextResponse.json({
       success: true,

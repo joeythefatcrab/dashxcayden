@@ -3,24 +3,44 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Building2, Activity, TrendingUp } from "lucide-react";
 
 export default async function SuperAdminDashboard() {
-  // Fetch overview stats
-  const [userCount, orgCount, activityCount] = await Promise.all([
-    db.user.count(),
-    db.organization.count(),
-    db.userActivity.count({
+  // Fetch overview stats with error handling
+  let userCount = 0;
+  let orgCount = 0;
+  let activityCount = 0;
+  let usersByRole: any[] = [];
+
+  try {
+    userCount = await db.user.count();
+  } catch (error) {
+    console.error("Error fetching user count:", error);
+  }
+
+  try {
+    orgCount = await db.organization.count();
+  } catch (error) {
+    console.error("Error fetching organization count:", error);
+  }
+
+  try {
+    activityCount = await db.userActivity.count({
       where: {
         createdAt: {
-          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         },
       },
-    }),
-  ]);
+    });
+  } catch (error) {
+    console.error("Error fetching activity count:", error);
+  }
 
-  // Get user breakdown by role
-  const usersByRole = await db.user.groupBy({
-    by: ["role"],
-    _count: true,
-  });
+  try {
+    usersByRole = await db.user.groupBy({
+      by: ["role"],
+      _count: true,
+    });
+  } catch (error) {
+    console.error("Error fetching users by role:", error);
+  }
 
   const stats = [
     {
@@ -93,21 +113,29 @@ export default async function SuperAdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {usersByRole.map((group) => (
-              <div key={group.role} className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="font-medium capitalize">
-                    {group.role.toLowerCase()}
+            {usersByRole.length > 0 ? (
+              usersByRole.map((group) => (
+                <div key={group.role} className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="font-medium capitalize">
+                      {group.role.toLowerCase()}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {group._count} users
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {group._count} users
+                  <div className="text-sm font-medium">
+                    {userCount > 0
+                      ? ((group._count / userCount) * 100).toFixed(1)
+                      : "0"}%
                   </div>
                 </div>
-                <div className="text-sm font-medium">
-                  {((group._count / userCount) * 100).toFixed(1)}%
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No user data available
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

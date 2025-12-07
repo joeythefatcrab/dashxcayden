@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Activity } from "lucide-react";
+import { RoleSwitcher } from "@/components/superadmin/RoleSwitcher";
 
 export default async function SuperAdminDashboard() {
   // Simple user count - should always work
@@ -53,6 +54,9 @@ export default async function SuperAdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Role Switcher for QA */}
+      <RoleSwitcher />
 
       {/* Recent Users */}
       <Card>

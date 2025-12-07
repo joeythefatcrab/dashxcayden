@@ -14,7 +14,7 @@ export default async function AdminLayout({
   }
 
   // @ts-ignore - role exists in session
-  if (session.user.role !== "ADMIN") {
+  if (!["ADMIN", "SUPERADMIN"].includes(session.user.role)) {
     redirect("/dashboard");
   }
 

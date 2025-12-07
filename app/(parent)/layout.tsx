@@ -14,7 +14,7 @@ export default async function ParentLayout({
   }
 
   // @ts-ignore - role exists in session
-  if (!["PARENT", "ADMIN"].includes(session.user.role)) {
+  if (!["PARENT", "ADMIN", "SUPERADMIN"].includes(session.user.role)) {
     redirect("/dashboard");
   }
 

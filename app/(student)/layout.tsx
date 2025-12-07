@@ -15,7 +15,7 @@ export default async function StudentLayout({
   }
 
   // @ts-ignore - role exists in session
-  if (session.user.role !== "STUDENT") {
+  if (!["STUDENT", "SUPERADMIN"].includes(session.user.role)) {
     redirect("/dashboard");
   }
 

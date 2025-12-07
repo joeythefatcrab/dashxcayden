@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Activity } from "lucide-react";
 import { RoleSwitcher } from "@/components/superadmin/RoleSwitcher";
+import { DeleteUserButton } from "@/components/superadmin/DeleteUserButton";
 
 export default async function SuperAdminDashboard() {
   // Simple user count - should always work
@@ -12,6 +13,7 @@ export default async function SuperAdminDashboard() {
     take: 10,
     orderBy: { createdAt: "desc" },
     select: {
+      id: true,
       name: true,
       email: true,
       role: true,
@@ -74,13 +76,16 @@ export default async function SuperAdminDashboard() {
                   <p className="font-medium text-gray-900">{user.name}</p>
                   <p className="text-sm text-gray-500">{user.email}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-600">
-                    {user.role}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-600">
+                      {user.role}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <DeleteUserButton userId={user.id} userName={user.name || user.email} />
                 </div>
               </div>
             ))}

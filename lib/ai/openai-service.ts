@@ -281,3 +281,76 @@ export async function enhanceLessonContent(
 
   return response.choices[0].message.content || currentContent;
 }
+
+/**
+ * Generate curriculum checksheet using Loopi Curriculum Planner Assistant
+ * This is for parents/teachers to create study-tech style curricula
+ */
+export async function generateCurriculumChecksheet(input: {
+  prompt: string;
+  studentAge?: number;
+  subject?: string;
+  durationWeeks?: number;
+}): Promise<string> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error(
+      "OpenAI API key is not configured. Please set OPENAI_API_KEY in your environment variables."
+    );
+  }
+
+  const CURRICULUM_ASSISTANT_ID = "asst_JKPjUxEHDPuAKKJRAgxDbrLm";
+
+  try {
+    // Build enhanced prompt with optional metadata
+    let fullPrompt = input.prompt;
+    if (input.studentAge) {
+      fullPrompt += `\n\nStudent Age: ${input.studentAge}`;
+    }
+    if (input.subject) {
+      fullPrompt += `\nSubject: ${input.subject}`;
+    }
+    if (input.durationWeeks) {
+      fullPrompt += `\nDuration: ${input.durationWeeks} weeks`;
+    }
+
+    // Create a new thread with the curriculum request
+    const thread = await openai.beta.threads.create({
+      messages: [
+        {
+          role: "user",
+          content: fullPrompt,
+        },
+      ],
+    });
+
+    // Run the Loopi Curriculum Planner assistant
+    const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
+      assistant_id: CURRICULUM_ASSISTANT_ID,
+    });
+
+    if (run.status !== "completed") {
+      throw new Error(`Curriculum assistant run failed with status: ${run.status}`);
+    }
+
+    // Fetch messages and get the latest assistant reply
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    const latestAssistantMessage = messages.data.find((m) => m.role === "assistant");
+
+    if (!latestAssistantMessage) {
+      throw new Error("No curriculum checksheet response found");
+    }
+
+    // Extract text from the message content
+    const checksheet = latestAssistantMessage.content
+      .filter((part) => part.type === "text")
+      .map((part) => (part as any).text.value)
+      .join("\n");
+
+    return checksheet || "Sorry, I couldn't generate a curriculum checksheet.";
+  } catch (error) {
+    console.error("Error generating curriculum checksheet:", error);
+    throw new Error(
+      `Failed to generate curriculum checksheet: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
+}

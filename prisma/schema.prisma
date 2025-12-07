@@ -53,6 +53,29 @@ enum Role {
   PARENT
   STUDENT
   ADMIN
+  SUPERADMIN  // CEO/platform-wide admin
+}
+
+// Multi-org support
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique  // URL-friendly identifier
+  domain      String?  // Optional: for email domain-based org assignment
+
+  // Settings
+  isActive    Boolean  @default(true)
+  maxUsers    Int?     // Optional user limit
+
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+
+  @@index([slug])
+  @@index([domain])
 }
 
 model User {
@@ -65,6 +88,10 @@ model User {
   role          Role      @default(PARENT)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  // Organization membership (null for superadmin)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
   // Admin hierarchy: parents can belong to an admin
   adminId       String?
@@ -85,6 +112,8 @@ model User {
 
   @@index([email])
   @@index([adminId])
+  @@index([organizationId])
+  @@index([role])
 }
 
 // Student Profile

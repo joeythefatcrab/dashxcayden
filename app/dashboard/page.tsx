@@ -1,8 +1,14 @@
 import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const session = await auth();
   const { user } = session!; // Layout already checks auth
+
+  // Redirect superadmins to their console
+  if (user.role === "SUPERADMIN") {
+    redirect("/superadmin");
+  }
 
   return (
     <div className="px-4 py-8">

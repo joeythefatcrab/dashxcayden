@@ -15,7 +15,6 @@ export default async function ParentDashboard() {
     select: {
       id: true,
       name: true,
-      email: true,
     },
   });
 
@@ -119,7 +118,6 @@ export default async function ParentDashboard() {
                 >
                   <div>
                     <p className="font-medium text-gray-900">{student.name}</p>
-                    <p className="text-sm text-gray-500">{student.email}</p>
                   </div>
                   <Button variant="outline" size="sm">
                     View Progress

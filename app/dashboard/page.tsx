@@ -20,6 +20,7 @@ export default async function DashboardPage() {
     redirect("/parents");
   }
 
+  // Only students should reach this point
   return (
     <div className="px-4 py-8">
       <div className="container mx-auto">
@@ -32,38 +33,7 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {user.role === "PARENT" && <ParentDashboard />}
-        {user.role === "STUDENT" && <StudentDashboard />}
-        {user.role === "ADMIN" && <AdminDashboard />}
-      </div>
-    </div>
-  );
-}
-
-function ParentDashboard() {
-  return (
-    <div className="space-y-6">
-      <div className="rounded-lg border bg-card p-6">
-        <h3 className="mb-4 text-xl font-semibold">Your Students</h3>
-        <p className="text-muted-foreground">
-          No students added yet. Click "Add Student" to get started.
-        </p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="mb-2 text-lg font-semibold">Recent Activity</h3>
-          <p className="text-sm text-muted-foreground">
-            No activity to display yet.
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="mb-2 text-lg font-semibold">Progress Overview</h3>
-          <p className="text-sm text-muted-foreground">
-            Add a student and enroll them in a curriculum to see progress.
-          </p>
-        </div>
+        <StudentDashboard />
       </div>
     </div>
   );
@@ -97,43 +67,6 @@ function StudentDashboard() {
           <h3 className="mb-2 text-lg font-semibold">Recent Scores</h3>
           <p className="text-sm text-muted-foreground">
             Complete a lesson to see your results!
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-function AdminDashboard() {
-  return (
-    <div className="space-y-6">
-      <div className="rounded-lg border bg-card p-6">
-        <h3 className="mb-4 text-xl font-semibold">Admin Panel</h3>
-        <p className="text-muted-foreground">
-          Manage users, curricula, and system settings.
-        </p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="mb-2 text-lg font-semibold">Users</h3>
-          <p className="text-sm text-muted-foreground">
-            Manage all users in the system.
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="mb-2 text-lg font-semibold">Curricula</h3>
-          <p className="text-sm text-muted-foreground">
-            View and manage all curricula.
-          </p>
-        </div>
-
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="mb-2 text-lg font-semibold">Settings</h3>
-          <p className="text-sm text-muted-foreground">
-            Configure system-wide settings.
           </p>
         </div>
       </div>

@@ -63,8 +63,19 @@ export default async function SuperAdminLayout({
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-7xl px-8 py-8">{children}</div>
+      <main className="flex-1 overflow-auto bg-yellow-100">
+        <div className="bg-red-500 text-white p-4 m-4">
+          LAYOUT TEST - If you see this RED box, the layout is rendering
+        </div>
+        <div className="mx-auto max-w-7xl px-8 py-8 bg-blue-100">
+          <div className="bg-green-500 text-white p-4 mb-4">
+            CHILDREN WRAPPER - This should be visible
+          </div>
+          {children}
+          <div className="bg-purple-500 text-white p-4 mt-4">
+            AFTER CHILDREN - This should be visible too
+          </div>
+        </div>
       </main>
     </div>
   );

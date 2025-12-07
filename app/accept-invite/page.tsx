@@ -138,12 +138,17 @@ function AcceptInviteForm() {
 
 export default function AcceptInvitePage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-gray-600">Loading invitation...</div>
+        </div>
+      }
+    >
       <AcceptInviteForm />
     </Suspense>
   );
 }
+
+// Force route recognition
+export const dynamic = "force-dynamic";

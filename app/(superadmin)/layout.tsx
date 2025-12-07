@@ -18,7 +18,7 @@ export default async function SuperAdminLayout({
   const navigation = [
     {
       name: "Dashboard",
-      href: "/superadmin",
+      href: "/superadmin/dashboard",
       icon: LayoutDashboard,
     },
     {

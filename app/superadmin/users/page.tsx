@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { InviteUserForm } from "@/components/superadmin/InviteUserForm";
 
 export default async function UsersPage() {
   // Fetch all users
@@ -22,6 +23,8 @@ export default async function UsersPage() {
         <h1 className="text-2xl font-bold text-gray-900">Users</h1>
         <p className="text-gray-600">Manage all users across the platform</p>
       </div>
+
+      <InviteUserForm />
 
       <Card>
         <CardHeader>

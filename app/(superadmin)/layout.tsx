@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { Building2, Users, Activity, LayoutDashboard } from "lucide-react";
+import { Users, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 
 export default async function SuperAdminLayout({
@@ -25,16 +25,6 @@ export default async function SuperAdminLayout({
       name: "Users",
       href: "/superadmin/users",
       icon: Users,
-    },
-    {
-      name: "Organizations",
-      href: "/superadmin/organizations",
-      icon: Building2,
-    },
-    {
-      name: "Activity",
-      href: "/superadmin/activity",
-      icon: Activity,
     },
   ];
 
@@ -63,19 +53,8 @@ export default async function SuperAdminLayout({
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto bg-yellow-100">
-        <div className="bg-red-500 text-white p-4 m-4">
-          LAYOUT TEST - If you see this RED box, the layout is rendering
-        </div>
-        <div className="mx-auto max-w-7xl px-8 py-8 bg-blue-100">
-          <div className="bg-green-500 text-white p-4 mb-4">
-            CHILDREN WRAPPER - This should be visible
-          </div>
-          {children}
-          <div className="bg-purple-500 text-white p-4 mt-4">
-            AFTER CHILDREN - This should be visible too
-          </div>
-        </div>
+      <main className="flex-1 overflow-auto bg-gray-50">
+        <div className="mx-auto max-w-7xl px-8 py-8">{children}</div>
       </main>
     </div>
   );

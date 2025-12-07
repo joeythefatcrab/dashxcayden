@@ -9,15 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { UserFilters } from "./UserFilters";
 
 interface PageProps {
   searchParams: Promise<{
@@ -102,57 +94,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
           <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <form method="get" className="flex flex-wrap gap-4">
-            {/* Search */}
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  name="search"
-                  placeholder="Search by name or email..."
-                  defaultValue={search}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-
-            {/* Role Filter */}
-            <div className="w-[180px]">
-              <Select name="role" defaultValue={roleFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="SUPERADMIN">Superadmin</SelectItem>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="PARENT">Parent</SelectItem>
-                  <SelectItem value="STUDENT">Student</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Organization Filter */}
-            <div className="w-[220px]">
-              <Select name="org" defaultValue={orgFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by organization" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Organizations</SelectItem>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.id}>
-                      {org.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <button type="submit" className="sr-only">
-              Apply Filters
-            </button>
-          </form>
+          <UserFilters organizations={organizations} />
         </CardContent>
       </Card>
 

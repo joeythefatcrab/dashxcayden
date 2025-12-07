@@ -10,6 +10,16 @@ export default async function DashboardPage() {
     redirect("/superadmin");
   }
 
+  // Redirect parents to parent dashboard
+  if (user.role === "PARENT") {
+    redirect("/curricula");
+  }
+
+  // Redirect admins to admin dashboard
+  if (user.role === "ADMIN") {
+    redirect("/parents");
+  }
+
   return (
     <div className="px-4 py-8">
       <div className="container mx-auto">

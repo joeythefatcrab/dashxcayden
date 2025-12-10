@@ -13,6 +13,9 @@ export default async function MyCoursesPage() {
     redirect("/sign-in");
   }
 
+  // @ts-ignore - Check if impersonating for better error messages
+  const isImpersonating = session.user.isImpersonating || false;
+
   // Get student profile
   const orConditions: Array<{ userId?: string; parent?: { email: string } }> = [
     { userId: session.user.id },
@@ -34,7 +37,10 @@ export default async function MyCoursesPage() {
           <CardHeader>
             <CardTitle>No Student Profile</CardTitle>
             <CardDescription>
-              You need a student profile to access courses
+              {isImpersonating
+                ? "This superadmin account doesn't have a student profile. Create a test student account to QA the student experience."
+                : "You need a student profile to access courses"
+              }
             </CardDescription>
           </CardHeader>
         </Card>

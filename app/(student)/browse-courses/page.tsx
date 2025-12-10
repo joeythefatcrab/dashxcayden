@@ -10,9 +10,18 @@ export default async function BrowseCoursesPage() {
     redirect("/sign-in");
   }
 
-  // @ts-ignore
+  // @ts-ignore - Allow both STUDENT and impersonating SUPERADMIN
+  const isImpersonating = session.user.isImpersonating || false;
+  const realRole = session.user.realRole;
+
+  // Allow STUDENT role or impersonating SUPERADMIN
   if (session.user.role !== "STUDENT") {
     redirect("/dashboard");
+  }
+
+  // If actually SUPERADMIN (not impersonating), redirect to superadmin console
+  if (realRole === "SUPERADMIN" && !isImpersonating) {
+    redirect("/superadmin");
   }
 
   // Get student profile
@@ -28,7 +37,10 @@ export default async function BrowseCoursesPage() {
         <div className="rounded-lg border bg-card p-6">
           <h2 className="text-xl font-semibold">No Student Profile</h2>
           <p className="mt-2 text-muted-foreground">
-            Unable to find your student profile. Please contact support.
+            {isImpersonating
+              ? "This superadmin account doesn't have a student profile. Create a test student account to QA the student experience."
+              : "Unable to find your student profile. Please contact support."
+            }
           </p>
         </div>
       </div>

@@ -280,6 +280,9 @@ export function StudentManager({ students, curricula }: StudentManagerProps) {
                 ) : (
                   <p className="text-sm text-muted-foreground">Not enrolled in any courses yet</p>
                 )}
+
+                {/* AI Progress Report */}
+                <AIProgressReport studentId={student.id} studentName={student.name} />
               </CardContent>
             </Card>
           ))

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { EmailPreferencesForm } from "@/components/settings/EmailPreferencesForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { DashboardNav } from "@/components/auth/dashboard-nav";
@@ -12,11 +13,23 @@ export default async function SettingsPage() {
     redirect("/sign-in");
   }
 
-  // Get user's current theme preference
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { theme: true, email: true, name: true, role: true },
+    select: {
+      digestFrequency: true,
+      notifyEmail: true,
+      email: true,
+      name: true,
+      role: true,
+      theme: true,
+    },
   });
+
+  if (!user) {
+    redirect("/sign-in");
+  }
+
+  const isParent = user.role === "PARENT";
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -40,15 +53,15 @@ export default async function SettingsPage() {
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Name</span>
-                  <span className="text-sm font-medium">{user?.name || "Not set"}</span>
+                  <span className="text-sm font-medium">{user.name || "Not set"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Email</span>
-                  <span className="text-sm font-medium">{user?.email}</span>
+                  <span className="text-sm font-medium">{user.email}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Role</span>
-                  <span className="text-sm font-medium">{user?.role}</span>
+                  <span className="text-sm font-medium">{user.role}</span>
                 </div>
               </CardContent>
             </Card>
@@ -62,9 +75,27 @@ export default async function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ThemeToggle currentTheme={user?.theme || "light"} />
+                <ThemeToggle currentTheme={user.theme || "light"} />
               </CardContent>
             </Card>
+
+            {/* Email Preferences - Only for Parents */}
+            {isParent && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Email Notifications</CardTitle>
+                  <CardDescription>
+                    Choose how often you want to receive updates about your children's progress
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <EmailPreferencesForm
+                    initialDigestFrequency={user.digestFrequency}
+                    initialNotifyEmail={user.notifyEmail}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </main>

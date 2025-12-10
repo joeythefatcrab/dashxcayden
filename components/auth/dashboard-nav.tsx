@@ -45,7 +45,7 @@ export function DashboardNav() {
     { name: "Curricula", href: "/curricula", icon: BookOpen, roles: ["PARENT", "ADMIN"] },
     { name: "My Students", href: "/students", icon: Users, roles: ["PARENT"] },
     { name: "Reports", href: "/reports", icon: FileText, roles: ["PARENT", "ADMIN"] },
-    { name: "Settings", href: "/settings", icon: Settings, roles: ["PARENT", "ADMIN"] },
+    { name: "Settings", href: "/settings", icon: Settings, roles: ["PARENT", "ADMIN", "STUDENT", "SUPERADMIN", "TEACHER"] },
   ];
 
   const filteredNav = navigation.filter((item) => item.roles.includes(role));

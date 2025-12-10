@@ -111,6 +111,9 @@ model User {
   notifySms       Boolean @default(false)
   phoneNumber     String?
 
+  // UI preferences
+  theme           String @default("light") // light, dark, system
+
   @@index([email])
   @@index([adminId])
   @@index([organizationId])

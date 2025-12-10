@@ -3,16 +3,38 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, KeyRound } from "lucide-react";
+import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, KeyRound, RotateCcw } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function DashboardNav() {
   const { data: session } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const router = useRouter();
 
   if (!session?.user) return null;
 
   const role = session.user.role;
+  // @ts-ignore - Check if impersonating
+  const isImpersonating = session.user.isImpersonating || false;
+
+  const handleExitQAMode = async () => {
+    setIsExiting(true);
+    try {
+      const response = await fetch("/api/superadmin/impersonate", {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        router.push("/superadmin/overview");
+        router.refresh();
+      }
+    } catch (error) {
+      console.error("Failed to exit QA mode:", error);
+      setIsExiting(false);
+    }
+  };
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home, roles: ["PARENT", "STUDENT", "ADMIN"] },
@@ -52,6 +74,20 @@ export function DashboardNav() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* QA Mode Exit Button */}
+          {isImpersonating && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExitQAMode}
+              disabled={isExiting}
+              className="hidden bg-orange-50 text-orange-700 hover:bg-orange-100 md:flex"
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Exit QA Mode
+            </Button>
+          )}
+
           <div className="hidden items-center gap-2 text-sm md:flex">
             <span className="text-muted-foreground">{session.user.email}</span>
             <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
@@ -85,6 +121,17 @@ export function DashboardNav() {
       {mobileMenuOpen && (
         <div className="border-t bg-background px-4 py-4 md:hidden">
           <nav className="flex flex-col gap-4">
+            {/* QA Mode Exit Button (Mobile) */}
+            {isImpersonating && (
+              <button
+                onClick={handleExitQAMode}
+                disabled={isExiting}
+                className="flex items-center gap-2 rounded-md bg-orange-50 px-3 py-2 text-sm font-medium text-orange-700 hover:bg-orange-100"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Exit QA Mode
+              </button>
+            )}
             {filteredNav.map((item) => (
               <Link
                 key={item.name}

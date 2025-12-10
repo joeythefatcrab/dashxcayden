@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { RotateCcw, X } from "lucide-react";
 
 export function FloatingExitQA() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [isExiting, setIsExiting] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -44,14 +44,25 @@ export function FloatingExitQA() {
   const handleExitQAMode = async () => {
     setIsExiting(true);
     try {
+      console.log("Exiting QA mode...");
       const response = await fetch("/api/superadmin/impersonate", {
         method: "DELETE",
       });
 
-      if (response.ok) {
-        router.push("/superadmin/overview");
-        router.refresh();
+      if (!response.ok) {
+        throw new Error("Failed to clear impersonation");
       }
+
+      console.log("Impersonation cleared, updating session...");
+
+      // Force session refresh to remove impersonation flags
+      await update();
+
+      console.log("Session updated, redirecting...");
+
+      // Navigate back to superadmin
+      router.push("/superadmin/overview");
+      router.refresh();
     } catch (error) {
       console.error("Failed to exit QA mode:", error);
       setIsExiting(false);

@@ -40,16 +40,6 @@ export default async function StudentsPage() {
     orderBy: { name: "asc" },
   });
 
-  // Get pending invitations
-  const invitations = await db.studentInvitation.findMany({
-    where: {
-      parentId: session.user.id,
-      status: "PENDING",
-      expiresAt: { gt: new Date() },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
   // Get available curricula for assignment
   const curricula = await db.curriculum.findMany({
     where: {
@@ -73,13 +63,12 @@ export default async function StudentsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Manage Students</h1>
         <p className="text-muted-foreground">
-          Invite students to your homeschool platform and assign them to courses
+          Create student accounts and enroll them in courses
         </p>
       </div>
 
       <StudentManager
         students={students}
-        invitations={invitations}
         curricula={curricula}
       />
     </div>

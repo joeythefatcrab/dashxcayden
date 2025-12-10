@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { UserPlus, Mail, Calendar, BookOpen, CheckCircle, Clock, Copy, Check } from "lucide-react";
+import { UserPlus, BookOpen, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Student {
@@ -33,15 +33,6 @@ interface Student {
   }>;
 }
 
-interface Invitation {
-  id: string;
-  studentEmail: string;
-  studentName: string | null;
-  curriculaIds: string[];
-  expiresAt: Date;
-  createdAt: Date;
-}
-
 interface Curriculum {
   id: string;
   name: string;
@@ -52,35 +43,37 @@ interface Curriculum {
 
 interface StudentManagerProps {
   students: Student[];
-  invitations: Invitation[];
   curricula: Curriculum[];
 }
 
-export function StudentManager({ students, invitations, curricula }: StudentManagerProps) {
+export function StudentManager({ students, curricula }: StudentManagerProps) {
   const router = useRouter();
-  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
-  // Invite form state
-  const [studentEmail, setStudentEmail] = useState("");
+  // Create student form state
   const [studentName, setStudentName] = useState("");
+  const [studentEmail, setStudentEmail] = useState("");
+  const [studentPassword, setStudentPassword] = useState("");
+  const [studentGrade, setStudentGrade] = useState("");
   const [selectedCurricula, setSelectedCurricula] = useState<string[]>([]);
 
-  const handleInviteStudent = async () => {
+  const handleCreateStudent = async () => {
     setIsLoading(true);
     setError("");
     setSuccess("");
 
     try {
-      const response = await fetch("/api/parent/invite-student", {
+      const response = await fetch("/api/parent/create-student", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          studentEmail,
-          studentName: studentName || undefined,
+          name: studentName,
+          email: studentEmail,
+          password: studentPassword,
+          grade: studentGrade ? parseInt(studentGrade) : null,
           curriculaIds: selectedCurricula,
         }),
       });
@@ -88,26 +81,23 @@ export function StudentManager({ students, invitations, curricula }: StudentMana
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to send invitation");
+        throw new Error(data.error || "Failed to create student");
       }
 
-      setSuccess(`Invitation sent to ${studentEmail}!`);
-
-      // Show invite URL in development
-      if (data.invitation.inviteUrl) {
-        console.log("Invitation URL:", data.invitation.inviteUrl);
-      }
+      setSuccess(`Student ${studentName} created successfully!`);
 
       // Reset form
-      setStudentEmail("");
       setStudentName("");
+      setStudentEmail("");
+      setStudentPassword("");
+      setStudentGrade("");
       setSelectedCurricula([]);
 
-      // Refresh the page to show new invitation
+      // Close dialog after a moment
       setTimeout(() => {
-        setIsInviteDialogOpen(false);
+        setIsCreateDialogOpen(false);
         router.refresh();
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -115,7 +105,7 @@ export function StudentManager({ students, invitations, curricula }: StudentMana
     }
   };
 
-  const toggleCurriculum = (curriculumId: string) => {
+  const handleToggleCurriculum = (curriculumId: string) => {
     setSelectedCurricula((prev) =>
       prev.includes(curriculumId)
         ? prev.filter((id) => id !== curriculumId)
@@ -123,234 +113,178 @@ export function StudentManager({ students, invitations, curricula }: StudentMana
     );
   };
 
-  const copyInviteUrl = (token: string) => {
-    const url = `${window.location.origin}/accept-invite/${token}`;
-    navigator.clipboard.writeText(url);
-    setCopiedUrl(token);
-    setTimeout(() => setCopiedUrl(null), 2000);
-  };
-
   return (
     <div className="space-y-6">
-      {/* Invite Student Button */}
-      <div className="flex justify-end">
-        <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="lg">
-              <UserPlus className="mr-2 h-5 w-5" />
-              Invite Student
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Invite a Student</DialogTitle>
-              <DialogDescription>
-                Send an invitation email to a student. They'll be able to create their account and
-                get automatically enrolled in the courses you select.
-              </DialogDescription>
-            </DialogHeader>
+      {/* Create Student Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogTrigger asChild>
+          <Button>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Create Student Account
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Student Account</DialogTitle>
+            <DialogDescription>
+              Create a new student account with email and password. You can enroll them in courses immediately.
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Student Email *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="student@example.com"
-                  value={studentEmail}
-                  onChange={(e) => setStudentEmail(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="name">Student Name (optional)</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="John Doe"
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Auto-Enroll in Courses (optional)</Label>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Select courses to automatically enroll the student when they accept the invitation.
-                </p>
-                {curricula.length === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">
-                    No courses available yet. Students can join courses later.
-                  </p>
-                ) : (
-                  <div className="space-y-2 max-h-60 overflow-y-auto border rounded-md p-3">
-                    {curricula.map((curriculum) => (
-                      <div key={curriculum.id} className="flex items-start space-x-2">
-                        <Checkbox
-                          id={`curriculum-${curriculum.id}`}
-                          checked={selectedCurricula.includes(curriculum.id)}
-                          onCheckedChange={() => toggleCurriculum(curriculum.id)}
-                          disabled={isLoading}
-                        />
-                        <label
-                          htmlFor={`curriculum-${curriculum.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                        >
-                          <div>{curriculum.name}</div>
-                          {curriculum.subject && (
-                            <div className="text-xs text-muted-foreground">
-                              {curriculum.subject}
-                              {curriculum.grade && ` • Grade ${curriculum.grade}`}
-                            </div>
-                          )}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {error && (
-                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                  {error}
-                </div>
-              )}
-
-              {success && (
-                <div className="rounded-md bg-green-50 p-3 text-sm text-green-700">
-                  {success}
-                </div>
-              )}
-            </div>
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsInviteDialogOpen(false)}
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="name">Student Name *</Label>
+              <Input
+                id="name"
+                value={studentName}
+                onChange={(e) => setStudentName(e.target.value)}
+                placeholder="John Doe"
                 disabled={isLoading}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleInviteStudent} disabled={isLoading || !studentEmail}>
-                {isLoading ? "Sending..." : "Send Invitation"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+              />
+            </div>
 
-      {/* Pending Invitations */}
-      {invitations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-orange-500" />
-              Pending Invitations
-            </CardTitle>
-            <CardDescription>
-              Students who have been invited but haven't accepted yet
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {invitations.map((invitation) => (
-                <div
-                  key={invitation.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium">
-                      {invitation.studentName || invitation.studentEmail}
+            <div>
+              <Label htmlFor="email">Email Address *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={studentEmail}
+                onChange={(e) => setStudentEmail(e.target.value)}
+                placeholder="student@example.com"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="password">Password *</Label>
+              <Input
+                id="password"
+                type="password"
+                value={studentPassword}
+                onChange={(e) => setStudentPassword(e.target.value)}
+                placeholder="Set a password"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="grade">Grade (optional)</Label>
+              <Input
+                id="grade"
+                type="number"
+                value={studentGrade}
+                onChange={(e) => setStudentGrade(e.target.value)}
+                placeholder="e.g. 8"
+                disabled={isLoading}
+              />
+            </div>
+
+            {curricula.length > 0 && (
+              <div>
+                <Label>Enroll in Courses (optional)</Label>
+                <div className="mt-2 max-h-40 space-y-2 overflow-y-auto rounded-md border p-3">
+                  {curricula.map((curriculum) => (
+                    <div key={curriculum.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`curriculum-${curriculum.id}`}
+                        checked={selectedCurricula.includes(curriculum.id)}
+                        onCheckedChange={() => handleToggleCurriculum(curriculum.id)}
+                        disabled={isLoading}
+                      />
+                      <label
+                        htmlFor={`curriculum-${curriculum.id}`}
+                        className="text-sm cursor-pointer"
+                      >
+                        {curriculum.name}
+                        {curriculum.subject && (
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            ({curriculum.subject})
+                          </span>
+                        )}
+                      </label>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {invitation.studentEmail}
-                    </div>
-                    <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      Expires {new Date(invitation.expiresAt).toLocaleDateString()}
-                    </div>
-                    {invitation.curriculaIds.length > 0 && (
-                      <div className="mt-2">
-                        <Badge variant="outline" className="text-xs">
-                          {invitation.curriculaIds.length} course
-                          {invitation.curriculaIds.length > 1 ? "s" : ""} assigned
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="rounded-md bg-green-50 p-3 text-sm text-green-700">
+                {success}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateDialogOpen(false)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateStudent}
+              disabled={isLoading || !studentName || !studentEmail || !studentPassword}
+            >
+              {isLoading ? "Creating..." : "Create Student"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Students List */}
+      <div className="grid gap-4">
+        {students.length === 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>No Students Yet</CardTitle>
+              <CardDescription>
+                Create your first student account to get started
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        ) : (
+          students.map((student) => (
+            <Card key={student.id}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>{student.name}</CardTitle>
+                    <CardDescription>
+                      {student.user?.email || "No email set"}
+                      {student.grade && ` • Grade ${student.grade}`}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {student.enrollments.length > 0 ? (
+                  <div>
+                    <p className="mb-2 text-sm font-medium">Enrolled in:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {student.enrollments.map((enrollment) => (
+                        <Badge key={enrollment.curriculum.id} variant="secondary">
+                          <BookOpen className="mr-1 h-3 w-3" />
+                          {enrollment.curriculum.name}
                         </Badge>
-                      </div>
-                    )}
+                      ))}
+                    </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyInviteUrl(invitation.id)}
-                  >
-                    {copiedUrl === invitation.id ? (
-                      <>
-                        <Check className="h-4 w-4 mr-2" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-4 w-4 mr-2" />
-                        Copy Link
-                      </>
-                    )}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Active Students */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            Active Students ({students.length})
-          </CardTitle>
-          <CardDescription>Students who have accepted their invitations</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {students.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <UserPlus className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No students yet. Invite your first student to get started!</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {students.map((student) => (
-                <div
-                  key={student.id}
-                  className="flex items-start justify-between p-4 border rounded-lg hover:bg-accent/50 transition"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium">{student.name}</div>
-                    {student.user?.email && (
-                      <div className="text-sm text-muted-foreground">{student.user.email}</div>
-                    )}
-                    {student.grade && (
-                      <div className="text-sm text-muted-foreground">Grade {student.grade}</div>
-                    )}
-                    {student.enrollments.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {student.enrollments.map((enrollment) => (
-                          <Badge key={enrollment.curriculum.id} variant="secondary" className="text-xs">
-                            <BookOpen className="h-3 w-3 mr-1" />
-                            {enrollment.curriculum.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Not enrolled in any courses yet</p>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 }

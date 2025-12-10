@@ -10,7 +10,7 @@ export default async function BrowseCoursesPage() {
     redirect("/sign-in");
   }
 
-  // @ts-ignore - Allow both STUDENT and impersonating SUPERADMIN
+  // Allow both STUDENT and impersonating SUPERADMIN
   const isImpersonating = session.user.isImpersonating || false;
   const realRole = session.user.realRole;
 

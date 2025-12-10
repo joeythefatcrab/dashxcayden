@@ -13,7 +13,7 @@ export default async function MyCoursesPage() {
     redirect("/sign-in");
   }
 
-  // @ts-ignore - Check if impersonating for better error messages
+  // Check if impersonating for better error messages
   const isImpersonating = session.user.isImpersonating || false;
 
   // Get student profile

@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "@/styles/globals.css";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { FloatingExitQA } from "@/components/superadmin/FloatingExitQA";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -34,7 +35,10 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider theme={userTheme}>
-          <SessionProvider>{children}</SessionProvider>
+          <SessionProvider>
+            {children}
+            <FloatingExitQA />
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

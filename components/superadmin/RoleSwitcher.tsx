@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, RotateCcw } from "lucide-react";
 
 export function RoleSwitcher() {
   const router = useRouter();
+  const { update } = useSession();
   const [selectedRole, setSelectedRole] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -29,6 +31,12 @@ export function RoleSwitcher() {
       if (!response.ok) {
         throw new Error("Failed to impersonate role");
       }
+
+      // Force session refresh to pick up impersonation
+      await update();
+
+      // Small delay to ensure session is updated
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Redirect to the role's main page
       switch (role) {
@@ -69,6 +77,9 @@ export function RoleSwitcher() {
       if (!response.ok) {
         throw new Error("Failed to reset role");
       }
+
+      // Force session refresh
+      await update();
 
       // Refresh to clear the impersonation
       router.push("/superadmin/overview");

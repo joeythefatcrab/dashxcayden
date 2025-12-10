@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { RotateCcw, X } from "lucide-react";
 
 export function FloatingExitQA() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [isExiting, setIsExiting] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -15,8 +15,29 @@ export function FloatingExitQA() {
   const isImpersonating = session?.user?.isImpersonating || false;
   // @ts-ignore - Get impersonated role
   const currentRole = session?.user?.role || "";
+  // @ts-ignore - Get real role
+  const realRole = session?.user?.realRole || "";
 
-  if (!isImpersonating) {
+  // Debug logging
+  useEffect(() => {
+    if (session?.user) {
+      console.log("FloatingExitQA - Session data:", {
+        role: session.user.role,
+        // @ts-ignore
+        isImpersonating: session.user.isImpersonating,
+        // @ts-ignore
+        realRole: session.user.realRole,
+      });
+    }
+  }, [session]);
+
+  // Don't show if not logged in or session is loading
+  if (status === "loading" || !session?.user) {
+    return null;
+  }
+
+  // Only show if actually impersonating
+  if (!isImpersonating && realRole !== "SUPERADMIN") {
     return null;
   }
 

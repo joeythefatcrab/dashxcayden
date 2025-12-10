@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { Users, LayoutDashboard } from "lucide-react";
+import { Users, LayoutDashboard, Settings } from "lucide-react";
 import Link from "next/link";
 
 export default async function SuperAdminLayout({
@@ -26,14 +26,19 @@ export default async function SuperAdminLayout({
       href: "/superadmin/users",
       icon: Users,
     },
+    {
+      name: "Settings",
+      href: "/settings",
+      icon: Settings,
+    },
   ];
 
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className="w-64 border-r bg-gray-50">
+      <aside className="w-64 border-r bg-muted">
         <div className="flex h-16 items-center border-b px-6">
-          <h1 className="text-lg font-semibold">Superadmin Console</h1>
+          <h1 className="text-lg font-semibold text-foreground">Superadmin Console</h1>
         </div>
         <nav className="space-y-1 p-4">
           {navigation.map((item) => {
@@ -42,7 +47,7 @@ export default async function SuperAdminLayout({
               <Link
                 key={item.name}
                 href={item.href}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
               >
                 <Icon className="h-5 w-5" />
                 {item.name}
@@ -53,7 +58,7 @@ export default async function SuperAdminLayout({
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto bg-gray-50">
+      <main className="flex-1 overflow-auto bg-background">
         <div className="mx-auto max-w-7xl px-8 py-8">{children}</div>
       </main>
     </div>

@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
   }
 
   // Set impersonation cookie
-  cookies().set("impersonate_role", role, {
+  const cookieStore = await cookies();
+  cookieStore.set("impersonate_role", role, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -45,7 +46,8 @@ export async function DELETE() {
   }
 
   // Clear the cookie
-  cookies().delete("impersonate_role");
+  const cookieStore = await cookies();
+  cookieStore.delete("impersonate_role");
 
   return NextResponse.json({ success: true });
 }

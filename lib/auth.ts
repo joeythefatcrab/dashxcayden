@@ -86,7 +86,7 @@ export const {
         session.user.role = token.role;
 
         // Check for role impersonation (QA feature for superadmins)
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const impersonateRole = cookieStore.get("impersonate_role");
 
         // Only allow superadmins to impersonate

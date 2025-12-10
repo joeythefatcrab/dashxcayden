@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
 
 export const {
   handlers: { GET, POST },
@@ -83,6 +84,20 @@ export const {
         session.user.id = token.id;
         // @ts-ignore - role exists in our User model
         session.user.role = token.role;
+
+        // Check for role impersonation (QA feature for superadmins)
+        const cookieStore = cookies();
+        const impersonateRole = cookieStore.get("impersonate_role");
+
+        // Only allow superadmins to impersonate
+        if (token.role === "SUPERADMIN" && impersonateRole?.value) {
+          // @ts-ignore - Override role for QA testing
+          session.user.role = impersonateRole.value;
+          // @ts-ignore - Mark that this is impersonation
+          session.user.isImpersonating = true;
+          // @ts-ignore - Store real role
+          session.user.realRole = token.role;
+        }
       }
       return session;
     },

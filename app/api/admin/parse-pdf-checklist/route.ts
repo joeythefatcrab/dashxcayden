@@ -58,9 +58,10 @@ export async function POST(request: NextRequest) {
       content: `Convert this document into a structured curriculum checklist:\n\n${extractedText.slice(0, 15000)}`,
     });
 
-    // Run the assistant
+    // Run the assistant with JSON response format
     const run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: assistantId,
+      response_format: { type: "json_object" },
     });
 
     // Wait for completion

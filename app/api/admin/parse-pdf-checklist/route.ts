@@ -58,10 +58,78 @@ export async function POST(request: NextRequest) {
       content: `Convert this document into a structured curriculum checklist:\n\n${extractedText.slice(0, 15000)}`,
     });
 
-    // Run the assistant with JSON response format
+    // Run the assistant with JSON schema for structured output
     const run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: assistantId,
-      response_format: { type: "json_object" },
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "curriculum_response",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              description: { type: "string" },
+              subject: { type: "string" },
+              grade: { type: ["number", "null"] },
+              units: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    description: { type: "string" },
+                    order: { type: "number" },
+                    lessons: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          title: { type: "string" },
+                          description: { type: "string" },
+                          contentMd: { type: "string" },
+                          order: { type: "number" },
+                          threshold: { type: "number" },
+                          objectives: {
+                            type: "array",
+                            items: { type: "string" }
+                          },
+                          items: {
+                            type: "array",
+                            items: {
+                              type: "object",
+                              properties: {
+                                type: { type: "string" },
+                                prompt: { type: "string" },
+                                order: { type: "number" },
+                                points: { type: "number" },
+                                answerKey: { type: "string" },
+                                choices: {
+                                  type: "array",
+                                  items: { type: "string" }
+                                }
+                              },
+                              required: ["type", "prompt", "order", "points", "answerKey"],
+                              additionalProperties: false
+                            }
+                          }
+                        },
+                        required: ["title", "description", "contentMd", "order", "threshold", "objectives", "items"],
+                        additionalProperties: false
+                      }
+                    }
+                  },
+                  required: ["title", "description", "order", "lessons"],
+                  additionalProperties: false
+                }
+              }
+            },
+            required: ["name", "description", "subject", "grade", "units"],
+            additionalProperties: false
+          }
+        }
+      }
     });
 
     // Wait for completion

@@ -104,11 +104,7 @@ export async function POST(request: NextRequest) {
                                 prompt: { type: "string" },
                                 order: { type: "number" },
                                 points: { type: "number" },
-                                answerKey: { type: "string" },
-                                choices: {
-                                  type: "array",
-                                  items: { type: "string" }
-                                }
+                                answerKey: { type: "string" }
                               },
                               required: ["type", "prompt", "order", "points", "answerKey"],
                               additionalProperties: false

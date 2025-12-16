@@ -16,6 +16,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: "OpenAI API key not configured. Please add OPENAI_API_KEY to your environment variables." },
+        { status: 500 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const name = formData.get("name") as string;
@@ -253,8 +261,30 @@ export async function POST(request: NextRequest) {
       curriculum: parsedCurriculum,
       message: "PDF parsed successfully",
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error parsing PDF:", error);
+
+    // Handle OpenAI API errors specifically
+    if (error?.status === 403 || error?.message?.includes("Forbidden")) {
+      return NextResponse.json(
+        {
+          error: "OpenAI API access forbidden. Please verify your OPENAI_API_KEY has access to the Assistants API and the assistant ID is correct.",
+          details: error.message
+        },
+        { status: 403 }
+      );
+    }
+
+    if (error?.status === 404 && error?.message?.includes("assistant")) {
+      return NextResponse.json(
+        {
+          error: "OpenAI Assistant not found. The assistant ID may be invalid or deleted.",
+          details: error.message
+        },
+        { status: 404 }
+      );
+    }
+
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     const errorStack = error instanceof Error ? error.stack : "";
 

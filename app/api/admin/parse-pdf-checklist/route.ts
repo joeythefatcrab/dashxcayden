@@ -77,8 +77,8 @@ export async function POST(request: NextRequest) {
       // Create a thread
       const thread = await openai.beta.threads.create();
 
-      // Determine how much text to send (max ~100k characters to stay within token limits)
-      const maxChars = 100000;
+      // Determine how much text to send (max ~500k characters for GPT-4 context window)
+      const maxChars = 500000;
       const textToSend = extractedText.slice(0, maxChars);
 
       if (extractedText.length > maxChars) {
@@ -131,7 +131,9 @@ Example of WRONG behavior:
 Original: "1. READ: Data Sheet (DS) #10 Energy. _________"
 Your output: prompt: "Read about energy concepts" ❌ WRONG - this is rewriting!
 
-Structure this curriculum document, preserving ALL original text exactly:
+CRITICAL: Process the COMPLETE document from start to finish. Include EVERY unit, EVERY lesson, and EVERY item. Do not stop early - process all ${textToSend.length} characters of content.
+
+Structure this ENTIRE curriculum document, preserving ALL original text exactly:
 
 ${textToSend}`,
       });

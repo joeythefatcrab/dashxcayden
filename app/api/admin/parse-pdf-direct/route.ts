@@ -71,8 +71,8 @@ export async function POST(request: NextRequest) {
 
       console.log(`Extracted ${extractedText.length} characters from PDF (${pdfData.numpages} pages)`);
 
-      // Determine how much text to send (max ~100k characters)
-      const maxChars = 100000;
+      // Determine how much text to send (max ~500k characters for GPT-4 context window)
+      const maxChars = 500000;
       const textToSend = extractedText.slice(0, maxChars);
 
       if (extractedText.length > maxChars) {
@@ -122,7 +122,14 @@ Your job is ONLY to organize existing text into the JSON structure. Do NOT creat
           },
           {
             role: "user",
-            content: `Extract this curriculum document into the JSON format. Remember: use EXACT text from the document, do NOT rewrite anything.\n\nDocument:\n${textToSend}`
+            content: `Extract this ENTIRE curriculum document into the JSON format. You must process ALL pages and ALL lessons from start to finish.
+
+CRITICAL: Process the COMPLETE document - do not stop early. Include EVERY unit, EVERY lesson, and EVERY item from the beginning to the end of the document.
+
+Remember: use EXACT text from the document, do NOT rewrite anything.
+
+Document (${textToSend.length} characters):
+${textToSend}`
           }
         ],
         response_format: {

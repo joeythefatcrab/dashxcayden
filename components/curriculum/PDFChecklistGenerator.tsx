@@ -107,6 +107,7 @@ export function PDFChecklistGenerator() {
   const handleApprove = async () => {
     if (!previewCurriculum) return;
 
+    console.log("Starting approve process...");
     setIsApproving(true);
 
     try {
@@ -117,12 +118,15 @@ export function PDFChecklistGenerator() {
       formData.append("subject", subject);
       formData.append("saveToDatabase", "true"); // Now save it
 
+      console.log("Sending save request to API...");
       const response = await fetch("/api/admin/parse-pdf-checklist", {
         method: "POST",
         body: formData,
       });
 
+      console.log("Got response:", response.status);
       const data = await response.json();
+      console.log("Response data:", data);
 
       if (!response.ok) {
         // Log full error details for debugging
@@ -132,11 +136,17 @@ export function PDFChecklistGenerator() {
       }
 
       // Success!
+      console.log("Save successful! Closing preview and refreshing...");
       setShowPreview(false);
-      router.refresh();
+
+      // Small delay to ensure state updates
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Reset form
       resetForm();
+
+      // Refresh the page
+      router.refresh();
     } catch (err: any) {
       console.error("Approve error:", err);
       setError(err.message || "Failed to save curriculum");

@@ -22,160 +22,175 @@ export async function POST(request: NextRequest) {
     const description = formData.get("description") as string;
     const subject = formData.get("subject") as string;
     const saveToDatabase = formData.get("saveToDatabase") === "true";
-
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    }
+    const curriculumDataStr = formData.get("curriculumData") as string;
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
-    // Convert file to buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    let parsedCurriculum;
+    let extractedText = "";
 
-    // Extract text from PDF
-    const pdfData = await pdf(buffer);
-    const extractedText = pdfData.text;
+    // If curriculum data is provided, skip PDF parsing
+    if (curriculumDataStr) {
+      console.log("Using pre-parsed curriculum data");
+      try {
+        parsedCurriculum = JSON.parse(curriculumDataStr);
+      } catch (parseError) {
+        console.error("Failed to parse curriculum data:", parseError);
+        throw new Error("Invalid curriculum data provided");
+      }
+    } else {
+      // Parse PDF
+      if (!file) {
+        return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      }
 
-    if (!extractedText || extractedText.trim().length === 0) {
-      return NextResponse.json(
-        { error: "Could not extract text from PDF" },
-        { status: 400 }
-      );
-    }
+      // Convert file to buffer
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
 
-    // Use OpenAI Assistant to parse the PDF text into a structured checklist/curriculum
-    const assistantId = "asst_R4hsz2dCZ3DwpaaITjaWCJHV";
+      // Extract text from PDF
+      const pdfData = await pdf(buffer);
+      extractedText = pdfData.text;
 
-    // Create a thread
-    const thread = await openai.beta.threads.create();
+      if (!extractedText || extractedText.trim().length === 0) {
+        return NextResponse.json(
+          { error: "Could not extract text from PDF" },
+          { status: 400 }
+        );
+      }
 
-    // Add message with extracted text
-    await openai.beta.threads.messages.create(thread.id, {
-      role: "user",
-      content: `Convert this document into a structured curriculum checklist:\n\n${extractedText.slice(0, 15000)}`,
-    });
+      // Use OpenAI Assistant to parse the PDF text into a structured checklist/curriculum
+      const assistantId = "asst_R4hsz2dCZ3DwpaaITjaWCJHV";
 
-    // Run the assistant with JSON schema for structured output
-    const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: assistantId,
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "curriculum_response",
-          strict: true,
-          schema: {
-            type: "object",
-            properties: {
-              name: { type: "string" },
-              description: { type: "string" },
-              subject: { type: "string" },
-              grade: { type: ["number", "null"] },
-              units: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    title: { type: "string" },
-                    description: { type: "string" },
-                    order: { type: "number" },
-                    lessons: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          title: { type: "string" },
-                          description: { type: "string" },
-                          contentMd: { type: "string" },
-                          order: { type: "number" },
-                          threshold: { type: "number" },
-                          objectives: {
-                            type: "array",
-                            items: { type: "string" }
-                          },
-                          items: {
-                            type: "array",
+      // Create a thread
+      const thread = await openai.beta.threads.create();
+
+      // Add message with extracted text
+      await openai.beta.threads.messages.create(thread.id, {
+        role: "user",
+        content: `Convert this document into a structured curriculum checklist:\n\n${extractedText.slice(0, 15000)}`,
+      });
+
+      // Run the assistant with JSON schema for structured output
+      const run = await openai.beta.threads.runs.create(thread.id, {
+        assistant_id: assistantId,
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "curriculum_response",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                description: { type: "string" },
+                subject: { type: "string" },
+                grade: { type: ["number", "null"] },
+                units: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      title: { type: "string" },
+                      description: { type: "string" },
+                      order: { type: "number" },
+                      lessons: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            title: { type: "string" },
+                            description: { type: "string" },
+                            contentMd: { type: "string" },
+                            order: { type: "number" },
+                            threshold: { type: "number" },
+                            objectives: {
+                              type: "array",
+                              items: { type: "string" }
+                            },
                             items: {
-                              type: "object",
-                              properties: {
-                                type: { type: "string" },
-                                prompt: { type: "string" },
-                                order: { type: "number" },
-                                points: { type: "number" },
-                                answerKey: { type: "string" }
-                              },
-                              required: ["type", "prompt", "order", "points", "answerKey"],
-                              additionalProperties: false
+                              type: "array",
+                              items: {
+                                type: "object",
+                                properties: {
+                                  type: { type: "string" },
+                                  prompt: { type: "string" },
+                                  order: { type: "number" },
+                                  points: { type: "number" },
+                                  answerKey: { type: "string" }
+                                },
+                                required: ["type", "prompt", "order", "points", "answerKey"],
+                                additionalProperties: false
+                              }
                             }
-                          }
-                        },
-                        required: ["title", "description", "contentMd", "order", "threshold", "objectives", "items"],
-                        additionalProperties: false
+                          },
+                          required: ["title", "description", "contentMd", "order", "threshold", "objectives", "items"],
+                          additionalProperties: false
+                        }
                       }
-                    }
-                  },
-                  required: ["title", "description", "order", "lessons"],
-                  additionalProperties: false
+                    },
+                    required: ["title", "description", "order", "lessons"],
+                    additionalProperties: false
+                  }
                 }
-              }
-            },
-            required: ["name", "description", "subject", "grade", "units"],
-            additionalProperties: false
+              },
+              required: ["name", "description", "subject", "grade", "units"],
+              additionalProperties: false
+            }
           }
         }
+      });
+
+      // Wait for completion
+      let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+
+      while (runStatus.status !== "completed") {
+        if (runStatus.status === "failed" || runStatus.status === "cancelled" || runStatus.status === "expired") {
+          throw new Error(`Assistant run ${runStatus.status}: ${runStatus.last_error?.message || "Unknown error"}`);
+        }
+
+        // Wait 1 second before checking again
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
       }
-    });
 
-    // Wait for completion
-    let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+      // Get the assistant's response
+      const messages = await openai.beta.threads.messages.list(thread.id);
+      const lastMessage = messages.data[0];
 
-    while (runStatus.status !== "completed") {
-      if (runStatus.status === "failed" || runStatus.status === "cancelled" || runStatus.status === "expired") {
-        throw new Error(`Assistant run ${runStatus.status}: ${runStatus.last_error?.message || "Unknown error"}`);
+      if (!lastMessage || lastMessage.role !== "assistant") {
+        throw new Error("No response from assistant");
       }
 
-      // Wait 1 second before checking again
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-    }
+      // Extract text content
+      const messageContent = lastMessage.content[0];
+      if (messageContent.type !== "text") {
+        throw new Error("Unexpected message content type");
+      }
 
-    // Get the assistant's response
-    const messages = await openai.beta.threads.messages.list(thread.id);
-    const lastMessage = messages.data[0];
+      const responseText = messageContent.text.value;
 
-    if (!lastMessage || lastMessage.role !== "assistant") {
-      throw new Error("No response from assistant");
-    }
+      // Log response for debugging
+      console.log("Assistant response:", responseText);
 
-    // Extract text content
-    const messageContent = lastMessage.content[0];
-    if (messageContent.type !== "text") {
-      throw new Error("Unexpected message content type");
-    }
+      // Strip markdown code blocks if present
+      let cleanedResponse = responseText.trim();
+      if (cleanedResponse.startsWith("```json")) {
+        cleanedResponse = cleanedResponse.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+      } else if (cleanedResponse.startsWith("```")) {
+        cleanedResponse = cleanedResponse.replace(/^```\n?/, "").replace(/\n?```$/, "");
+      }
 
-    const responseText = messageContent.text.value;
-
-    // Log response for debugging
-    console.log("Assistant response:", responseText);
-
-    // Strip markdown code blocks if present
-    let cleanedResponse = responseText.trim();
-    if (cleanedResponse.startsWith("```json")) {
-      cleanedResponse = cleanedResponse.replace(/^```json\n?/, "").replace(/\n?```$/, "");
-    } else if (cleanedResponse.startsWith("```")) {
-      cleanedResponse = cleanedResponse.replace(/^```\n?/, "").replace(/\n?```$/, "");
-    }
-
-    // Parse JSON response
-    let parsedCurriculum;
-    try {
-      parsedCurriculum = JSON.parse(cleanedResponse);
-    } catch (parseError) {
-      console.error("Failed to parse JSON:", parseError);
-      console.error("Response text:", cleanedResponse);
-      throw new Error(`Invalid JSON response from assistant: ${cleanedResponse.slice(0, 200)}`);
+      // Parse JSON response
+      try {
+        parsedCurriculum = JSON.parse(cleanedResponse);
+      } catch (parseError) {
+        console.error("Failed to parse JSON:", parseError);
+        console.error("Response text:", cleanedResponse);
+        throw new Error(`Invalid JSON response from assistant: ${cleanedResponse.slice(0, 200)}`);
+      }
     }
 
     // Override with user-provided values
@@ -212,7 +227,7 @@ export async function POST(request: NextRequest) {
                       type: item.type,
                       prompt: item.prompt,
                       order: item.order,
-                      choices: item.choices ?? undefined,
+                      ...(item.choices && { choices: item.choices }),
                       answerKey: item.answerKey,
                       points: item.points || 1,
                     })),

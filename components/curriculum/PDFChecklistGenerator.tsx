@@ -112,7 +112,7 @@ export function PDFChecklistGenerator() {
 
     try {
       const formData = new FormData();
-      if (file) formData.append("file", file);
+      formData.append("curriculumData", JSON.stringify(previewCurriculum));
       formData.append("name", name);
       formData.append("description", description);
       formData.append("subject", subject);

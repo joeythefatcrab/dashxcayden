@@ -96,14 +96,22 @@ export async function POST(request: NextRequest) {
     // Log response for debugging
     console.log("Assistant response:", responseText);
 
+    // Strip markdown code blocks if present
+    let cleanedResponse = responseText.trim();
+    if (cleanedResponse.startsWith("```json")) {
+      cleanedResponse = cleanedResponse.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+    } else if (cleanedResponse.startsWith("```")) {
+      cleanedResponse = cleanedResponse.replace(/^```\n?/, "").replace(/\n?```$/, "");
+    }
+
     // Parse JSON response
     let parsedCurriculum;
     try {
-      parsedCurriculum = JSON.parse(responseText);
+      parsedCurriculum = JSON.parse(cleanedResponse);
     } catch (parseError) {
       console.error("Failed to parse JSON:", parseError);
-      console.error("Response text:", responseText);
-      throw new Error(`Invalid JSON response from assistant: ${responseText.slice(0, 200)}`);
+      console.error("Response text:", cleanedResponse);
+      throw new Error(`Invalid JSON response from assistant: ${cleanedResponse.slice(0, 200)}`);
     }
 
     // Override with user-provided values

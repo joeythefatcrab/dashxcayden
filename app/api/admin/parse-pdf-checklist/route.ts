@@ -245,11 +245,14 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error parsing PDF:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorStack = error instanceof Error ? error.stack : "";
 
     return NextResponse.json(
       {
         error: "Failed to parse PDF",
         details: errorMessage,
+        stack: errorStack,
+        step: "Check the error details above for more information"
       },
       { status: 500 }
     );

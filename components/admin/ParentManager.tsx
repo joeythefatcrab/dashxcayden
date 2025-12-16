@@ -25,6 +25,8 @@ import {
   UserPlus,
   Trash2,
   Plus,
+  Edit,
+  Key,
 } from "lucide-react";
 import { AIProgressReport } from "@/components/student/AIProgressReport";
 
@@ -37,6 +39,12 @@ type Parent = {
     id: string;
     name: string;
     grade: number | null;
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+      role: string;
+    } | null;
     enrollments: Array<{
       curriculum: {
         name: string;
@@ -70,6 +78,18 @@ export function ParentManager({ parents: initialParents }: ParentManagerProps) {
   // Student form state
   const [studentName, setStudentName] = useState("");
   const [studentGrade, setStudentGrade] = useState("");
+  const [studentEmail, setStudentEmail] = useState("");
+  const [studentPassword, setStudentPassword] = useState("");
+
+  // Edit student state
+  const [editingStudent, setEditingStudent] = useState<{
+    id: string;
+    name: string;
+    grade: number | null;
+    email: string;
+    parentId: string;
+  } | null>(null);
+  const [isEditStudentOpen, setIsEditStudentOpen] = useState(false);
 
   const toggleParent = (parentId: string) => {
     const newExpanded = new Set(expandedParents);
@@ -160,6 +180,8 @@ export function ParentManager({ parents: initialParents }: ParentManagerProps) {
           name: studentName,
           parentId: selectedParentId,
           grade: studentGrade ? parseInt(studentGrade) : null,
+          email: studentEmail || undefined,
+          password: studentPassword || undefined,
         }),
       });
 
@@ -172,6 +194,8 @@ export function ParentManager({ parents: initialParents }: ParentManagerProps) {
       // Reset form
       setStudentName("");
       setStudentGrade("");
+      setStudentEmail("");
+      setStudentPassword("");
       setSelectedParentId(null);
       setIsAddStudentOpen(false);
 
@@ -179,6 +203,46 @@ export function ParentManager({ parents: initialParents }: ParentManagerProps) {
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create student");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/admin/students/${editingStudent.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editingStudent.name,
+          grade: editingStudent.grade,
+          parentId: editingStudent.parentId,
+          email: editingStudent.email || undefined,
+          password: studentPassword || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update student");
+      }
+
+      // Reset form
+      setEditingStudent(null);
+      setStudentPassword("");
+      setIsEditStudentOpen(false);
+
+      // Refresh the page
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update student");
     } finally {
       setIsLoading(false);
     }
@@ -476,31 +540,65 @@ export function ParentManager({ parents: initialParents }: ParentManagerProps) {
                           className="rounded-md border bg-muted/50 p-3"
                         >
                           <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-medium">{student.name}</h4>
-                              <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                                {student.grade && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    Grade {student.grade}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-medium">{student.name}</h4>
+                                {student.user && (
+                                  <Badge variant="default" className="text-xs">
+                                    <Key className="mr-1 h-3 w-3" />
+                                    Has Login
                                   </Badge>
                                 )}
-                                <span>
-                                  {student.enrollments.length}{" "}
-                                  {student.enrollments.length === 1
-                                    ? "course"
-                                    : "courses"}
-                                </span>
+                              </div>
+                              <div className="mt-1 flex flex-col gap-1 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                  {student.grade && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      Grade {student.grade}
+                                    </Badge>
+                                  )}
+                                  <span>
+                                    {student.enrollments.length}{" "}
+                                    {student.enrollments.length === 1
+                                      ? "course"
+                                      : "courses"}
+                                  </span>
+                                </div>
+                                {student.user && (
+                                  <span className="flex items-center gap-1">
+                                    <Mail className="h-3 w-3" />
+                                    {student.user.email}
+                                  </span>
+                                )}
                               </div>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                handleDeleteStudent(student.id, student.name)
-                              }
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingStudent({
+                                    id: student.id,
+                                    name: student.name,
+                                    grade: student.grade,
+                                    email: student.user?.email || "",
+                                    parentId: parent.id,
+                                  });
+                                  setIsEditStudentOpen(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  handleDeleteStudent(student.id, student.name)
+                                }
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
                           </div>
                           {student.enrollments.length > 0 && (
                             <div className="mt-2 space-y-1">
@@ -541,7 +639,7 @@ export function ParentManager({ parents: initialParents }: ParentManagerProps) {
             <DialogHeader>
               <DialogTitle>Add New Student</DialogTitle>
               <DialogDescription>
-                Add a student to this parent's account.
+                Add a student to this parent's account. Optionally create login credentials.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -567,6 +665,36 @@ export function ParentManager({ parents: initialParents }: ParentManagerProps) {
                   onChange={(e) => setStudentGrade(e.target.value)}
                 />
               </div>
+
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium mb-3">Login Credentials (Optional)</p>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="student-email">Email</Label>
+                    <Input
+                      id="student-email"
+                      type="email"
+                      placeholder="student@example.com"
+                      value={studentEmail}
+                      onChange={(e) => setStudentEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="student-password">Password</Label>
+                    <Input
+                      id="student-password"
+                      type="password"
+                      placeholder="Choose a password"
+                      value={studentPassword}
+                      onChange={(e) => setStudentPassword(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Both email and password required to create login access
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {error && (
                 <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                   {error}
@@ -582,12 +710,109 @@ export function ParentManager({ parents: initialParents }: ParentManagerProps) {
                   setSelectedParentId(null);
                   setStudentName("");
                   setStudentGrade("");
+                  setStudentEmail("");
+                  setStudentPassword("");
                 }}
               >
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? "Creating..." : "Create Student"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Student Dialog */}
+      <Dialog open={isEditStudentOpen} onOpenChange={setIsEditStudentOpen}>
+        <DialogContent>
+          <form onSubmit={handleEditStudent}>
+            <DialogHeader>
+              <DialogTitle>Edit Student</DialogTitle>
+              <DialogDescription>
+                Update student information and credentials.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-student-name">Student Name *</Label>
+                <Input
+                  id="edit-student-name"
+                  placeholder="Student's full name"
+                  value={editingStudent?.name || ""}
+                  onChange={(e) =>
+                    setEditingStudent(editingStudent ? { ...editingStudent, name: e.target.value } : null)
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-student-grade">Grade</Label>
+                <Input
+                  id="edit-student-grade"
+                  type="number"
+                  placeholder="e.g., 8"
+                  min="1"
+                  max="12"
+                  value={editingStudent?.grade || ""}
+                  onChange={(e) =>
+                    setEditingStudent(editingStudent ? {
+                      ...editingStudent,
+                      grade: e.target.value ? parseInt(e.target.value) : null
+                    } : null)
+                  }
+                />
+              </div>
+
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium mb-3">Login Credentials</p>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-student-email">Email</Label>
+                    <Input
+                      id="edit-student-email"
+                      type="email"
+                      placeholder="student@example.com"
+                      value={editingStudent?.email || ""}
+                      onChange={(e) =>
+                        setEditingStudent(editingStudent ? { ...editingStudent, email: e.target.value } : null)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-student-password">New Password (leave blank to keep current)</Label>
+                    <Input
+                      id="edit-student-password"
+                      type="password"
+                      placeholder="Enter new password"
+                      value={studentPassword}
+                      onChange={(e) => setStudentPassword(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {error && (
+                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                  {error}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsEditStudentOpen(false);
+                  setEditingStudent(null);
+                  setStudentPassword("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>

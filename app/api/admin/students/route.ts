@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import bcrypt from "bcryptjs";
 
-// POST - Create a new student for a parent
+// POST - Create a new student for a parent (with optional user account)
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, parentId, grade } = body;
+    const { name, parentId, grade, email, password } = body;
 
     // Validate input
     if (!name || !parentId) {
@@ -38,12 +39,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create student
+    let userId = null;
+
+    // If email and password provided, create a user account for the student
+    if (email && password) {
+      // Check if email already exists
+      const existingUser = await db.user.findUnique({
+        where: { email },
+      });
+
+      if (existingUser) {
+        return NextResponse.json(
+          { error: "Email already exists" },
+          { status: 400 }
+        );
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create user account
+      const user = await db.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: "STUDENT",
+          adminId: session.user.id,
+        },
+      });
+
+      userId = user.id;
+    }
+
+    // Create student profile
     const student = await db.student.create({
       data: {
         name,
         parentId,
+        userId,
         grade: grade ? parseInt(grade) : null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
       },
     });
 

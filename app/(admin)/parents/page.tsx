@@ -18,6 +18,14 @@ export default async function AdminParentsPage() {
     include: {
       children: {
         include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+            },
+          },
           enrollments: {
             include: {
               curriculum: {

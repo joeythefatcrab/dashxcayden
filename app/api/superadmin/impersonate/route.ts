@@ -40,8 +40,11 @@ export async function POST(request: NextRequest) {
 export async function DELETE() {
   const session = await auth();
 
-  // Only SUPERADMIN can clear impersonation
-  if (!session?.user || session.user.role !== "SUPERADMIN") {
+  // Check if user is actually a SUPERADMIN (either as real role or current role)
+  // @ts-ignore - realRole exists when impersonating
+  const realRole = session?.user?.realRole || session?.user?.role;
+
+  if (!session?.user || realRole !== "SUPERADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

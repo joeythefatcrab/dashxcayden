@@ -104,6 +104,8 @@ export function LessonPlayer({
   }
 
   if (result) {
+    const hasPendingItems = result.pendingReview || false;
+
     return (
       <div className="container mx-auto max-w-4xl px-4 py-8">
         <Link href={`/my-courses/${curriculumId}`}>
@@ -116,34 +118,56 @@ export function LessonPlayer({
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              {result.score >= lesson.threshold ? (
+              {hasPendingItems ? (
+                <Lock className="h-6 w-6 text-blue-600" />
+              ) : result.score >= lesson.threshold ? (
                 <CheckCircle2 className="h-6 w-6 text-green-600" />
               ) : (
                 <XCircle className="h-6 w-6 text-orange-600" />
               )}
-              {result.score >= lesson.threshold ? "Lesson Complete!" : "Try Again"}
+              {hasPendingItems
+                ? "Awaiting Review"
+                : result.score >= lesson.threshold
+                ? "Lesson Complete!"
+                : "Try Again"}
             </CardTitle>
             <CardDescription>
-              You scored {result.score}% ({result.earned}/{result.maxScore} points)
+              {hasPendingItems ? (
+                <>Your assignment is being reviewed by your parent/teacher</>
+              ) : (
+                <>You scored {result.score}% ({result.earned}/{result.maxScore} points)</>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {hasPendingItems && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Status:</strong> Your written assignments are being reviewed. Your final score will be updated once grading is complete.
+                </p>
+              </div>
+            )}
+
             <div className="rounded-lg border p-4">
               <div className="mb-2 text-sm font-medium">Performance</div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
                 <div
                   className={`h-full ${
-                    result.score >= lesson.threshold ? "bg-green-600" : "bg-orange-600"
+                    hasPendingItems
+                      ? "bg-blue-600"
+                      : result.score >= lesson.threshold
+                      ? "bg-green-600"
+                      : "bg-orange-600"
                   }`}
                   style={{ width: `${result.score}%` }}
                 />
               </div>
               <div className="mt-2 text-xs text-muted-foreground">
-                Threshold: {lesson.threshold}%
+                {hasPendingItems ? "Partial score (pending manual grading)" : `Threshold: ${lesson.threshold}%`}
               </div>
             </div>
 
-            {result.score >= lesson.threshold && (
+            {!hasPendingItems && result.score >= lesson.threshold && (
               <div className="rounded-lg bg-green-50 p-4">
                 <p className="text-sm text-green-800">
                   You met the threshold! The next lesson is now unlocked.
@@ -176,16 +200,24 @@ export function LessonPlayer({
           <CardContent className="space-y-4">
             {lesson.items.map((item: any, idx: number) => {
               const itemResult = result.detail[item.id];
+              const isPending = itemResult.needsGrading === true;
+
               return (
                 <div
                   key={item.id}
                   className={`rounded-lg border p-4 ${
-                    itemResult.correct ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"
+                    isPending
+                      ? "border-blue-200 bg-blue-50"
+                      : itemResult.correct
+                      ? "border-green-200 bg-green-50"
+                      : "border-red-200 bg-red-50"
                   }`}
                 >
                   <div className="mb-2 flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      {itemResult.correct ? (
+                      {isPending ? (
+                        <Lock className="h-5 w-5 text-blue-600" />
+                      ) : itemResult.correct ? (
                         <CheckCircle2 className="h-5 w-5 text-green-600" />
                       ) : (
                         <XCircle className="h-5 w-5 text-red-600" />
@@ -193,12 +225,16 @@ export function LessonPlayer({
                       <span className="font-medium">Question {idx + 1}</span>
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {itemResult.points}/{item.points} points
+                      {isPending ? "Pending" : `${itemResult.points}/${item.points} points`}
                     </span>
                   </div>
                   <p className="mb-2 text-sm">{item.prompt}</p>
                   <div className="text-sm text-muted-foreground">
-                    {item.type === "CHECKBOX" ? (
+                    {isPending ? (
+                      <span className="text-blue-700">
+                        <strong>Awaiting manual review</strong> - Your answer has been submitted and will be graded soon.
+                      </span>
+                    ) : item.type === "CHECKBOX" ? (
                       <span>
                         Status: <strong>{itemResult.answer ? "Completed ✓" : "Not completed"}</strong>
                       </span>

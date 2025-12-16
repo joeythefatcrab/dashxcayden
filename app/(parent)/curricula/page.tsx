@@ -11,6 +11,7 @@ import { AICurriculumGenerator } from "@/components/curriculum/AICurriculumGener
 import { CurriculumChecksheetGenerator } from "@/components/curriculum/CurriculumChecksheetGenerator";
 import { PDFChecklistGenerator } from "@/components/curriculum/PDFChecklistGenerator";
 import { AssignCurriculumDialog } from "@/components/curriculum/AssignCurriculumDialog";
+import { PendingGradesList } from "@/components/grading/pending-grades-list";
 
 export default async function CurriculaPage() {
   const session = await auth();
@@ -89,6 +90,11 @@ export default async function CurriculaPage() {
             <PDFChecklistGenerator />
             <CurriculumUploader />
           </div>
+        </div>
+
+        {/* Pending Grades Section */}
+        <div className="mb-8">
+          <PendingGradesList />
         </div>
 
         {curricula.length === 0 ? (

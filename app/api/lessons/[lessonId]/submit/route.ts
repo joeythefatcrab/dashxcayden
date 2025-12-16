@@ -65,6 +65,7 @@ export async function POST(
     const detail: Record<string, any> = {};
     let totalPoints = 0;
     let earnedPoints = 0;
+    let needsManualGrading = false;
 
     for (const item of lesson.items) {
       const studentAnswer = answers[item.id];
@@ -81,30 +82,19 @@ export async function POST(
           correct = true;
           points = item.points;
         }
-      } else if (item.type === "SHORT_ANSWER") {
-        // Pattern matching
-        const patterns = answerKey.patterns || [];
-        const answer = String(studentAnswer).trim().toLowerCase();
-
-        for (const pattern of patterns) {
-          if (pattern.startsWith("/") && pattern.endsWith("/i")) {
-            // Regex pattern
-            const regexStr = pattern.slice(1, -2);
-            const regex = new RegExp(regexStr, "i");
-            if (regex.test(answer)) {
-              correct = true;
-              points = item.points;
-              break;
-            }
-          } else {
-            // Exact match (case-insensitive)
-            if (answer === pattern.toLowerCase()) {
-              correct = true;
-              points = item.points;
-              break;
-            }
-          }
-        }
+      } else if (item.type === "ESSAY" || item.type === "SHORT_ANSWER") {
+        // These require manual grading - mark as pending
+        needsManualGrading = true;
+        detail[item.id] = {
+          answer: studentAnswer,
+          correct: false,
+          points: 0,
+          needsGrading: true,
+          itemType: item.type,
+          itemPrompt: item.prompt,
+          maxPoints: item.points,
+        };
+        continue; // Skip adding to earnedPoints for now
       } else if (item.type === "CHECKBOX") {
         // Honor system - if checked, award points
         if (studentAnswer === true) {
@@ -193,6 +183,8 @@ export async function POST(
       maxScore: totalPoints,
       detail,
       passed: score >= lesson.threshold,
+      needsManualGrading,
+      pendingReview: needsManualGrading,
     });
   } catch (error) {
     console.error("Grading error:", error);

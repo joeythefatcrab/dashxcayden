@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { parseCSV } from "@/lib/parsers/csv-parser";
-import { generateCourseCode } from "@/lib/utils/course-code";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -37,26 +36,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // Generate unique course code
-    let courseCode: string;
-    let isUnique = false;
-    while (!isUnique) {
-      courseCode = generateCourseCode();
-      const existing = await db.curriculum.findUnique({
-        where: { courseCode },
-      });
-      if (!existing) {
-        isUnique = true;
-      }
-    }
-
     // Save to database
     const curriculum = await db.curriculum.create({
       data: {
         name: name || parsedData.name,
         description: description || parsedData.description,
         subject,
-        courseCode: courseCode!,
         isPublic: true, // Default to public
         createdById: session.user.id,
         rawFileUrl: fileUrl,
@@ -94,7 +79,6 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       curriculumId: curriculum.id,
-      courseCode: curriculum.courseCode,
       message: "Curriculum imported successfully",
     });
   } catch (error) {

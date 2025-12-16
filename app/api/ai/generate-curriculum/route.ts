@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { generateCurriculumFromWireframe } from "@/lib/ai/openai-service";
-import { generateCourseCode } from "@/lib/utils/course-code";
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,19 +33,6 @@ export async function POST(request: NextRequest) {
 
     // If saveToDatabase is true, save to database
     if (saveToDatabase) {
-      // Generate unique course code
-      let courseCode: string;
-      let isUnique = false;
-      while (!isUnique) {
-        courseCode = generateCourseCode();
-        const existing = await db.curriculum.findUnique({
-          where: { courseCode },
-        });
-        if (!existing) {
-          isUnique = true;
-        }
-      }
-
       // Save curriculum to database
       const curriculum = await db.curriculum.create({
         data: {
@@ -54,7 +40,6 @@ export async function POST(request: NextRequest) {
           description: generatedCurriculum.description,
           subject: generatedCurriculum.subject,
           grade: generatedCurriculum.grade,
-          courseCode: courseCode!,
           isPublic: true,
           createdById: session.user.id,
           rawData: generatedCurriculum as any,
@@ -92,7 +77,6 @@ export async function POST(request: NextRequest) {
         success: true,
         curriculum: generatedCurriculum,
         curriculumId: curriculum.id,
-        courseCode: curriculum.courseCode,
         message: "Curriculum generated and saved successfully",
       });
     }

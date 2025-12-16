@@ -85,7 +85,11 @@ export function PDFChecklistGenerator() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || data.details || "Failed to parse PDF");
+        // Log full error details for debugging
+        console.error("Full error response:", data);
+        console.error("Error details:", data.details);
+        console.error("Error stack:", data.stack);
+        throw new Error(data.details || data.error || "Failed to parse PDF");
       }
 
       // Show preview
@@ -121,7 +125,10 @@ export function PDFChecklistGenerator() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || data.details || "Failed to save curriculum");
+        // Log full error details for debugging
+        console.error("Save error response:", data);
+        console.error("Error details:", data.details);
+        throw new Error(data.details || data.error || "Failed to save curriculum");
       }
 
       // Success!

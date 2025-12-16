@@ -198,7 +198,15 @@ export function LessonPlayer({
                   </div>
                   <p className="mb-2 text-sm">{item.prompt}</p>
                   <div className="text-sm text-muted-foreground">
-                    Your answer: <strong>{String(itemResult.answer)}</strong>
+                    {item.type === "CHECKBOX" ? (
+                      <span>
+                        Status: <strong>{itemResult.answer ? "Completed ✓" : "Not completed"}</strong>
+                      </span>
+                    ) : (
+                      <span>
+                        Your answer: <strong>{String(itemResult.answer)}</strong>
+                      </span>
+                    )}
                   </div>
                 </div>
               );
@@ -302,6 +310,22 @@ export function LessonPlayer({
                   value={answers[item.id] || ""}
                   onChange={(e) => handleAnswerChange(item.id, e.target.value)}
                 />
+              )}
+
+              {item.type === "CHECKBOX" && (
+                <div className="flex items-center space-x-3 rounded-lg border border-dashed p-4">
+                  <Checkbox
+                    id={`checkbox-${item.id}`}
+                    checked={answers[item.id] === true}
+                    onCheckedChange={(checked) => handleAnswerChange(item.id, checked === true)}
+                  />
+                  <Label
+                    htmlFor={`checkbox-${item.id}`}
+                    className="cursor-pointer text-base font-normal leading-relaxed"
+                  >
+                    Mark this task as complete
+                  </Label>
+                </div>
               )}
             </div>
           ))}

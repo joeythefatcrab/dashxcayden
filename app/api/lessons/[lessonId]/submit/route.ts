@@ -105,6 +105,12 @@ export async function POST(
             }
           }
         }
+      } else if (item.type === "CHECKBOX") {
+        // Honor system - if checked, award points
+        if (studentAnswer === true) {
+          correct = true;
+          points = item.points;
+        }
       }
 
       earnedPoints += points;

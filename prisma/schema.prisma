@@ -210,7 +210,7 @@ enum ItemType {
   SHORT_ANSWER
   ESSAY
   TRUE_FALSE
-  CHECKBOX
+  CHECKBOX  // For checklist/task items from curriculum PDFs
 }
 
 model Item {

@@ -23,18 +23,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify parent belongs to this admin
+    // Verify parent exists (single organization - all admins can manage all parents)
     const parent = await db.user.findFirst({
       where: {
         id: parentId,
         role: "PARENT",
-        adminId: session.user.id,
       },
     });
 
     if (!parent) {
       return NextResponse.json(
-        { error: "Parent not found or unauthorized" },
+        { error: "Parent not found" },
         { status: 404 }
       );
     }

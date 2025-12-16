@@ -16,12 +16,11 @@ export async function DELETE(
 
     const { id: parentId } = await params;
 
-    // Verify this parent belongs to the admin
+    // Verify this parent exists (single organization - all admins can manage all parents)
     const parent = await db.user.findFirst({
       where: {
         id: parentId,
         role: "PARENT",
-        adminId: session.user.id,
       },
       include: {
         _count: {

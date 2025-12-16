@@ -15,7 +15,6 @@ export async function GET() {
     const parents = await db.user.findMany({
       where: {
         role: "PARENT",
-        adminId: session.user.id,
       },
       include: {
         _count: {

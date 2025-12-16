@@ -9,11 +9,10 @@ export default async function AdminParentsPage() {
     return null;
   }
 
-  // Fetch all parents managed by this admin
+  // Fetch all parents (single organization - all admins see all parents)
   const parents = await db.user.findMany({
     where: {
       role: "PARENT",
-      adminId: session.user.id,
     },
     include: {
       children: {

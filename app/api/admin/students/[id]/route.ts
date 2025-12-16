@@ -19,13 +19,10 @@ export async function PATCH(
     const body = await request.json();
     const { name, grade, parentId, email, password } = body;
 
-    // Verify this student belongs to a parent managed by this admin
+    // Verify this student exists (single organization - all admins can manage all students)
     const student = await db.student.findFirst({
       where: {
         id: studentId,
-        parent: {
-          adminId: session.user.id,
-        },
       },
     });
 
@@ -36,19 +33,18 @@ export async function PATCH(
       );
     }
 
-    // If changing parent, verify new parent belongs to this admin
+    // If changing parent, verify new parent exists (single organization)
     if (parentId && parentId !== student.parentId) {
       const newParent = await db.user.findFirst({
         where: {
           id: parentId,
           role: "PARENT",
-          adminId: session.user.id,
         },
       });
 
       if (!newParent) {
         return NextResponse.json(
-          { error: "New parent not found or unauthorized" },
+          { error: "New parent not found" },
           { status: 404 }
         );
       }
@@ -168,13 +164,10 @@ export async function DELETE(
 
     const { id: studentId } = await params;
 
-    // Verify this student belongs to a parent managed by this admin
+    // Verify this student exists (single organization - all admins can manage all students)
     const student = await db.student.findFirst({
       where: {
         id: studentId,
-        parent: {
-          adminId: session.user.id,
-        },
       },
     });
 

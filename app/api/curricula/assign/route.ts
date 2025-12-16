@@ -40,17 +40,13 @@ export async function POST(request: NextRequest) {
     }
 
     // For parents: verify they own these students
-    // For admins: verify students belong to their parents
+    // For admins: all students are accessible (single organization)
     const students = await db.student.findMany({
       where: {
         id: { in: studentIds },
         ...(session.user.role === "PARENT"
           ? { parentId: session.user.id }
-          : {
-              parent: {
-                adminId: session.user.id,
-              },
-            }),
+          : {}), // Admins can access all students
       },
     });
 
@@ -118,17 +114,13 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Verify student belongs to user
+    // Verify student exists (parents can only access their own, admins can access all)
     const student = await db.student.findFirst({
       where: {
         id: studentId,
         ...(session.user.role === "PARENT"
           ? { parentId: session.user.id }
-          : {
-              parent: {
-                adminId: session.user.id,
-              },
-            }),
+          : {}), // Admins can access all students
       },
     });
 

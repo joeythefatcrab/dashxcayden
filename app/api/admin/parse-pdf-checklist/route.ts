@@ -93,8 +93,18 @@ export async function POST(request: NextRequest) {
 
     const responseText = messageContent.text.value;
 
+    // Log response for debugging
+    console.log("Assistant response:", responseText);
+
     // Parse JSON response
-    const parsedCurriculum = JSON.parse(responseText);
+    let parsedCurriculum;
+    try {
+      parsedCurriculum = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("Failed to parse JSON:", parseError);
+      console.error("Response text:", responseText);
+      throw new Error(`Invalid JSON response from assistant: ${responseText.slice(0, 200)}`);
+    }
 
     // Override with user-provided values
     parsedCurriculum.name = name;

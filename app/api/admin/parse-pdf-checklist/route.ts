@@ -105,9 +105,27 @@ STRICT RULES:
 6. If instructions reference external materials, keep those references intact
 7. contentMd = the exact original text from that section, not a summary
 
+OCR ERROR CORRECTION - YOU MAY FIX THESE:
+✅ Fix obvious OCR typos: "tlie" → "the", "witli" → "with", "sliow" → "show"
+✅ Fix character substitutions: "0" → "O", "1" → "l" when clearly wrong
+✅ Fix spacing issues: "DataSheet" → "Data Sheet"
+✅ Fix capitalization ONLY if clearly OCR errors: "RFAD" → "READ"
+❌ Do NOT change actual words, terminology, or meaning
+❌ Do NOT rewrite instructions in "better" language
+❌ Do NOT modernize or simplify wording
+
+ITEM TYPES - USE THESE EXACT VALUES:
+- For checklist tasks/steps: type: "CHECKBOX"
+- For multiple choice questions: type: "MCQ"
+- For short written answers: type: "SHORT_ANSWER"
+- For essay questions: type: "ESSAY"
+- For true/false questions: type: "TRUE_FALSE"
+
+NEVER use "task" or any other type - only use the exact values listed above.
+
 Example of CORRECT behavior:
 Original: "1. READ: Data Sheet (DS) #10 Energy. _________"
-Your output: prompt: "READ: Data Sheet (DS) #10 Energy"
+Your output: type: "CHECKBOX", prompt: "READ: Data Sheet (DS) #10 Energy"
 
 Example of WRONG behavior:
 Original: "1. READ: Data Sheet (DS) #10 Energy. _________"
@@ -160,7 +178,10 @@ ${textToSend}`,
                               items: {
                                 type: "object",
                                 properties: {
-                                  type: { type: "string" },
+                                  type: {
+                                    type: "string",
+                                    enum: ["CHECKBOX", "MCQ", "SHORT_ANSWER", "ESSAY", "TRUE_FALSE"]
+                                  },
                                   prompt: { type: "string" },
                                   order: { type: "number" },
                                   points: { type: "number" },

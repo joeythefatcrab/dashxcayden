@@ -96,6 +96,24 @@ ABSOLUTE RULES - FOLLOW THESE PRECISELY:
 6. contentMd must contain the EXACT original instructions
 7. Unit/lesson titles must be EXACT headings from document
 
+OCR ERROR CORRECTION - YOU MAY FIX THESE:
+✅ Fix obvious OCR typos: "tlie" → "the", "witli" → "with", "sliow" → "show"
+✅ Fix character substitutions: "0" → "O", "1" → "l" when clearly wrong
+✅ Fix spacing issues: "DataSheet" → "Data Sheet"
+✅ Fix capitalization ONLY if clearly OCR errors: "RFAD" → "READ"
+❌ Do NOT change actual words, terminology, or meaning
+❌ Do NOT rewrite instructions in "better" language
+❌ Do NOT modernize or simplify wording
+
+ITEM TYPES - USE THESE EXACT VALUES:
+- For checklist tasks/steps: type: "CHECKBOX"
+- For multiple choice questions: type: "MCQ"
+- For short written answers: type: "SHORT_ANSWER"
+- For essay questions: type: "ESSAY"
+- For true/false questions: type: "TRUE_FALSE"
+
+NEVER use "task" or any other type - only use the exact values listed above.
+
 EXAMPLES:
 ❌ WRONG: "Read about energy concepts"
 ✅ CORRECT: "READ: Data Sheet (DS) #10 Energy"
@@ -146,7 +164,10 @@ Your job is ONLY to organize existing text into the JSON structure. Do NOT creat
                               items: {
                                 type: "object",
                                 properties: {
-                                  type: { type: "string" },
+                                  type: {
+                                    type: "string",
+                                    enum: ["CHECKBOX", "MCQ", "SHORT_ANSWER", "ESSAY", "TRUE_FALSE"]
+                                  },
                                   prompt: { type: "string" },
                                   order: { type: "number" },
                                   points: { type: "number" },

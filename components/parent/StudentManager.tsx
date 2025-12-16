@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { UserPlus, BookOpen, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AIProgressReport } from "@/components/student/AIProgressReport";
 
 interface Student {
   id: string;

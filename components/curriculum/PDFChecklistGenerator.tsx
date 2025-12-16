@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FileText, Upload, Loader2, CheckCircle } from "lucide-react";
+import { CurriculumPreview } from "./CurriculumPreview";
 
 export function PDFChecklistGenerator() {
   const router = useRouter();
@@ -23,13 +24,16 @@ export function PDFChecklistGenerator() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [subject, setSubject] = useState("");
+
+  const [previewCurriculum, setPreviewCurriculum] = useState<any>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -64,7 +68,6 @@ export function PDFChecklistGenerator() {
 
     setIsGenerating(true);
     setError("");
-    setSuccess(false);
 
     try {
       const formData = new FormData();
@@ -72,7 +75,7 @@ export function PDFChecklistGenerator() {
       formData.append("name", name);
       formData.append("description", description);
       formData.append("subject", subject);
-      formData.append("saveToDatabase", "true");
+      formData.append("saveToDatabase", "false"); // Don't save yet, just generate
 
       const response = await fetch("/api/admin/parse-pdf-checklist", {
         method: "POST",
@@ -85,23 +88,10 @@ export function PDFChecklistGenerator() {
         throw new Error(data.error || data.details || "Failed to parse PDF");
       }
 
-      setSuccess(true);
-
-      // Wait a moment then close and refresh
-      setTimeout(() => {
-        setIsOpen(false);
-        router.refresh();
-
-        // Reset form
-        setFile(null);
-        setName("");
-        setDescription("");
-        setSubject("");
-        setSuccess(false);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      }, 1500);
+      // Show preview
+      setPreviewCurriculum(data.curriculum);
+      setShowPreview(true);
+      setIsOpen(false); // Close upload dialog
     } catch (err: any) {
       console.error("Generate error:", err);
       setError(err.message || "Failed to generate checklist");
@@ -110,144 +100,191 @@ export function PDFChecklistGenerator() {
     }
   };
 
-  const handleCancel = () => {
-    setIsOpen(false);
+  const handleApprove = async () => {
+    if (!previewCurriculum) return;
+
+    setIsApproving(true);
+
+    try {
+      const formData = new FormData();
+      if (file) formData.append("file", file);
+      formData.append("name", name);
+      formData.append("description", description);
+      formData.append("subject", subject);
+      formData.append("saveToDatabase", "true"); // Now save it
+
+      const response = await fetch("/api/admin/parse-pdf-checklist", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.details || "Failed to save curriculum");
+      }
+
+      // Success!
+      setShowPreview(false);
+      router.refresh();
+
+      // Reset form
+      resetForm();
+    } catch (err: any) {
+      console.error("Approve error:", err);
+      setError(err.message || "Failed to save curriculum");
+      setShowPreview(false);
+      setIsOpen(true); // Reopen upload dialog to show error
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const resetForm = () => {
     setFile(null);
     setName("");
     setDescription("");
     setSubject("");
     setError("");
-    setSuccess(false);
+    setPreviewCurriculum(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <FileText className="mr-2 h-4 w-4" />
-          Import PDF Checklist
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <form onSubmit={handleGenerate}>
-          <DialogHeader>
-            <DialogTitle>Import PDF as Checklist</DialogTitle>
-            <DialogDescription>
-              Upload a PDF document (course pack, step list, etc.) and AI will convert it into a structured checklist curriculum.
-            </DialogDescription>
-          </DialogHeader>
+  const handleCancel = () => {
+    setIsOpen(false);
+    resetForm();
+  };
 
-          <div className="space-y-4 py-4">
-            {/* File Upload */}
-            <div className="space-y-2">
-              <Label htmlFor="pdf-file">PDF File *</Label>
-              <div className="flex gap-2">
-                <Input
-                  ref={fileInputRef}
-                  id="pdf-file"
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileChange}
-                  disabled={isGenerating}
-                  required
-                  className="flex-1"
-                />
+  const handlePreviewClose = () => {
+    setShowPreview(false);
+    setIsOpen(true); // Reopen upload dialog
+  };
+
+  return (
+    <>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button>
+            <FileText className="mr-2 h-4 w-4" />
+            Import PDF Checklist
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl">
+          <form onSubmit={handleGenerate}>
+            <DialogHeader>
+              <DialogTitle>Import PDF as Interactive Checklist</DialogTitle>
+              <DialogDescription>
+                Upload a PDF document and AI will convert it into an engaging, Khan Academy-style interactive course with checklists, achievements, and progress tracking.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              {/* File Upload */}
+              <div className="space-y-2">
+                <Label htmlFor="pdf-file">PDF File *</Label>
+                <div className="flex gap-2">
+                  <Input
+                    ref={fileInputRef}
+                    id="pdf-file"
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileChange}
+                    disabled={isGenerating}
+                    required
+                    className="flex-1"
+                  />
+                </div>
                 {file && (
-                  <div className="flex items-center gap-2 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+                  <div className="flex items-center gap-2 rounded-md bg-green-50 dark:bg-green-950/30 px-3 py-2 text-sm text-green-700 dark:text-green-400">
                     <CheckCircle className="h-4 w-4" />
                     {file.name}
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Name */}
-            <div className="space-y-2">
-              <Label htmlFor="checklist-name">Checklist Name *</Label>
-              <Input
-                id="checklist-name"
-                placeholder="e.g., Science Fair Project Steps"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={isGenerating}
-                required
-              />
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="checklist-description">Description (optional)</Label>
-              <Textarea
-                id="checklist-description"
-                placeholder="Brief description of this checklist..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={isGenerating}
-                rows={3}
-              />
-            </div>
-
-            {/* Subject */}
-            <div className="space-y-2">
-              <Label htmlFor="checklist-subject">Subject (optional)</Label>
-              <Input
-                id="checklist-subject"
-                placeholder="e.g., Science, Math, General"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                disabled={isGenerating}
-              />
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {error}
+              {/* Name */}
+              <div className="space-y-2">
+                <Label htmlFor="checklist-name">Course Name *</Label>
+                <Input
+                  id="checklist-name"
+                  placeholder="e.g., Science Fair Project Adventure"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={isGenerating}
+                  required
+                />
               </div>
-            )}
 
-            {/* Success Message */}
-            {success && (
-              <div className="flex items-center gap-2 rounded-md bg-green-50 p-3 text-sm text-green-800">
-                <CheckCircle className="h-4 w-4" />
-                Checklist created successfully!
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="checklist-description">Description (optional)</Label>
+                <Textarea
+                  id="checklist-description"
+                  placeholder="A fun journey through the scientific method..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  disabled={isGenerating}
+                  rows={3}
+                />
               </div>
-            )}
-          </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isGenerating}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isGenerating || success}>
-              {isGenerating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing PDF...
-                </>
-              ) : success ? (
-                <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Created!
-                </>
-              ) : (
-                <>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Generate Checklist
-                </>
+              {/* Subject */}
+              <div className="space-y-2">
+                <Label htmlFor="checklist-subject">Subject (optional)</Label>
+                <Input
+                  id="checklist-subject"
+                  placeholder="e.g., Science, Math, General"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  disabled={isGenerating}
+                />
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                  {error}
+                </div>
               )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isGenerating}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isGenerating}>
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating Preview...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Generate Preview
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <CurriculumPreview
+        curriculum={previewCurriculum}
+        isOpen={showPreview}
+        onClose={handlePreviewClose}
+        onApprove={handleApprove}
+        isApproving={isApproving}
+      />
+    </>
   );
 }

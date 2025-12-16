@@ -144,11 +144,6 @@ export default async function CurriculaPage() {
                       {curriculum.subject && (
                         <Badge variant="secondary">{curriculum.subject}</Badge>
                       )}
-                      {curriculum.courseCode && (
-                        <Badge variant="outline" className="font-mono">
-                          📋 {curriculum.courseCode}
-                        </Badge>
-                      )}
                     </div>
 
                     {/* Enrollment Status */}

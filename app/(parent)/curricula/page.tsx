@@ -9,6 +9,7 @@ import Link from "next/link";
 import { CurriculumUploader } from "@/components/curriculum/CurriculumUploader";
 import { AICurriculumGenerator } from "@/components/curriculum/AICurriculumGenerator";
 import { CurriculumChecksheetGenerator } from "@/components/curriculum/CurriculumChecksheetGenerator";
+import { PDFChecklistGenerator } from "@/components/curriculum/PDFChecklistGenerator";
 import { AssignCurriculumDialog } from "@/components/curriculum/AssignCurriculumDialog";
 
 export default async function CurriculaPage() {
@@ -85,6 +86,7 @@ export default async function CurriculaPage() {
           <div className="flex gap-2">
             <CurriculumChecksheetGenerator />
             <AICurriculumGenerator />
+            <PDFChecklistGenerator />
             <CurriculumUploader />
           </div>
         </div>
@@ -95,11 +97,12 @@ export default async function CurriculaPage() {
               <BookOpen className="mb-4 h-12 w-12 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-semibold">No curricula yet</h3>
               <p className="mb-4 text-center text-sm text-muted-foreground">
-                Generate a checksheet, create with AI, or upload a CSV file
+                Generate a checksheet, create with AI, import a PDF, or upload a CSV file
               </p>
               <div className="flex gap-2">
                 <CurriculumChecksheetGenerator />
                 <AICurriculumGenerator />
+                <PDFChecklistGenerator />
                 <CurriculumUploader />
               </div>
             </CardContent>

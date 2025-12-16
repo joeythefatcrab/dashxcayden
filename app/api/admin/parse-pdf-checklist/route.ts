@@ -46,72 +46,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use OpenAI to parse the PDF text into a structured checklist/curriculum
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert curriculum designer. Convert the provided document text into a structured curriculum with units and lessons.
+    // Use OpenAI Assistant to parse the PDF text into a structured checklist/curriculum
+    const assistantId = "asst_R4hsz2dCZ3DwpaaITjaWCJHV";
 
-Each lesson should be a checklist item or step from the document.
+    // Create a thread
+    const thread = await openai.beta.threads.create();
 
-Return a JSON object with this exact structure:
-{
-  "name": "Curriculum name",
-  "description": "Brief description",
-  "subject": "Subject area",
-  "grade": null,
-  "units": [
-    {
-      "title": "Unit title",
-      "description": "Unit description",
-      "order": 1,
-      "lessons": [
-        {
-          "title": "Lesson/Step title",
-          "description": "What this step involves",
-          "contentMd": "Detailed markdown content explaining this step",
-          "order": 1,
-          "threshold": 100,
-          "objectives": ["Objective 1", "Objective 2"],
-          "items": [
-            {
-              "type": "CHECKBOX",
-              "prompt": "Checklist item text",
-              "order": 1,
-              "points": 1,
-              "answerKey": "complete"
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-
-Important:
-- Create logical groupings as units
-- Each step/task becomes a lesson with a checkbox item
-- Use CHECKBOX type for all items (checklist format)
-- Keep titles concise but descriptive
-- Include helpful details in contentMd
-- Order lessons sequentially`,
-        },
-        {
-          role: "user",
-          content: `Convert this document into a structured curriculum checklist:\n\n${extractedText.slice(0, 15000)}`,
-        },
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.3,
+    // Add message with extracted text
+    await openai.beta.threads.messages.create(thread.id, {
+      role: "user",
+      content: `Convert this document into a structured curriculum checklist:\n\n${extractedText.slice(0, 15000)}`,
     });
 
-    const responseText = completion.choices[0].message.content;
-    if (!responseText) {
-      throw new Error("No response from OpenAI");
+    // Run the assistant
+    const run = await openai.beta.threads.runs.create(thread.id, {
+      assistant_id: assistantId,
+    });
+
+    // Wait for completion
+    let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+
+    while (runStatus.status !== "completed") {
+      if (runStatus.status === "failed" || runStatus.status === "cancelled" || runStatus.status === "expired") {
+        throw new Error(`Assistant run ${runStatus.status}: ${runStatus.last_error?.message || "Unknown error"}`);
+      }
+
+      // Wait 1 second before checking again
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
     }
 
+    // Get the assistant's response
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    const lastMessage = messages.data[0];
+
+    if (!lastMessage || lastMessage.role !== "assistant") {
+      throw new Error("No response from assistant");
+    }
+
+    // Extract text content
+    const messageContent = lastMessage.content[0];
+    if (messageContent.type !== "text") {
+      throw new Error("Unexpected message content type");
+    }
+
+    const responseText = messageContent.text.value;
+
+    // Parse JSON response
     const parsedCurriculum = JSON.parse(responseText);
 
     // Override with user-provided values

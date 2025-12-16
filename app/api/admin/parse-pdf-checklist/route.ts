@@ -69,11 +69,21 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      console.log(`Extracted ${extractedText.length} characters from PDF (${pdfData.numpages} pages)`);
+
       // Use OpenAI Assistant to parse the PDF text into a structured checklist/curriculum
       const assistantId = "asst_R4hsz2dCZ3DwpaaITjaWCJHV";
 
       // Create a thread
       const thread = await openai.beta.threads.create();
+
+      // Determine how much text to send (max ~100k characters to stay within token limits)
+      const maxChars = 100000;
+      const textToSend = extractedText.slice(0, maxChars);
+
+      if (extractedText.length > maxChars) {
+        console.warn(`PDF text truncated from ${extractedText.length} to ${maxChars} characters`);
+      }
 
       // Add message with extracted text
       await openai.beta.threads.messages.create(thread.id, {
@@ -105,7 +115,7 @@ Your output: prompt: "Read about energy concepts" ❌ WRONG - this is rewriting!
 
 Structure this curriculum document, preserving ALL original text exactly:
 
-${extractedText.slice(0, 15000)}`,
+${textToSend}`,
       });
 
       // Run the assistant with JSON schema for structured output

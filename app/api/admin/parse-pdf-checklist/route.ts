@@ -78,7 +78,34 @@ export async function POST(request: NextRequest) {
       // Add message with extracted text
       await openai.beta.threads.messages.create(thread.id, {
         role: "user",
-        content: `Convert this document into a structured curriculum checklist:\n\n${extractedText.slice(0, 15000)}`,
+        content: `CRITICAL INSTRUCTIONS - READ CAREFULLY:
+
+Your ONLY job is to structure this document into a JSON checklist format. You MUST preserve the EXACT original text.
+
+STRICT RULES:
+1. Copy text VERBATIM - Do NOT rewrite, paraphrase, summarize, or improve
+2. Use EXACT wording from the document for:
+   - Item prompts (e.g., "READ: Data Sheet #10 Energy")
+   - Lesson descriptions
+   - Content (contentMd should be the exact original instructions)
+   - Unit titles
+3. Keep ALL numbering, references, codes (e.g., "DS #8948", "step B.11")
+4. Preserve original formatting, capitalization, punctuation
+5. If the doc says "DEMONSTRATE: Show work", use EXACTLY that text
+6. If instructions reference external materials, keep those references intact
+7. contentMd = the exact original text from that section, not a summary
+
+Example of CORRECT behavior:
+Original: "1. READ: Data Sheet (DS) #10 Energy. _________"
+Your output: prompt: "READ: Data Sheet (DS) #10 Energy"
+
+Example of WRONG behavior:
+Original: "1. READ: Data Sheet (DS) #10 Energy. _________"
+Your output: prompt: "Read about energy concepts" ❌ WRONG - this is rewriting!
+
+Structure this curriculum document, preserving ALL original text exactly:
+
+${extractedText.slice(0, 15000)}`,
       });
 
       // Run the assistant with JSON schema for structured output

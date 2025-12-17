@@ -64,20 +64,23 @@ export default async function CurriculaPage() {
 
   // Fetch students for assignment
   // For parents: their own students
-  // For admins: all students under their parents
+  // For admins/superadmins: all students in the system
+  const studentWhereClause = ["ADMIN", "SUPERADMIN"].includes(session.user.role)
+    ? {} // Show all students for admins
+    : { parentId: session.user.id }; // Parents see only their own
+
   const students = await db.student.findMany({
-    where:
-      session.user.role === "PARENT"
-        ? { parentId: session.user.id }
-        : {
-            parent: {
-              adminId: session.user.id,
-            },
-          },
+    where: studentWhereClause,
     select: {
       id: true,
       name: true,
       grade: true,
+      parent: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
     },
     orderBy: {
       name: "asc",

@@ -20,6 +20,10 @@ type Student = {
   id: string;
   name: string;
   grade: number | null;
+  parent?: {
+    name: string | null;
+    email: string;
+  };
 };
 
 type AssignCurriculumDialogProps = {
@@ -145,11 +149,18 @@ export function AssignCurriculumDialog({
                   htmlFor={student.id}
                   className="flex-1 cursor-pointer text-sm"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{student.name}</span>
-                    {student.grade && (
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{student.name}</span>
+                      {student.grade && (
+                        <span className="text-xs text-muted-foreground">
+                          Grade {student.grade}
+                        </span>
+                      )}
+                    </div>
+                    {student.parent && (
                       <span className="text-xs text-muted-foreground">
-                        Grade {student.grade}
+                        Parent: {student.parent.name || student.parent.email}
                       </span>
                     )}
                   </div>

@@ -123,6 +123,13 @@ ITEM TYPES - USE THESE EXACT VALUES:
 
 NEVER use "task" or any other type - only use the exact values listed above.
 
+UNIT AND LESSON ORDERING - CRITICAL:
+- Start unit order at 0 for the FIRST unit (Unit 1 in document = order: 0)
+- Start lesson order at 0 for the FIRST lesson in each unit
+- Include ALL units starting from Unit 1 - do not skip the first unit
+- If you see "Unit 1", "Unit I", or the first major section, it should have order: 0
+- Process units and lessons in sequential order from the document
+
 Example of CORRECT behavior:
 Original: "1. READ: Data Sheet (DS) #10 Energy. _________"
 Your output: type: "CHECKBOX", prompt: "READ: Data Sheet (DS) #10 Energy"

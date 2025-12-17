@@ -20,12 +20,22 @@ export default async function CurriculaPage() {
     redirect("/dashboard");
   }
 
-  // Fetch curricula created by this user
+  // Fetch curricula based on role
+  // Admins and superadmins see all curricula
+  // Parents see only their own curricula
+  const whereClause = ["ADMIN", "SUPERADMIN"].includes(session.user.role)
+    ? {} // Show all curricula for admins
+    : { createdById: session.user.id }; // Parents see only their own
+
   const curricula = await db.curriculum.findMany({
-    where: {
-      createdById: session.user.id,
-    },
+    where: whereClause,
     include: {
+      createdBy: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
       units: {
         include: {
           lessons: true,
@@ -152,6 +162,11 @@ export default async function CurriculaPage() {
                     <div className="flex flex-wrap gap-2">
                       {curriculum.subject && (
                         <Badge variant="secondary">{curriculum.subject}</Badge>
+                      )}
+                      {["ADMIN", "SUPERADMIN"].includes(session.user.role) && curriculum.createdBy && (
+                        <Badge variant="outline" className="text-xs">
+                          By: {curriculum.createdBy.name || curriculum.createdBy.email}
+                        </Badge>
                       )}
                     </div>
 

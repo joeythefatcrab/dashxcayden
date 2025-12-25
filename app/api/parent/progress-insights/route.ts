@@ -7,8 +7,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy-key",
 });
 
-// This will be replaced with the actual assistant ID once created
-const PROGRESS_ASSISTANT_ID = process.env.PROGRESS_ASSISTANT_ID || "";
+// Progress Insights Assistant ID
+const PROGRESS_ASSISTANT_ID = "asst_PVatp1jFEG4WGkJ4kGiZn8lT";
 
 export async function POST(req: Request) {
   try {
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { studentId, studentName, stats, messages, type } = body;
+    const { studentId, studentName, stats, messages, type, threadId } = body;
 
     // Verify access to student
     const student = await db.student.findUnique({
@@ -100,54 +100,66 @@ ${detailedAttempts
   )
   .join("\n")}`;
 
-    // Use direct chat completions for better control
-    const systemPrompt = `You are an AI educational progress analyst for DashX Cayden, a homeschool curriculum platform. Your role is to analyze student progress data and provide helpful insights to parents and instructors.
+    let thread;
+    let userMessage = "";
 
-When generating reports or answering questions, focus on:
-1. Identifying patterns in performance
-2. Highlighting strengths and areas needing attention
-3. Providing actionable recommendations
-4. Being encouraging while being honest about challenges
-5. Suggesting specific interventions when needed
+    if (type === "initial") {
+      userMessage = `Please analyze this student's progress and provide a comprehensive progress report.
 
-Tone: Professional, supportive, data-informed, and constructive.`;
+${contextMessage}`;
+    } else {
+      // Chat message
+      const lastUserMessage = messages[messages.length - 1];
+      userMessage = `${contextMessage}
 
-    const userPrompt = type === "initial"
-      ? `Please analyze this student's progress and provide a comprehensive progress report. Include:
+Parent's question: ${lastUserMessage.content}`;
+    }
 
-1. **Overall Summary** (2-3 sentences about their progress)
-2. **Strengths** (What they're doing well)
-3. **Areas for Improvement** (Specific challenges with data)
-4. **Recommendations** (Actionable steps for parents/instructors)
-5. **Encouragement** (Positive note to end on)
+    // Create or use existing thread
+    if (threadId) {
+      thread = { id: threadId };
+      await openai.beta.threads.messages.create(threadId, {
+        role: "user",
+        content: userMessage,
+      });
+    } else {
+      thread = await openai.beta.threads.create({
+        messages: [
+          {
+            role: "user",
+            content: userMessage,
+          },
+        ],
+      });
+    }
 
-Format the report clearly with headers and bullet points.
-
-${contextMessage}`
-      : `${contextMessage}
-
-Previous conversation:
-${messages.map((m: any) => `${m.role === "user" ? "Parent" : "AI"}: ${m.content}`).join("\n\n")}`;
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.7,
-      max_tokens: 1000,
+    // Run the assistant
+    const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
+      assistant_id: PROGRESS_ASSISTANT_ID,
     });
 
-    const responseMessage = completion.choices[0]?.message?.content;
-
-    if (!responseMessage) {
-      throw new Error("No response generated");
+    if (run.status !== "completed") {
+      throw new Error(`Assistant run failed with status: ${run.status}`);
     }
+
+    // Fetch the response
+    const messagesResponse = await openai.beta.threads.messages.list(thread.id);
+    const latestAssistantMessage = messagesResponse.data.find((m) => m.role === "assistant");
+
+    if (!latestAssistantMessage) {
+      throw new Error("No assistant response found");
+    }
+
+    // Extract text from the message content
+    const text = latestAssistantMessage.content
+      .filter((part) => part.type === "text")
+      .map((part) => (part as any).text.value)
+      .join("\n");
 
     return NextResponse.json({
       success: true,
-      message: responseMessage,
+      message: text || "Sorry, I couldn't generate a response.",
+      threadId: thread.id,
     });
   } catch (error) {
     console.error("Error generating progress insights:", error);

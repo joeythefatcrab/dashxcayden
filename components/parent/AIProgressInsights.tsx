@@ -38,6 +38,7 @@ export function AIProgressInsights({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [hasGeneratedInitial, setHasGeneratedInitial] = useState(false);
+  const [threadId, setThreadId] = useState<string | undefined>(undefined);
 
   const generateInitialReport = async () => {
     setIsLoading(true);
@@ -51,6 +52,7 @@ export function AIProgressInsights({
           stats,
           messages: [],
           type: "initial",
+          threadId,
         }),
       });
 
@@ -58,6 +60,10 @@ export function AIProgressInsights({
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to generate insights");
+      }
+
+      if (data.threadId) {
+        setThreadId(data.threadId);
       }
 
       setMessages([
@@ -99,6 +105,7 @@ export function AIProgressInsights({
           stats,
           messages: newMessages,
           type: "chat",
+          threadId,
         }),
       });
 
@@ -106,6 +113,10 @@ export function AIProgressInsights({
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to get response");
+      }
+
+      if (data.threadId) {
+        setThreadId(data.threadId);
       }
 
       setMessages([

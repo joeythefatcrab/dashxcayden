@@ -201,12 +201,15 @@ export function LessonPlayer({
             {lesson.items.map((item: any, idx: number) => {
               const itemResult = result.detail[item.id];
               const isPending = itemResult.needsGrading === true;
+              const isOptedOut = itemResult.optedOut === true;
 
               return (
                 <div
                   key={item.id}
                   className={`rounded-lg border p-4 ${
-                    isPending
+                    isOptedOut
+                      ? "border-gray-200 bg-gray-50"
+                      : isPending
                       ? "border-blue-200 bg-blue-50"
                       : itemResult.correct
                       ? "border-green-200 bg-green-50"
@@ -215,7 +218,9 @@ export function LessonPlayer({
                 >
                   <div className="mb-2 flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      {isPending ? (
+                      {isOptedOut ? (
+                        <span className="text-gray-500">—</span>
+                      ) : isPending ? (
                         <Lock className="h-5 w-5 text-blue-600" />
                       ) : itemResult.correct ? (
                         <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -223,14 +228,19 @@ export function LessonPlayer({
                         <XCircle className="h-5 w-5 text-red-600" />
                       )}
                       <span className="font-medium">Question {idx + 1}</span>
+                      {item.isOptional && <span className="ml-2 text-xs text-muted-foreground">(Optional)</span>}
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {isPending ? "Pending" : `${itemResult.points}/${item.points} points`}
+                      {isOptedOut ? "Skipped" : isPending ? "Pending" : `${itemResult.points}/${item.points} points`}
                     </span>
                   </div>
                   <p className="mb-2 text-sm">{item.prompt}</p>
                   <div className="text-sm text-muted-foreground">
-                    {isPending ? (
+                    {isOptedOut ? (
+                      <span className="text-gray-600">
+                        <strong>Skipped</strong> - You chose to skip this optional item
+                      </span>
+                    ) : isPending ? (
                       <span className="text-blue-700">
                         <strong>Awaiting manual review</strong> - Your answer has been submitted and will be graded soon.
                       </span>
@@ -349,18 +359,32 @@ export function LessonPlayer({
               )}
 
               {item.type === "CHECKBOX" && (
-                <div className="flex items-center space-x-3 rounded-lg border border-dashed p-4">
-                  <Checkbox
-                    id={`checkbox-${item.id}`}
-                    checked={answers[item.id] === true}
-                    onCheckedChange={(checked) => handleAnswerChange(item.id, checked === true)}
-                  />
-                  <Label
-                    htmlFor={`checkbox-${item.id}`}
-                    className="cursor-pointer text-base font-normal leading-relaxed"
-                  >
-                    Mark this task as complete
-                  </Label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-3 rounded-lg border border-dashed p-4">
+                    <Checkbox
+                      id={`checkbox-${item.id}`}
+                      checked={answers[item.id] === true}
+                      onCheckedChange={(checked) => handleAnswerChange(item.id, checked === true)}
+                      disabled={answers[item.id] === "OPTED_OUT"}
+                    />
+                    <Label
+                      htmlFor={`checkbox-${item.id}`}
+                      className="cursor-pointer text-base font-normal leading-relaxed"
+                    >
+                      Mark this task as complete
+                    </Label>
+                  </div>
+                  {item.isOptional && (
+                    <Button
+                      type="button"
+                      variant={answers[item.id] === "OPTED_OUT" ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => handleAnswerChange(item.id, answers[item.id] === "OPTED_OUT" ? null : "OPTED_OUT")}
+                      className="w-full text-xs"
+                    >
+                      {answers[item.id] === "OPTED_OUT" ? "Undo Skip" : "Skip (Optional)"}
+                    </Button>
+                  )}
                 </div>
               )}
             </div>

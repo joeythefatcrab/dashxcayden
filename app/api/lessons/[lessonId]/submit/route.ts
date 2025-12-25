@@ -96,6 +96,19 @@ export async function POST(
         };
         continue; // Skip adding to earnedPoints for now
       } else if (item.type === "CHECKBOX") {
+        // Check if student opted out (for optional items)
+        if (studentAnswer === "OPTED_OUT" && item.isOptional) {
+          detail[item.id] = {
+            answer: "OPTED_OUT",
+            correct: false,
+            points: 0,
+            optedOut: true,
+          };
+          // Don't count opted-out items in total points
+          totalPoints -= item.points;
+          continue;
+        }
+
         // Honor system - if checked, award points
         if (studentAnswer === true) {
           correct = true;

@@ -249,6 +249,25 @@ export function LessonPlayer({
                       <span>
                         Status: <strong>{itemResult.answer ? "Completed ✓" : "Not completed"}</strong>
                       </span>
+                    ) : item.type === "MCQ" || item.type === "TRUE_FALSE" ? (
+                      <div className="space-y-1">
+                        <div>
+                          Your answer: <strong className={itemResult.correct ? "text-green-700" : "text-red-700"}>
+                            {item.type === "TRUE_FALSE"
+                              ? (itemResult.answer === 0 ? "True" : "False")
+                              : (item.choices as string[])[itemResult.answer]}
+                          </strong>
+                        </div>
+                        {!itemResult.correct && item.answerKey && (
+                          <div className="text-green-700">
+                            Correct answer: <strong>
+                              {item.type === "TRUE_FALSE"
+                                ? (item.answerKey.correct[0] === 0 ? "True" : "False")
+                                : item.answerKey.correct.map((idx: number) => (item.choices as string[])[idx]).join(", ")}
+                            </strong>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <span>
                         Your answer: <strong>{String(itemResult.answer)}</strong>

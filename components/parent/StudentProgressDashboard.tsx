@@ -211,7 +211,7 @@ export function StudentProgressDashboard({ student }: StudentProgressDashboardPr
               No courses enrolled yet
             </p>
           ) : (
-            curriculaProgress.map((course) => (
+            curriculaProgress.map((course: any) => (
               <div key={course.id} className="space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">

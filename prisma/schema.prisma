@@ -214,27 +214,28 @@ enum ItemType {
 }
 
 model Item {
-  id        String   @id @default(cuid())
-  lessonId  String
-  type      ItemType
-  order     Int
+  id         String   @id @default(cuid())
+  lessonId   String
+  type       ItemType
+  order      Int
 
-  prompt    String   @db.Text
+  prompt     String   @db.Text
 
   // For MCQ/True-False: JSON array of choices
-  choices   Json?
+  choices    Json?
 
   // Answer key - flexible structure based on type
   // MCQ: { "correct": [0, 2] } for indices
   // SHORT_ANSWER: { "patterns": ["exact match", "/regex/i"] }
-  answerKey Json
+  answerKey  Json
 
-  points    Int      @default(1)
+  points     Int      @default(1)
+  isOptional Boolean  @default(false) // Optional items can be skipped/opted-out
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@index([lessonId])
   @@unique([lessonId, order])

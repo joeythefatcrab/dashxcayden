@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/auth/dashboard-nav";
 import { ChatbotWrapper } from "@/components/student/ChatbotWrapper";
+import { FloatingNotesWrapper } from "@/components/student/FloatingNotesWrapper";
 
 export default async function StudentLayout({
   children,
@@ -24,6 +25,7 @@ export default async function StudentLayout({
       <DashboardNav />
       <main className="flex-1 bg-muted/30">{children}</main>
       <ChatbotWrapper />
+      <FloatingNotesWrapper />
     </div>
   );
 }

@@ -95,15 +95,26 @@ ABSOLUTE RULES - FOLLOW THESE PRECISELY:
 5. Item prompts must be the EXACT text from the document
 6. contentMd must contain the EXACT original instructions
 7. Unit/lesson titles must be EXACT headings from document
+8. Maintain the EXACT ORDER of items as they appear in the document
 
 OCR ERROR CORRECTION - YOU MAY FIX THESE:
 ✅ Fix obvious OCR typos: "tlie" → "the", "witli" → "with", "sliow" → "show"
 ✅ Fix character substitutions: "0" → "O", "1" → "l" when clearly wrong
-✅ Fix spacing issues: "DataSheet" → "Data Sheet"
+✅ Fix spacing issues: "DataSheet" → "Data Sheet", "answerto" → "answer to"
+✅ Fix merged words: "readthe" → "read the", "writeyour" → "write your"
+✅ Fix split numbers: "1 6" → "16", "p age" → "page"
 ✅ Fix capitalization ONLY if clearly OCR errors: "RFAD" → "READ"
 ❌ Do NOT change actual words, terminology, or meaning
 ❌ Do NOT rewrite instructions in "better" language
 ❌ Do NOT modernize or simplify wording
+❌ NEVER change action words: "write down" must stay "write down", not "answer to yourself"
+
+DESCRIPTION FIELD - IMPORTANT:
+- Create a concise 2-3 sentence overview of what the curriculum covers
+- Do NOT list every single drill, chapter, and sub-chapter in description
+- Focus on main learning objectives and scope
+- Example GOOD: "This biology course covers cell structure, genetics, and evolution. Students will complete readings, answer questions, and perform laboratory exercises."
+- Example BAD: "Students will read chapter 1 section A, complete drill 1, drill 2, drill 3, answer questions on page 7, read chapter 2..."
 
 ITEM TYPES - USE THESE EXACT VALUES:
 - For checklist tasks/steps: type: "CHECKBOX"
@@ -120,8 +131,14 @@ UNIT AND LESSON ORDERING - CRITICAL:
 - Include ALL units starting from Unit 1 - do not skip the first unit
 - If you see "Unit 1", "Unit I", or the first major section, it should have order: 0
 - Process units and lessons in sequential order from the document
+- MAINTAIN THE EXACT ORDER OF ITEMS as they appear on each page
+- If page 7 says "answer questions" then "keep reading", preserve that exact order
+- Do not reorder items based on your interpretation
 
 EXAMPLES:
+❌ WRONG: "answer the biology practice questions on page 7 to yourself"
+✅ CORRECT: "answer the biology practice questions on page 7" (preserve exact wording)
+
 ❌ WRONG: "Read about energy concepts"
 ✅ CORRECT: "READ: Data Sheet (DS) #10 Energy"
 

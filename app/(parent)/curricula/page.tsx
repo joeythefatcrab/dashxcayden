@@ -7,8 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, Users, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { CurriculumUploader } from "@/components/curriculum/CurriculumUploader";
-import { AICurriculumGenerator } from "@/components/curriculum/AICurriculumGenerator";
-import { CurriculumChecksheetGenerator } from "@/components/curriculum/CurriculumChecksheetGenerator";
 import { PDFChecklistGenerator } from "@/components/curriculum/PDFChecklistGenerator";
 import { AssignCurriculumDialog } from "@/components/curriculum/AssignCurriculumDialog";
 import { PendingGradesList } from "@/components/grading/pending-grades-list";
@@ -98,8 +96,6 @@ export default async function CurriculaPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <CurriculumChecksheetGenerator />
-            <AICurriculumGenerator />
             <PDFChecklistGenerator />
             <CurriculumUploader />
           </div>
@@ -116,11 +112,9 @@ export default async function CurriculaPage() {
               <BookOpen className="mb-4 h-12 w-12 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-semibold">No curricula yet</h3>
               <p className="mb-4 text-center text-sm text-muted-foreground">
-                Generate a checksheet, create with AI, import a PDF, or upload a CSV file
+                Import a PDF curriculum or upload a CSV file to get started
               </p>
               <div className="flex gap-2">
-                <CurriculumChecksheetGenerator />
-                <AICurriculumGenerator />
                 <PDFChecklistGenerator />
                 <CurriculumUploader />
               </div>

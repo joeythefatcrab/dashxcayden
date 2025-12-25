@@ -16,9 +16,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { UserPlus, BookOpen, Trash2 } from "lucide-react";
+import { UserPlus, BookOpen, Trash2, BarChart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AIProgressReport } from "@/components/student/AIProgressReport";
+import Link from "next/link";
 
 interface Student {
   id: string;
@@ -267,7 +268,7 @@ export function StudentManager({ students, curricula }: StudentManagerProps) {
               </CardHeader>
               <CardContent>
                 {student.enrollments.length > 0 ? (
-                  <div>
+                  <div className="mb-4">
                     <p className="mb-2 text-sm font-medium">Enrolled in:</p>
                     <div className="flex flex-wrap gap-2">
                       {student.enrollments.map((enrollment) => (
@@ -279,8 +280,15 @@ export function StudentManager({ students, curricula }: StudentManagerProps) {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Not enrolled in any courses yet</p>
+                  <p className="text-sm text-muted-foreground mb-4">Not enrolled in any courses yet</p>
                 )}
+
+                <Link href={`/students/${student.id}`}>
+                  <Button variant="outline" className="w-full mb-4">
+                    <BarChart className="mr-2 h-4 w-4" />
+                    View Detailed Progress
+                  </Button>
+                </Link>
 
                 {/* AI Progress Report */}
                 <AIProgressReport studentId={student.id} studentName={student.name} />

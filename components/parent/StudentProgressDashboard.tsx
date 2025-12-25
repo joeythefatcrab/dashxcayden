@@ -175,10 +175,10 @@ export function StudentProgressDashboard({ student }: StudentProgressDashboardPr
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {curriculaProgress.reduce((sum: number, c) => sum + c.completedLessons, 0)}
+              {curriculaProgress.reduce((sum: number, c: any) => sum + c.completedLessons, 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              of {curriculaProgress.reduce((sum: number, c) => sum + c.totalLessons, 0)} total
+              of {curriculaProgress.reduce((sum: number, c: any) => sum + c.totalLessons, 0)} total
             </p>
           </CardContent>
         </Card>

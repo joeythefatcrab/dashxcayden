@@ -37,7 +37,6 @@ export function AIChatbot({ context }: AIChatbotProps) {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [threadId, setThreadId] = useState<string | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -62,7 +61,6 @@ export function AIChatbot({ context }: AIChatbotProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...messages, userMessage],
-          threadId,
           context,
         }),
       });
@@ -71,11 +69,6 @@ export function AIChatbot({ context }: AIChatbotProps) {
 
       if (!response.ok) {
         throw new Error(data.details || data.error || "Failed to get response");
-      }
-
-      // Store the threadId for conversation continuity
-      if (data.threadId) {
-        setThreadId(data.threadId);
       }
 
       const assistantMessage: Message = {

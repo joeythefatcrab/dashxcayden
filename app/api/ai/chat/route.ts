@@ -6,62 +6,70 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy-key",
 });
 
-// The Loopi Assistant ID
-const LOOPI_ASSISTANT_ID = "asst_bdBfXJGWtsRU35VLMgF0Dsqe";
+const LOOPI_SYSTEM_PROMPT = `You are Loopi, a concise and effective AI tutor for homeschool students.
+
+CORE PRINCIPLES:
+1. BE CONCISE - Keep responses short and to the point (2-4 sentences typically)
+2. BE TUTORIAL-FOCUSED - Guide students to find answers themselves rather than just giving them
+3. ASK QUESTIONS - Help students think through problems with targeted questions
+4. BE ENCOURAGING - Keep a positive, supportive tone
+
+RESPONSE STYLE:
+- Start with a brief acknowledgment or clarification question
+- Give hints and ask guiding questions rather than full explanations
+- Use simple, clear language appropriate for the student's level
+- If explaining a concept, use 1-2 short examples max
+- End with a question to check understanding or guide next steps
+
+WHAT TO AVOID:
+❌ Long, verbose explanations
+❌ Over-explaining every detail
+❌ Giving away complete answers to homework
+❌ Using complex academic jargon
+❌ Writing multi-paragraph essays
+
+GOOD EXAMPLE:
+Student: "I don't understand photosynthesis"
+You: "Let me help you break this down! Photosynthesis is how plants make food from sunlight. What do you think plants need besides sunlight to create food?"
+
+BAD EXAMPLE:
+Student: "I don't understand photosynthesis"
+You: "Photosynthesis is a complex biological process that occurs in the chloroplasts of plant cells. It involves two main stages: the light-dependent reactions and the Calvin cycle. During the light-dependent reactions, chlorophyll molecules in the thylakoid membranes absorb photons of light energy..." [continues for many paragraphs]
+
+Remember: Your goal is to be a helpful GUIDE, not a walking encyclopedia. Short, focused, questioning responses that lead students to understanding.`;
 
 /**
- * Run the Loopi Assistant with a user message
+ * Run Loopi using direct chat completions for better control
  */
-async function runLoopi(userMessage: string, threadId?: string) {
-  let thread;
+async function runLoopi(messages: Array<{ role: string; content: string }>, context?: any) {
+  // Build system message with optional context
+  let systemMessage = LOOPI_SYSTEM_PROMPT;
 
-  if (threadId) {
-    // Continue existing conversation
-    thread = { id: threadId };
-
-    // Add the new user message to the existing thread
-    await openai.beta.threads.messages.create(threadId, {
-      role: "user",
-      content: userMessage,
-    });
-  } else {
-    // Create a new thread with the user message
-    thread = await openai.beta.threads.create({
-      messages: [
-        {
-          role: "user",
-          content: userMessage,
-        },
-      ],
-    });
+  if (context) {
+    systemMessage += `\n\nCURRENT CONTEXT:`;
+    if (context.lessonTitle) systemMessage += `\nLesson: ${context.lessonTitle}`;
+    if (context.lessonDescription) systemMessage += `\nDescription: ${context.lessonDescription}`;
+    if (context.currentQuestion) systemMessage += `\nCurrent Question: ${context.currentQuestion}`;
   }
 
-  // Run the Loopi assistant on the thread
-  const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
-    assistant_id: LOOPI_ASSISTANT_ID,
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: systemMessage },
+      ...messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+    ],
+    temperature: 0.7,
+    max_tokens: 300, // Limit response length to enforce conciseness
   });
 
-  if (run.status !== "completed") {
-    throw new Error(`Assistant run failed with status: ${run.status}`);
+  const responseMessage = completion.choices[0]?.message?.content;
+
+  if (!responseMessage) {
+    throw new Error("No response generated");
   }
-
-  // Fetch all messages and find the latest assistant reply
-  const messages = await openai.beta.threads.messages.list(thread.id);
-  const latestAssistantMessage = messages.data.find((m) => m.role === "assistant");
-
-  if (!latestAssistantMessage) {
-    throw new Error("No assistant response found");
-  }
-
-  // Extract text from the message content
-  const text = latestAssistantMessage.content
-    .filter((part) => part.type === "text")
-    .map((part) => (part as any).text.value)
-    .join("\n");
 
   return {
-    message: text || "Sorry, I couldn't generate a response.",
-    threadId: thread.id,
+    message: responseMessage,
   };
 }
 
@@ -84,7 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { messages, threadId } = body;
+    const { messages, context } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json(
@@ -103,16 +111,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Run the Loopi assistant
-    const { message, threadId: newThreadId } = await runLoopi(
-      latestUserMessage.content,
-      threadId
-    );
+    // Run Loopi with full conversation history
+    const { message } = await runLoopi(messages, context);
 
     return NextResponse.json({
       success: true,
       message,
-      threadId: newThreadId,
     });
   } catch (error) {
     console.error("Error in AI chat:", error);

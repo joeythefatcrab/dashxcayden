@@ -135,6 +135,7 @@ model Student {
   enrollments  Enrollment[]
   attempts     Attempt[]
   activities   Activity[]
+  notes        Note[]
 
   @@index([parentId])
   @@index([userId])
@@ -299,6 +300,23 @@ model Attempt {
   @@index([studentId])
   @@index([lessonId])
   @@index([createdAt])
+}
+
+// Student Notes
+model Note {
+  id        String   @id @default(cuid())
+  studentId String
+  lessonId  String?  // Optional: note on entire lesson
+  itemId    String?  // Optional: note on specific item
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([lessonId])
+  @@index([itemId])
 }
 
 // Activity Log for parent digests

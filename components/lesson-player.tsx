@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Lock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { GlossaryMarkdown } from "./glossary-markdown";
+import { NotesSection } from "./notes-section";
 
 interface LessonPlayerProps {
   lesson: any;
@@ -294,6 +295,10 @@ export function LessonPlayer({
           </CardContent>
         </Card>
       )}
+
+      <div className="mb-6">
+        <NotesSection studentId={studentId} lessonId={lesson.id} title="Lesson Notes" />
+      </div>
 
       <Card className="mb-6">
         <CardHeader>

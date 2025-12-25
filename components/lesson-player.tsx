@@ -321,7 +321,7 @@ export function LessonPlayer({
 
               {item.type === "MCQ" && (
                 <RadioGroup
-                  value={answers[item.id]}
+                  value={answers[item.id] !== undefined ? String(answers[item.id]) : undefined}
                   onValueChange={(value) => handleAnswerChange(item.id, parseInt(value))}
                 >
                   {(item.choices as string[]).map((choice: string, choiceIdx: number) => (
@@ -337,7 +337,7 @@ export function LessonPlayer({
 
               {item.type === "TRUE_FALSE" && (
                 <RadioGroup
-                  value={answers[item.id]}
+                  value={answers[item.id] !== undefined ? String(answers[item.id]) : undefined}
                   onValueChange={(value) => handleAnswerChange(item.id, parseInt(value))}
                 >
                   <div className="flex items-center space-x-2">

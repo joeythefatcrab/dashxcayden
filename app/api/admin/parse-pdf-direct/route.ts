@@ -109,12 +109,20 @@ OCR ERROR CORRECTION - YOU MAY FIX THESE:
 ❌ Do NOT modernize or simplify wording
 ❌ NEVER change action words: "write down" must stay "write down", not "answer to yourself"
 
-DESCRIPTION FIELD - IMPORTANT:
-- Create a concise 2-3 sentence overview of what the curriculum covers
-- Do NOT list every single drill, chapter, and sub-chapter in description
-- Focus on main learning objectives and scope
-- Example GOOD: "This biology course covers cell structure, genetics, and evolution. Students will complete readings, answer questions, and perform laboratory exercises."
-- Example BAD: "Students will read chapter 1 section A, complete drill 1, drill 2, drill 3, answer questions on page 7, read chapter 2..."
+DESCRIPTION FIELD - CRITICAL REQUIREMENT:
+⚠️ The description must be a SHORT, HIGH-LEVEL summary (2-3 sentences MAX)
+⚠️ Do NOT create a paragraph listing every single activity, drill, chapter, or page
+⚠️ Think of this as a "course catalog description" - brief and informative
+
+✅ GOOD EXAMPLES:
+- "This history curriculum covers American history from colonial times through the Civil War. Students will read primary sources, complete analytical exercises, and write short essays."
+- "A comprehensive math course covering algebra fundamentals including equations, functions, and graphing. Includes practice problems and real-world applications."
+
+❌ BAD EXAMPLES (DO NOT DO THIS):
+- "Read chapter 1, answer questions 1-5 on page 7, complete drill #8948, read chapter 2 section A, answer questions on page 12, complete activity B.11..." (This is listing individual tasks)
+- "Students will complete Reading Assignment #1, Data Sheet DS #8948, write down answers to questions..." (This is too detailed)
+
+The description should NEVER be a to-do list of activities. Save the detailed instructions for the individual lesson contentMd fields.
 
 ITEM TYPES - USE THESE EXACT VALUES:
 - For checklist tasks/steps: type: "CHECKBOX"

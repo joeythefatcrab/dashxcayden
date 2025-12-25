@@ -139,13 +139,13 @@ export function FloatingNotes({ studentId }: FloatingNotesProps) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-24 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg transition-all hover:scale-110 hover:shadow-xl"
+        className="fixed bottom-6 z-[9998] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg transition-all hover:scale-110 hover:shadow-xl"
         aria-label="Open Notes"
         style={{
           position: "fixed",
           bottom: "1.5rem",
           right: "6rem",
-          zIndex: 9999,
+          zIndex: 9998,
         }}
       >
         <StickyNote className="h-6 w-6" />
@@ -154,7 +154,14 @@ export function FloatingNotes({ studentId }: FloatingNotesProps) {
   }
 
   return (
-    <div className="fixed bottom-6 right-24 z-50 flex h-[600px] w-[400px] flex-col rounded-lg border border-gray-200 bg-white shadow-2xl">
+    <div className="fixed bottom-6 z-[9998] flex h-[600px] w-[400px] flex-col rounded-lg border border-border bg-background shadow-2xl dark:border-gray-700 transition-all"
+      style={{
+        position: "fixed",
+        bottom: "1.5rem",
+        right: "6rem",
+        zIndex: 9998,
+      }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-r from-amber-500 to-orange-600 p-4 text-white">
         <div className="flex items-center gap-2">
@@ -195,13 +202,13 @@ export function FloatingNotes({ studentId }: FloatingNotesProps) {
 
             {/* Add New Note Form */}
             {isAdding && (
-              <div className="space-y-2 rounded-lg border bg-muted/50 p-3">
+              <div className="space-y-2 rounded-lg border border-border bg-muted/50 dark:bg-muted/20 p-3">
                 <Textarea
                   placeholder="Write your note here..."
                   value={newNoteContent}
                   onChange={(e) => setNewNoteContent(e.target.value)}
                   rows={3}
-                  className="resize-none text-sm"
+                  className="resize-none text-sm bg-background dark:bg-gray-800"
                   autoFocus
                 />
                 <div className="flex gap-2">
@@ -234,14 +241,14 @@ export function FloatingNotes({ studentId }: FloatingNotesProps) {
             ) : (
               <div className="space-y-3">
                 {notes.map((note) => (
-                  <div key={note.id} className="rounded-lg border bg-card p-3 shadow-sm">
+                  <div key={note.id} className="rounded-lg border border-border bg-card dark:bg-gray-800 p-3 shadow-sm">
                     {editingId === note.id ? (
                       <div className="space-y-2">
                         <Textarea
                           value={editContent}
                           onChange={(e) => setEditContent(e.target.value)}
                           rows={3}
-                          className="resize-none text-sm"
+                          className="resize-none text-sm bg-background dark:bg-gray-700"
                         />
                         <div className="flex gap-2">
                           <Button size="sm" onClick={() => handleUpdateNote(note.id)} disabled={!editContent.trim()}>
@@ -256,7 +263,7 @@ export function FloatingNotes({ studentId }: FloatingNotesProps) {
                       </div>
                     ) : (
                       <>
-                        <p className="mb-2 whitespace-pre-wrap text-sm">{note.content}</p>
+                        <p className="mb-2 whitespace-pre-wrap text-sm text-foreground">{note.content}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-muted-foreground">
                             {new Date(note.updatedAt).toLocaleDateString()}

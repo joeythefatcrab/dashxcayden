@@ -8,8 +8,7 @@ const openai = new OpenAI({
 });
 
 // Monthly Report Generator Assistant ID
-// TODO: Create this assistant in OpenAI dashboard with the prompt from docs/monthly-report-assistant-prompt.md
-const REPORT_ASSISTANT_ID = process.env.MONTHLY_REPORT_ASSISTANT_ID || "asst_REPLACE_ME";
+const REPORT_ASSISTANT_ID = process.env.MONTHLY_REPORT_ASSISTANT_ID || "asst_ZvIocbPkAZ6b6ztZacDEnhKJ";
 
 export async function POST(req: Request) {
   try {

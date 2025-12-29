@@ -26,6 +26,7 @@ export function FloatingNotes({ studentId }: FloatingNotesProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
+  const [isLoopiOpen, setIsLoopiOpen] = useState(false);
 
   // Detect current lesson from URL
   useEffect(() => {
@@ -34,6 +35,23 @@ export function FloatingNotes({ studentId }: FloatingNotesProps) {
     if (lessonMatch) {
       setCurrentLessonId(lessonMatch[1]);
     }
+  }, []);
+
+  // Listen for Loopi open/close events
+  useEffect(() => {
+    const handleLoopiChange = (e: CustomEvent) => {
+      setIsLoopiOpen(e.detail.isOpen);
+    };
+
+    window.addEventListener('loopi-state-change' as any, handleLoopiChange);
+
+    // Check initial state
+    const loopiState = localStorage.getItem('loopi-open');
+    setIsLoopiOpen(loopiState === 'true');
+
+    return () => {
+      window.removeEventListener('loopi-state-change' as any, handleLoopiChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -135,16 +153,18 @@ export function FloatingNotes({ studentId }: FloatingNotesProps) {
     setEditContent("");
   };
 
+  const rightPosition = isLoopiOpen ? "27rem" : "6rem"; // Slide left when Loopi is open
+
   if (!isOpen) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 z-[9998] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg transition-all hover:scale-110 hover:shadow-xl"
+        className="fixed bottom-6 z-[9998] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg transition-all duration-300 ease-in-out hover:scale-110 hover:shadow-xl"
         aria-label="Open Notes"
         style={{
           position: "fixed",
           bottom: "1.5rem",
-          right: "6rem",
+          right: rightPosition,
           zIndex: 9998,
         }}
       >
@@ -154,11 +174,11 @@ export function FloatingNotes({ studentId }: FloatingNotesProps) {
   }
 
   return (
-    <div className="fixed bottom-6 z-[9998] flex h-[600px] w-[400px] flex-col rounded-lg border border-border bg-background shadow-2xl dark:border-gray-700 transition-all"
+    <div className="fixed bottom-6 z-[9998] flex h-[600px] w-[400px] flex-col rounded-lg border border-border bg-background shadow-2xl dark:border-gray-700 transition-all duration-300 ease-in-out"
       style={{
         position: "fixed",
         bottom: "1.5rem",
-        right: "6rem",
+        right: rightPosition,
         zIndex: 9998,
       }}
     >

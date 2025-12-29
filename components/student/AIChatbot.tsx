@@ -96,10 +96,22 @@ export function AIChatbot({ context }: AIChatbotProps) {
     }
   };
 
+  const handleOpen = () => {
+    setIsOpen(true);
+    localStorage.setItem('loopi-open', 'true');
+    window.dispatchEvent(new CustomEvent('loopi-state-change', { detail: { isOpen: true } }));
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    localStorage.setItem('loopi-open', 'false');
+    window.dispatchEvent(new CustomEvent('loopi-state-change', { detail: { isOpen: false } }));
+  };
+
   if (!isOpen) {
     return (
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={handleOpen}
         className="fixed bottom-6 right-6 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transition-all hover:scale-110 hover:shadow-xl"
         aria-label="Open AI Tutor Chat"
         style={{
@@ -115,7 +127,7 @@ export function AIChatbot({ context }: AIChatbotProps) {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex h-[600px] w-[400px] flex-col rounded-lg border border-gray-200 bg-white shadow-2xl">
+    <div className="fixed bottom-6 right-6 z-50 flex h-[600px] w-[400px] flex-col rounded-lg border border-border bg-background shadow-2xl dark:border-gray-700">
       {/* Header */}
       <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-r from-blue-600 to-purple-600 p-4 text-white">
         <div className="flex items-center gap-2">
@@ -123,7 +135,7 @@ export function AIChatbot({ context }: AIChatbotProps) {
           <h3 className="font-semibold">Loopi - AI Tutor</h3>
         </div>
         <button
-          onClick={() => setIsOpen(false)}
+          onClick={handleClose}
           className="rounded-full p-1 hover:bg-white/20 transition-colors"
           aria-label="Close chat"
         >
@@ -149,7 +161,7 @@ export function AIChatbot({ context }: AIChatbotProps) {
               className={`max-w-[80%] rounded-lg px-4 py-2 ${
                 message.role === "user"
                   ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-900"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               }`}
             >
               <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -166,8 +178,8 @@ export function AIChatbot({ context }: AIChatbotProps) {
             <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white">
               <Bot className="h-5 w-5" />
             </div>
-            <div className="bg-gray-100 rounded-lg px-4 py-2">
-              <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-2">
+              <Loader2 className="h-4 w-4 animate-spin text-gray-600 dark:text-gray-400" />
             </div>
           </div>
         )}
@@ -175,7 +187,7 @@ export function AIChatbot({ context }: AIChatbotProps) {
       </div>
 
       {/* Input */}
-      <div className="border-t border-gray-200 p-4">
+      <div className="border-t border-border dark:border-gray-700 p-4">
         <div className="flex gap-2">
           <Textarea
             value={input}

@@ -23,6 +23,18 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Map user role to message recipient type
+    // SUPERADMIN and TEACHER can see ADMIN messages
+    const roleConditions = [];
+
+    if (user.role === "STUDENT") {
+      roleConditions.push({ recipientType: "STUDENT" as const });
+    } else if (user.role === "PARENT") {
+      roleConditions.push({ recipientType: "PARENT" as const });
+    } else if (user.role === "ADMIN" || user.role === "SUPERADMIN" || user.role === "TEACHER") {
+      roleConditions.push({ recipientType: "ADMIN" as const });
+    }
+
     // Build query to get messages for this user
     const messages = await db.message.findMany({
       where: {
@@ -40,17 +52,19 @@ export async function GET(req: Request) {
               // All users
               { recipientType: "ALL" },
               // Specific role and either no recipientIds (all of that role) or includes this user
-              {
-                AND: [
-                  { recipientType: user.role },
-                  {
-                    OR: [
-                      { recipientIds: { isEmpty: true } },
-                      { recipientIds: { has: user.id } },
+              ...(roleConditions.length > 0
+                ? roleConditions.map((roleCondition) => ({
+                    AND: [
+                      roleCondition,
+                      {
+                        OR: [
+                          { recipientIds: { isEmpty: true } },
+                          { recipientIds: { has: user.id } },
+                        ],
+                      },
                     ],
-                  },
-                ],
-              },
+                  }))
+                : []),
             ],
           },
           // If message has an organizationId, it must match the user's organization

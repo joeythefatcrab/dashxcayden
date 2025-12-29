@@ -137,6 +137,7 @@ model Student {
   attempts     Attempt[]
   activities   Activity[]
   notes        Note[]
+  monthlyReports MonthlyReport[]
 
   @@index([parentId])
   @@index([userId])
@@ -434,4 +435,48 @@ model MessageRead {
   @@unique([messageId, userId])
   @@index([userId])
   @@index([messageId])
+}
+
+// Monthly Reports System
+model MonthlyReport {
+  id              String              @id @default(cuid())
+  studentId       String
+  parentId        String
+  month           Int                 // 1-12
+  year            Int
+
+  // AI-generated report content
+  reportContent   String?             @db.Text
+  generatedAt     DateTime?
+
+  // Metadata
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  // Relations
+  student         Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  externalActivities ExternalActivity[]
+
+  @@unique([studentId, month, year])
+  @@index([studentId])
+  @@index([parentId])
+  @@index([month, year])
+}
+
+model ExternalActivity {
+  id              String         @id @default(cuid())
+  reportId        String
+  title           String
+  description     String?        @db.Text
+  date            DateTime
+  hoursSpent      Float?         // Hours spent on activity
+  category        String?        // e.g., "Field Trip", "Reading", "Project"
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  report          MonthlyReport  @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@index([date])
 }

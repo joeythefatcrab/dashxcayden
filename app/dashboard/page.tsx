@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { NotificationBanner } from "@/components/notifications/NotificationBanner";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -42,6 +43,8 @@ export default async function DashboardPage() {
 function StudentDashboard() {
   return (
     <div className="space-y-6">
+      <NotificationBanner />
+
       <div className="rounded-lg border bg-card p-6">
         <h3 className="mb-4 text-xl font-semibold">My Lessons</h3>
         <p className="mb-4 text-muted-foreground">

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BookOpen, Clock } from "lucide-react";
 import Link from "next/link";
 import { DailyGreeting } from "@/components/student/DailyGreeting";
+import { NotificationBanner } from "@/components/notifications/NotificationBanner";
 
 export default async function MyCoursesPage() {
   const session = await auth();
@@ -70,6 +71,7 @@ export default async function MyCoursesPage() {
   return (
     <div className="container mx-auto max-w-5xl px-4 py-8">
       <DailyGreeting studentName={student.name} studentId={student.id} />
+      <NotificationBanner />
 
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-bold">My Courses</h1>

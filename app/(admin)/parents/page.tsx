@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ParentManager } from "@/components/admin/ParentManager";
+import { NotificationBanner } from "@/components/notifications/NotificationBanner";
 
 export default async function AdminParentsPage() {
   const session = await auth();
@@ -62,6 +63,8 @@ export default async function AdminParentsPage() {
           View and manage all parent accounts under your administration.
         </p>
       </div>
+
+      <NotificationBanner />
 
       <ParentManager parents={serializedParents} />
     </div>

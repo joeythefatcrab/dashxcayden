@@ -104,6 +104,7 @@ model User {
   children      Student[] @relation("StudentParent")
   curricula     Curriculum[] @relation("CurriculumCreator")
   userActivities UserActivity[]
+  sentMessages  Message[] @relation("SentMessages")
 
   // Parent settings
   digestFrequency String @default("daily") // daily, weekly, none
@@ -387,4 +388,50 @@ model StudentInvitation {
   @@index([studentEmail])
   @@index([token])
   @@index([status])
+}
+
+// Admin Messaging System
+enum MessageRecipientType {
+  STUDENT
+  PARENT
+  ADMIN
+  ALL
+}
+
+model Message {
+  id              String               @id @default(cuid())
+  content         String               @db.Text
+  title           String?              // Optional message title
+  senderId        String
+  sender          User                 @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  // Targeting
+  recipientType   MessageRecipientType
+  recipientIds    String[]             @default([]) // Empty means all users of recipientType
+  organizationId  String?              // Optional: limit to specific organization
+
+  // Metadata
+  createdAt       DateTime             @default(now())
+  expiresAt       DateTime?            // Optional: auto-hide after this date
+
+  // Relations
+  readReceipts    MessageRead[]
+
+  @@index([senderId])
+  @@index([recipientType])
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model MessageRead {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@index([messageId])
 }

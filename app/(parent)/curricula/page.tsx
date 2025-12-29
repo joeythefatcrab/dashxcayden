@@ -10,6 +10,7 @@ import { CurriculumUploader } from "@/components/curriculum/CurriculumUploader";
 import { PDFChecklistGenerator } from "@/components/curriculum/PDFChecklistGenerator";
 import { AssignCurriculumDialog } from "@/components/curriculum/AssignCurriculumDialog";
 import { PendingGradesList } from "@/components/grading/pending-grades-list";
+import { NotificationBanner } from "@/components/notifications/NotificationBanner";
 
 export default async function CurriculaPage() {
   const session = await auth();
@@ -100,6 +101,8 @@ export default async function CurriculaPage() {
             <CurriculumUploader />
           </div>
         </div>
+
+        <NotificationBanner />
 
         {/* Pending Grades Section */}
         <div className="mb-8">

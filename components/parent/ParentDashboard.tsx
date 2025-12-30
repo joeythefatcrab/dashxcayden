@@ -9,8 +9,10 @@ import { PendingEssaysList } from "@/components/parent/PendingEssaysList";
 type Student = {
   id: string;
   name: string;
-  grade: number;
-  email?: string;
+  grade: number | null;
+  user?: {
+    email: string;
+  } | null;
   enrollments: {
     id: string;
     curriculum: {
@@ -84,13 +86,15 @@ export function ParentDashboard({ parentName, students }: Props) {
                 <CardHeader>
                   <CardTitle className="flex items-start justify-between">
                     <span className="line-clamp-1">{student.name}</span>
-                    <Badge variant="secondary" className="ml-2">
-                      Grade {student.grade}
-                    </Badge>
+                    {student.grade !== null && (
+                      <Badge variant="secondary" className="ml-2">
+                        Grade {student.grade}
+                      </Badge>
+                    )}
                   </CardTitle>
-                  {student.email && (
+                  {student.user?.email && (
                     <CardDescription className="text-xs truncate">
-                      {student.email}
+                      {student.user.email}
                     </CardDescription>
                   )}
                 </CardHeader>

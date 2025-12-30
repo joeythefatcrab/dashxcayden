@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
 import { NotificationBanner } from "@/components/notifications/NotificationBanner";
+import { ParentDashboard } from "@/components/parent/ParentDashboard";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -11,14 +13,44 @@ export default async function DashboardPage() {
     redirect("/superadmin");
   }
 
-  // Redirect parents to parent dashboard
-  if (user.role === "PARENT") {
-    redirect("/curricula");
-  }
-
   // Redirect admins to admin dashboard
   if (user.role === "ADMIN") {
     redirect("/parents");
+  }
+
+  // Show parent dashboard
+  if (user.role === "PARENT") {
+    const students = await db.student.findMany({
+      where: { parentId: user.id },
+      include: {
+        user: {
+          select: {
+            email: true,
+          },
+        },
+        enrollments: {
+          include: {
+            curriculum: {
+              select: {
+                id: true,
+                name: true,
+                subject: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    return (
+      <div className="px-4 py-8">
+        <div className="container mx-auto">
+          <NotificationBanner />
+          <ParentDashboard parentName={user.name || "there"} students={students} />
+        </div>
+      </div>
+    );
   }
 
   // Only students should reach this point

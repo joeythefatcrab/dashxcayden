@@ -43,9 +43,8 @@ export function DashboardNav() {
     { name: "Manage Parents", href: "/parents", icon: Users, roles: ["ADMIN"] },
     { name: "Messages", href: "/messages", icon: MessageSquare, roles: ["ADMIN", "SUPERADMIN"] },
     { name: "Curricula", href: "/curricula", icon: BookOpen, roles: ["PARENT", "ADMIN"] },
-    { name: "My Students", href: "/students", icon: Users, roles: ["PARENT"] },
-    { name: "Monthly Reports", href: "/monthly-reports", icon: FileText, roles: ["PARENT", "ADMIN"] },
-    { name: "Export Data", href: "/reports", icon: FileText, roles: ["PARENT", "ADMIN"] },
+    { name: "Students", href: "/students", icon: Users, roles: ["PARENT"] },
+    { name: "Reports", href: "/monthly-reports", icon: FileText, roles: ["PARENT", "ADMIN"] },
     { name: "Settings", href: "/settings", icon: Settings, roles: ["PARENT", "ADMIN", "STUDENT", "SUPERADMIN"] },
   ];
 

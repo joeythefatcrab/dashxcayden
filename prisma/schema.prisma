@@ -138,6 +138,7 @@ model Student {
   activities   Activity[]
   notes        Note[]
   monthlyReports MonthlyReport[]
+  essaySubmissions EssaySubmission[]
 
   @@index([parentId])
   @@index([userId])
@@ -302,6 +303,45 @@ model Attempt {
   @@index([studentId])
   @@index([lessonId])
   @@index([createdAt])
+}
+
+// Essay Submissions
+enum EssayStatus {
+  DRAFT
+  SUBMITTED
+  GRADED
+}
+
+model EssaySubmission {
+  id          String      @id @default(cuid())
+  studentId   String
+  lessonId    String
+  itemId      String      // The essay question/prompt item
+
+  // Rich text content (HTML)
+  content     String      @db.Text
+
+  // Submission tracking
+  status      EssayStatus @default(DRAFT)
+  submittedAt DateTime?
+
+  // Grading
+  grade       Int?        // Percentage 0-100
+  feedback    String?     @db.Text
+  gradedAt    DateTime?
+  gradedBy    String?     // Parent/Admin user ID
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  student     Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, itemId])
+  @@index([studentId])
+  @@index([lessonId])
+  @@index([itemId])
+  @@index([status])
+  @@index([submittedAt])
 }
 
 // Student Notes

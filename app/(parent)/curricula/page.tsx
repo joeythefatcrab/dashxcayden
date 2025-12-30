@@ -10,6 +10,7 @@ import { CurriculumUploader } from "@/components/curriculum/CurriculumUploader";
 import { PDFChecklistGenerator } from "@/components/curriculum/PDFChecklistGenerator";
 import { AssignCurriculumDialog } from "@/components/curriculum/AssignCurriculumDialog";
 import { PendingGradesList } from "@/components/grading/pending-grades-list";
+import { PendingEssaysList } from "@/components/parent/PendingEssaysList";
 import { NotificationBanner } from "@/components/notifications/NotificationBanner";
 
 export default async function CurriculaPage() {
@@ -107,6 +108,11 @@ export default async function CurriculaPage() {
         {/* Pending Grades Section */}
         <div className="mb-8">
           <PendingGradesList />
+        </div>
+
+        {/* Pending Essays Section */}
+        <div className="mb-8">
+          <PendingEssaysList />
         </div>
 
         {curricula.length === 0 ? (

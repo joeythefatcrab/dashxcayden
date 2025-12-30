@@ -134,4 +134,15 @@ List external activities with:
 
 ## Output Format
 
-Return ONLY the formatted report text. Do not include JSON or any meta-commentary. The report should be ready to display to parents as-is.
+Return ONLY the formatted report text as PLAIN TEXT.
+
+**CRITICAL FORMATTING RULES:**
+- DO NOT use markdown symbols (**, *, _, #, etc.)
+- DO NOT use asterisks or bullet points symbols
+- DO NOT use code blocks or backticks
+- Use simple line breaks and spacing for structure
+- Use ALL CAPS for section headers (e.g., "SUMMARY:")
+- Use indentation and line spacing for readability
+- The report should be clean, professional text ready to print or display
+
+The report should be ready to display to parents as-is without any formatting symbols.

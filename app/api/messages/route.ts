@@ -24,14 +24,14 @@ export async function GET(req: Request) {
     }
 
     // Map user role to message recipient type
-    // SUPERADMIN and TEACHER can see ADMIN messages
+    // SUPERADMIN can see ADMIN messages
     const roleConditions = [];
 
     if (user.role === "STUDENT") {
       roleConditions.push({ recipientType: "STUDENT" as const });
     } else if (user.role === "PARENT") {
       roleConditions.push({ recipientType: "PARENT" as const });
-    } else if (user.role === "ADMIN" || user.role === "SUPERADMIN" || user.role === "TEACHER") {
+    } else if (user.role === "ADMIN" || user.role === "SUPERADMIN") {
       roleConditions.push({ recipientType: "ADMIN" as const });
     }
 

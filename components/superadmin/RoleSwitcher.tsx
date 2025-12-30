@@ -44,13 +44,10 @@ export function RoleSwitcher() {
           router.push("/parents");
           break;
         case "PARENT":
-          router.push("/curricula");
+          router.push("/dashboard");
           break;
         case "STUDENT":
           router.push("/my-courses");
-          break;
-        case "TEACHER":
-          router.push("/curricula");
           break;
         default:
           router.refresh();
@@ -111,7 +108,6 @@ export function RoleSwitcher() {
             <option value="ADMIN">Admin</option>
             <option value="PARENT">Parent</option>
             <option value="STUDENT">Student</option>
-            <option value="TEACHER">Teacher</option>
           </select>
           <button
             onClick={handleReset}

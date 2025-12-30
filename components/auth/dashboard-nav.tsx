@@ -46,7 +46,7 @@ export function DashboardNav() {
     { name: "My Students", href: "/students", icon: Users, roles: ["PARENT"] },
     { name: "Monthly Reports", href: "/monthly-reports", icon: FileText, roles: ["PARENT", "ADMIN"] },
     { name: "Export Data", href: "/reports", icon: FileText, roles: ["PARENT", "ADMIN"] },
-    { name: "Settings", href: "/settings", icon: Settings, roles: ["PARENT", "ADMIN", "STUDENT", "SUPERADMIN", "TEACHER"] },
+    { name: "Settings", href: "/settings", icon: Settings, roles: ["PARENT", "ADMIN", "STUDENT", "SUPERADMIN"] },
   ];
 
   const filteredNav = navigation.filter((item) => item.roles.includes(role));

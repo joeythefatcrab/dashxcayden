@@ -16,6 +16,11 @@ type Submission = {
   grade: number | null;
   feedback: string | null;
   gradedAt: string | null;
+  aiGrade: number | null;
+  aiStrengths: string | null;
+  aiImprovements: string | null;
+  aiSummary: string | null;
+  aiParentNote: string | null;
   student: {
     id: string;
     name: string;
@@ -52,6 +57,36 @@ export function EssayGrading({ onBack }: Props) {
       console.error("Error loading pending essays:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleApproveAI = async () => {
+    if (!selectedSubmission || !selectedSubmission.aiGrade) return;
+
+    setIsGrading(true);
+    try {
+      const response = await fetch("/api/parent/grade-essay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          submissionId: selectedSubmission.id,
+          grade: selectedSubmission.aiGrade,
+          feedback: feedback.trim() || null,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to approve grade");
+
+      alert("AI grade approved successfully!");
+      setSelectedSubmission(null);
+      setGrade("");
+      setFeedback("");
+      loadPendingEssays();
+    } catch (error) {
+      console.error("Error approving grade:", error);
+      alert("Failed to approve grade");
+    } finally {
+      setIsGrading(false);
     }
   };
 
@@ -125,6 +160,88 @@ export function EssayGrading({ onBack }: Props) {
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* AI Grading Recommendation */}
+            {selectedSubmission.aiGrade !== null && (
+              <div className="rounded-lg border-2 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/20 p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                    AI Grading Recommendation: {selectedSubmission.aiGrade}%
+                  </h3>
+                  <Button
+                    onClick={handleApproveAI}
+                    disabled={isGrading}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isGrading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Approving...
+                      </>
+                    ) : (
+                      "Approve AI Grade"
+                    )}
+                  </Button>
+                </div>
+
+                {/* AI Parent Note */}
+                {selectedSubmission.aiParentNote && (
+                  <div className="mb-3 p-3 rounded-md bg-blue-100/50 dark:bg-blue-900/20">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                      Note for You:
+                    </p>
+                    <p className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
+                      {selectedSubmission.aiParentNote}
+                    </p>
+                  </div>
+                )}
+
+                {/* AI Summary */}
+                {selectedSubmission.aiSummary && (
+                  <div className="mb-3">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                      Overall Assessment:
+                    </p>
+                    <p className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
+                      {selectedSubmission.aiSummary}
+                    </p>
+                  </div>
+                )}
+
+                {/* Strengths */}
+                {selectedSubmission.aiStrengths && (
+                  <div className="mb-3">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                      Strengths:
+                    </p>
+                    <ul className="list-disc list-inside text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                      {JSON.parse(selectedSubmission.aiStrengths).map((strength: string, i: number) => (
+                        <li key={i}>{strength}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Areas for Improvement */}
+                {selectedSubmission.aiImprovements && (
+                  <div>
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                      Areas for Improvement:
+                    </p>
+                    <ul className="list-disc list-inside text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                      {JSON.parse(selectedSubmission.aiImprovements).map((improvement: string, i: number) => (
+                        <li key={i}>{improvement}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-3">
+                  You can approve the AI grade above, or manually enter a different grade below.
+                </p>
+              </div>
+            )}
+
             {/* Essay Content */}
             <div>
               <h3 className="font-semibold mb-2">Essay Content:</h3>

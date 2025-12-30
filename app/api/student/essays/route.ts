@@ -1,6 +1,71 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || "dummy-key",
+});
+
+// Essay Grading Assistant ID
+const ESSAY_GRADING_ASSISTANT_ID = process.env.ESSAY_GRADING_ASSISTANT_ID || "asst_REPLACE_ME";
+
+// AI Grading Function
+async function gradeEssayWithAI(prompt: string, essayContent: string, gradeLevel: number) {
+  try {
+    // Create a thread with the grading request
+    const thread = await openai.beta.threads.create({
+      messages: [
+        {
+          role: "user",
+          content: JSON.stringify({
+            prompt: prompt,
+            essay: essayContent,
+            gradeLevel: gradeLevel,
+          }),
+        },
+      ],
+    });
+
+    // Run the assistant
+    const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
+      assistant_id: ESSAY_GRADING_ASSISTANT_ID,
+    });
+
+    if (run.status !== "completed") {
+      console.error("Assistant run failed:", run.status);
+      return null;
+    }
+
+    // Get the response
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    const assistantMessage = messages.data.find((m) => m.role === "assistant");
+
+    if (!assistantMessage) {
+      console.error("No assistant response found");
+      return null;
+    }
+
+    // Parse the JSON response
+    const content = assistantMessage.content
+      .filter((c) => c.type === "text")
+      .map((c) => (c as any).text.value)
+      .join("");
+
+    // Extract JSON from markdown code blocks if present
+    let jsonContent = content;
+    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      jsonContent = jsonMatch[1];
+    }
+
+    const result = JSON.parse(jsonContent);
+    return result;
+  } catch (error) {
+    console.error("Error grading essay with AI:", error);
+    return null;
+  }
+}
 
 // GET - Fetch essay submission
 export async function GET(req: Request) {
@@ -113,6 +178,45 @@ export async function POST(req: Request) {
       );
     }
 
+    // If submitting (not just saving draft), trigger AI grading
+    let aiGradeData = {};
+    if (status === "SUBMITTED" && !existing) {
+      try {
+        // Get essay prompt and student grade level
+        const item = await db.item.findUnique({
+          where: { id: itemId },
+          select: { prompt: true },
+        });
+
+        const studentData = await db.student.findUnique({
+          where: { id: studentId },
+          select: { grade: true },
+        });
+
+        if (item && studentData && process.env.OPENAI_API_KEY) {
+          const gradeResult = await gradeEssayWithAI(
+            item.prompt,
+            content,
+            studentData.grade || 8 // Default to 8th grade if not set
+          );
+
+          if (gradeResult) {
+            aiGradeData = {
+              aiGrade: gradeResult.grade,
+              aiStrengths: JSON.stringify(gradeResult.strengths),
+              aiImprovements: JSON.stringify(gradeResult.improvements),
+              aiSummary: gradeResult.summary,
+              aiParentNote: gradeResult.parentNote,
+              aiGradedAt: new Date(),
+            };
+          }
+        }
+      } catch (error) {
+        console.error("AI grading failed:", error);
+        // Continue without AI grading if it fails
+      }
+    }
+
     // Create or update submission
     const submission = await db.essaySubmission.upsert({
       where: {
@@ -125,6 +229,7 @@ export async function POST(req: Request) {
         content,
         status: status || "DRAFT",
         submittedAt: status === "SUBMITTED" ? new Date() : existing?.submittedAt,
+        ...aiGradeData,
       },
       create: {
         studentId,
@@ -133,6 +238,7 @@ export async function POST(req: Request) {
         content,
         status: status || "DRAFT",
         submittedAt: status === "SUBMITTED" ? new Date() : null,
+        ...aiGradeData,
       },
     });
 

@@ -325,9 +325,17 @@ model EssaySubmission {
   status      EssayStatus @default(DRAFT)
   submittedAt DateTime?
 
-  // Grading
-  grade       Int?        // Percentage 0-100
-  feedback    String?     @db.Text
+  // AI Grading (automatic on submission)
+  aiGrade         Int?     // AI's suggested percentage 0-100
+  aiStrengths     String?  @db.Text // JSON array of strengths
+  aiImprovements  String?  @db.Text // JSON array of improvements
+  aiSummary       String?  @db.Text // Overall AI assessment
+  aiParentNote    String?  @db.Text // Note specifically for parent
+  aiGradedAt      DateTime?
+
+  // Final Grading (parent approval/override)
+  grade       Int?        // Final percentage 0-100 (from AI or parent override)
+  feedback    String?     @db.Text // Parent's additional feedback (optional)
   gradedAt    DateTime?
   gradedBy    String?     // Parent/Admin user ID
 

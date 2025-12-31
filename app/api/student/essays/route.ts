@@ -199,7 +199,7 @@ export async function POST(req: Request) {
           select: { grade: true },
         });
 
-        if (studentData && process.env.OPENAI_API_KEY && process.env.ESSAY_GRADING_ASSISTANT_ID !== "asst_REPLACE_ME") {
+        if (studentData) {
           console.log("Starting AI grading for essay...");
           const gradeResult = await gradeEssayWithAI(
             essayPrompt,
@@ -220,8 +220,6 @@ export async function POST(req: Request) {
           } else {
             console.log("AI grading returned null");
           }
-        } else {
-          console.log("Skipping AI grading - missing configuration or student data");
         }
       } catch (error) {
         console.error("AI grading failed:", error);

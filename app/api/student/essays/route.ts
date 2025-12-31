@@ -52,11 +52,21 @@ async function gradeEssayWithAI(prompt: string, essayContent: string, gradeLevel
       .map((c) => (c as any).text.value)
       .join("");
 
-    // Extract JSON from markdown code blocks if present
+    console.log("Raw assistant response:", content.substring(0, 200));
+
+    // Try to extract JSON from the response
     let jsonContent = content;
+
+    // Try to find JSON in markdown code blocks
     const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
     if (jsonMatch) {
       jsonContent = jsonMatch[1];
+    } else {
+      // Try to find JSON object directly
+      const objectMatch = content.match(/\{[\s\S]*\}/);
+      if (objectMatch) {
+        jsonContent = objectMatch[0];
+      }
     }
 
     const result = JSON.parse(jsonContent);

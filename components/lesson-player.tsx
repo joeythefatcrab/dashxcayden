@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Lock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, XCircle, Loader2, FileText } from "lucide-react";
 import Link from "next/link";
 import { GlossaryMarkdown } from "./glossary-markdown";
 import { NotesSection } from "./notes-section";
+import { FloatingEssaySubmission } from "./student/FloatingEssaySubmission";
 
 interface LessonPlayerProps {
   lesson: any;
@@ -37,6 +38,8 @@ export function LessonPlayer({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [showContent, setShowContent] = useState(true);
+  const [essayPopupOpen, setEssayPopupOpen] = useState(false);
+  const [selectedEssayItem, setSelectedEssayItem] = useState<any>(null);
 
   const handleAnswerChange = (itemId: string, value: any) => {
     setAnswers((prev) => ({ ...prev, [itemId]: value }));
@@ -411,10 +414,46 @@ export function LessonPlayer({
                   )}
                 </div>
               )}
+
+              {item.type === "ESSAY" && (
+                <div className="space-y-2">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setSelectedEssayItem(item);
+                      setEssayPopupOpen(true);
+                    }}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Write Essay
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Click to open the essay editor
+                  </p>
+                </div>
+              )}
             </div>
           ))}
         </CardContent>
       </Card>
+
+      {/* Essay Popup */}
+      {selectedEssayItem && (
+        <FloatingEssaySubmission
+          studentId={studentId}
+          lessonId={lesson.id}
+          itemId={selectedEssayItem.id}
+          prompt={selectedEssayItem.prompt}
+          isOpen={essayPopupOpen}
+          onClose={() => {
+            setEssayPopupOpen(false);
+            // Mark essay as answered so submit button can be enabled
+            handleAnswerChange(selectedEssayItem.id, "ESSAY_SUBMITTED");
+          }}
+        />
+      )}
 
       <div className="flex justify-end gap-4">
         <Button

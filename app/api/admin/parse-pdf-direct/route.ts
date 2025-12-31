@@ -127,9 +127,32 @@ The description should NEVER be a to-do list of activities. Save the detailed in
 ITEM TYPES - USE THESE EXACT VALUES:
 - For checklist tasks/steps: type: "CHECKBOX"
 - For multiple choice questions: type: "MCQ"
-- For short written answers: type: "SHORT_ANSWER"
-- For essay questions: type: "ESSAY"
+- For short written answers (1-2 sentences): type: "SHORT_ANSWER"
+- For essay questions (detailed writing): type: "ESSAY"
 - For true/false questions: type: "TRUE_FALSE"
+
+WHEN TO USE ESSAY TYPE - CRITICAL DETECTION RULES:
+Use type: "ESSAY" when the prompt includes ANY of these indicators:
+✅ Contains words: "essay", "write a...", "compose", "explain in detail", "analyze", "describe in your own words"
+✅ Requests multiple paragraphs or extended writing
+✅ Asks for analysis, comparison, or argumentation
+✅ Specifies word count (e.g., "250 words", "2-3 pages", "500 word essay")
+✅ Asks to "discuss", "evaluate", "justify", "argue for/against"
+✅ Phrases like "in a well-developed essay", "support your answer with examples"
+✅ Creative writing prompts: "write a story", "write a letter", "write a narrative"
+
+EXAMPLES OF ESSAY ITEMS:
+✅ "Write a 250-word essay explaining the causes of the Civil War"
+✅ "Describe in detail how photosynthesis works"
+✅ "Write a narrative about a time you overcame a challenge"
+✅ "Analyze the main themes in this chapter and support with examples"
+✅ "Compose a persuasive essay arguing for or against school uniforms"
+
+EXAMPLES OF SHORT_ANSWER (NOT ESSAY):
+✅ "List three causes of World War I"
+✅ "Define photosynthesis"
+✅ "What is the main idea of this passage?"
+✅ "Explain in 1-2 sentences why..."
 
 NEVER use "task" or any other type - only use the exact values listed above.
 

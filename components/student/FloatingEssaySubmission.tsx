@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { X, FileText, Loader2, Save, Send, CheckCircle } from "lucide-react";
 import { RichTextEditor } from "./RichTextEditor";
+import { EssayWritingAssistant } from "./EssayWritingAssistant";
 
 type EssaySubmission = {
   id: string;
@@ -245,6 +246,16 @@ export function FloatingEssaySubmission({
                   disabled={isSubmitted}
                 />
               </div>
+
+              {/* Writing Assistant - Only show if not submitted */}
+              {!isSubmitted && (
+                <div className="mt-4">
+                  <EssayWritingAssistant
+                    essayContent={content}
+                    essayPrompt={prompt}
+                  />
+                </div>
+              )}
 
               {/* Action Buttons */}
               {!isSubmitted && (

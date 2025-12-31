@@ -88,6 +88,7 @@ export function FloatingEssaySubmission({
           itemId,
           content,
           status: "DRAFT",
+          prompt,
         }),
       });
 
@@ -129,6 +130,7 @@ export function FloatingEssaySubmission({
           itemId,
           content,
           status: "SUBMITTED",
+          prompt,
         }),
       });
 

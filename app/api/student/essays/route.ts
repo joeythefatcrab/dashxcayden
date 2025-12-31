@@ -136,7 +136,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { studentId, lessonId, itemId, content, status } = body;
+    const { studentId, lessonId, itemId, content, status, prompt } = body;
 
     if (!studentId || !lessonId || !itemId || !content) {
       return NextResponse.json(
@@ -182,25 +182,33 @@ export async function POST(req: Request) {
     let aiGradeData = {};
     if (status === "SUBMITTED" && !existing) {
       try {
-        // Get essay prompt and student grade level
+        // Get essay prompt - first try from Item table, fallback to passed prompt
+        let essayPrompt = prompt || "Write an essay about this topic";
+
         const item = await db.item.findUnique({
           where: { id: itemId },
           select: { prompt: true },
         });
+
+        if (item?.prompt) {
+          essayPrompt = item.prompt;
+        }
 
         const studentData = await db.student.findUnique({
           where: { id: studentId },
           select: { grade: true },
         });
 
-        if (item && studentData && process.env.OPENAI_API_KEY) {
+        if (studentData && process.env.OPENAI_API_KEY && process.env.ESSAY_GRADING_ASSISTANT_ID !== "asst_REPLACE_ME") {
+          console.log("Starting AI grading for essay...");
           const gradeResult = await gradeEssayWithAI(
-            item.prompt,
+            essayPrompt,
             content,
             studentData.grade || 8 // Default to 8th grade if not set
           );
 
           if (gradeResult) {
+            console.log("AI grading successful:", gradeResult.grade);
             aiGradeData = {
               aiGrade: gradeResult.grade,
               aiStrengths: JSON.stringify(gradeResult.strengths),
@@ -209,7 +217,11 @@ export async function POST(req: Request) {
               aiParentNote: gradeResult.parentNote,
               aiGradedAt: new Date(),
             };
+          } else {
+            console.log("AI grading returned null");
           }
+        } else {
+          console.log("Skipping AI grading - missing configuration or student data");
         }
       } catch (error) {
         console.error("AI grading failed:", error);

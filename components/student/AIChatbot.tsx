@@ -19,6 +19,7 @@ type Message = {
 };
 
 type AIChatbotProps = {
+  lessonId?: string | null;
   context?: {
     lessonTitle?: string;
     lessonDescription?: string;
@@ -26,13 +27,15 @@ type AIChatbotProps = {
   };
 };
 
-export function AIChatbot({ context }: AIChatbotProps) {
+export function AIChatbot({ lessonId, context }: AIChatbotProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content:
-        "Hi! I'm Loopi, your AI tutor! I'm here to help you understand your coursework and guide you through challenging concepts. How can I help you today?",
+      content: lessonId
+        ? "Hi! I'm your lesson coach! I'm here to help you with this specific lesson. I can see what you're studying and help guide you through it. What would you like help with?"
+        : "Hi! I'm Loopi, your AI tutor! I'm here to help you understand your coursework and guide you through challenging concepts. How can I help you today?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -56,26 +59,58 @@ export function AIChatbot({ context }: AIChatbotProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/ai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...messages, userMessage],
-          context,
-        }),
-      });
+      // Use context-aware assistant endpoint if on a lesson page
+      if (lessonId) {
+        const response = await fetch("/api/student/essay-assistant", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: input.trim(),
+            essayContent: "",
+            prompt: "",
+            threadId,
+            lessonId,
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.details || data.error || "Failed to get response");
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to get response");
+        }
+
+        if (data.threadId) {
+          setThreadId(data.threadId);
+        }
+
+        const assistantMessage: Message = {
+          role: "assistant",
+          content: data.response,
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        // Use regular chat endpoint
+        const response = await fetch("/api/ai/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: [...messages, userMessage],
+            context,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.details || data.error || "Failed to get response");
+        }
+
+        const assistantMessage: Message = {
+          role: "assistant",
+          content: data.message,
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
       }
-
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: data.message,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       const errorMessage: Message = {
         role: "assistant",
@@ -132,7 +167,9 @@ export function AIChatbot({ context }: AIChatbotProps) {
       <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-r from-blue-600 to-purple-600 p-4 text-white">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5" />
-          <h3 className="font-semibold">Loopi - AI Tutor</h3>
+          <h3 className="font-semibold">
+            {lessonId ? "Lesson Coach" : "Loopi - AI Tutor"}
+          </h3>
         </div>
         <button
           onClick={handleClose}

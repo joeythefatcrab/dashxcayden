@@ -255,6 +255,7 @@ export function FloatingEssaySubmission({
                   <EssayWritingAssistant
                     essayContent={content}
                     essayPrompt={prompt}
+                    lessonId={lessonId}
                   />
                 </div>
               )}

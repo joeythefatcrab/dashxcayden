@@ -15,9 +15,10 @@ type Message = {
 type Props = {
   essayContent: string;
   essayPrompt: string;
+  lessonId?: string;
 };
 
-export function EssayWritingAssistant({ essayContent, essayPrompt }: Props) {
+export function EssayWritingAssistant({ essayContent, essayPrompt, lessonId }: Props) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -63,6 +64,7 @@ export function EssayWritingAssistant({ essayContent, essayPrompt }: Props) {
           essayContent,
           prompt: essayPrompt,
           threadId,
+          lessonId,
         }),
       });
 

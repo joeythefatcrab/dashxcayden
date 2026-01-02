@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { message, essayContent, prompt, threadId } = await req.json();
+    const { message, essayContent, prompt, threadId, lessonId } = await req.json();
 
     if (!message) {
       return NextResponse.json(
@@ -37,12 +37,45 @@ export async function POST(req: Request) {
       select: { grade: true },
     });
 
+    // Get lesson context if lessonId is provided
+    let lessonContext = null;
+    if (lessonId) {
+      const lesson = await db.lesson.findUnique({
+        where: { id: lessonId },
+        include: {
+          unit: {
+            include: {
+              curriculum: {
+                select: {
+                  name: true,
+                  subject: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (lesson) {
+        lessonContext = {
+          curriculumName: lesson.unit.curriculum.name,
+          subject: lesson.unit.curriculum.subject,
+          unitTitle: lesson.unit.title,
+          lessonTitle: lesson.title,
+          lessonDescription: lesson.description,
+          lessonContent: lesson.contentMd,
+          objectives: lesson.objectives,
+        };
+      }
+    }
+
     // Create context for the assistant
     const context = {
       essayPrompt: prompt || "Essay assignment",
       currentDraft: essayContent || "",
       gradeLevel: student?.grade || 8,
       studentQuestion: message,
+      ...(lessonContext && { lessonContext }),
     };
 
     let thread;

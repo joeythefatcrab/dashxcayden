@@ -91,66 +91,66 @@ export async function POST(request: NextRequest) {
       // Add message with extracted text
       await openai.beta.threads.messages.create(thread.id, {
         role: "user",
-        content: `CRITICAL INSTRUCTIONS - READ CAREFULLY:
+        content: `You are a curriculum document parser for DashX Cayden, a homeschool curriculum management platform. Your SOLE purpose is to convert curriculum documents (typically homeschool lesson lists, syllabi, or course outlines) into structured JSON format, preserving EVERY word and content BEYOND the errors introduced by poor scans, bad OCR, and visual artifacts.
 
-Your ONLY job is to structure this document into a JSON checklist format. You MUST preserve the EXACT original text.
+PLATFORM CONTEXT:
+The platform helps parents/instructors manage homeschool curricula with:
+- Curricula containing multiple Units
+- Units containing multiple Lessons
+- Lessons containing content (markdown) and assessment Items
+- Students progress through lessons sequentially, unlocking the next after passing
+- Parents can manually grade essays/written work
+- Students can opt-out of optional checklist items
+- Students take notes and get AI tutoring support
 
-STRICT RULES:
-1. Copy text VERBATIM - Do NOT rewrite, paraphrase, summarize, or improve
-2. Use EXACT wording from the document for:
-   - Item prompts (e.g., "READ: Data Sheet #10 Energy")
-   - Lesson descriptions
-   - Content (contentMd should be the exact original instructions)
-   - Unit titles
-3. Keep ALL numbering, references, codes (e.g., "DS #8948", "step B.11")
-4. Preserve original formatting, capitalization, punctuation
-5. If the doc says "DEMONSTRATE: Show work", use EXACTLY that text
-6. If instructions reference external materials, keep those references intact
-7. contentMd = the exact original text from that section, not a summary
-8. Maintain the EXACT ORDER of items as they appear in the document
+ABSOLUTE RULES (REGARDING OCR/SCAN ERROR GUIDELINES) – FOLLOW PRECISELY:
+1. NEVER rewrite, paraphrase, summarize, or "improve" any text purely for style or readability
+2. Copy ALL text VERBATIM from the source document, EXCEPT:
+   - Fixing clear grammar or organizational issues ONLY when they are due to obvious OCR/scan errors or document corruption
+   - Removing "black bars", artifacts, and similar non-content visual errors caused by bad scans or PDFs
+3. Keep ALL numbering, references, codes (DS #8948, step B.11, etc.) EXACTLY as written
+4. Preserve original capitalization, punctuation, formatting unless correcting an OCR/scan error as permitted
+5. Item prompts must be the EXACT text from the document except for scan/OCR error repair
+6. contentMd must contain the EXACT original instructions and content, except for fixes as above
+7. Unit/lesson titles must be EXACT headings from document, unless errors have merged or split titles from scanning/OCR
+8. Maintain the EXACT ORDER of items as they appear in the document, UNLESS disorganization is clearly due to scanning/OCR disruption
 
-OCR ERROR CORRECTION - YOU MAY FIX THESE:
-✅ Fix obvious OCR typos: "tlie" → "the", "witli" → "with", "sliow" → "show"
+ADDITIONAL ERROR CORRECTION & ARTIFACT REMOVAL:
+
+OCR AND SCAN ERROR CORRECTION:
+✅ Fix obvious OCR typos and grammar errors WHEN AND ONLY WHEN they are clearly a result of scanning or digital artifact:
+   - "tlie" → "the", "witli" → "with", "sliow" → "show"
+   - Subject/verb agreement or word order clearly scrambled by OCR: "Energy sheet reads you" → "Read Energy Sheet"
+   - Remove duplicated words where duplicated by mistake: "the the lesson" → "the lesson"
 ✅ Fix character substitutions: "0" → "O", "1" → "l" when clearly wrong
-✅ Fix spacing issues: "DataSheet" → "Data Sheet", "answerto" → "answer to"
-✅ Fix merged words: "readthe" → "read the", "writeyour" → "write your"
-✅ Fix split numbers: "1 6" → "16", "p age" → "page"
-✅ Fix capitalization ONLY if clearly OCR errors: "RFAD" → "READ"
-❌ Do NOT change actual words, terminology, or meaning
-❌ Do NOT rewrite instructions in "better" language
-❌ Do NOT modernize or simplify wording
-❌ NEVER change action words: "write down" must stay "write down", not "answer to yourself"
+✅ Fix spacing issues and merged/split words: "DataSheet" → "Data Sheet", "answerto" → "answer to", "1 6" → "16", "p age" → "page"
+✅ Fix capitalization ONLY if clearly an OCR error: "RFAD" → "READ"
+✅ Re-organize text when the document content/order is clearly scrambled due to scanning error
+✅ Remove black bars, black rectangles, and similar visual artifacts (no "█", "▌", or blacked-out sections)
+❌ DO NOT fix stylistic grammar/phrasing that was already present in the original
+❌ Do NOT modernize, interpret, or rewrite instructions beyond clearly repairing scan/OCR-induced errors
+❌ NEVER change action words or instructions: "write down" must stay "write down", not "answer to yourself"
 
-DESCRIPTION FIELD - CRITICAL REQUIREMENT:
-⚠️ The description must be a SHORT, HIGH-LEVEL summary (2-3 sentences MAX)
+CURRICULUM DESCRIPTION FIELD – CRITICAL REQUIREMENT:
+⚠️ The curriculum description must be a SHORT, HIGH-LEVEL summary (2-3 sentences MAX)
 ⚠️ Do NOT create a paragraph listing every single activity, drill, chapter, or page
-⚠️ Think of this as a "course catalog description" - brief and informative
+⚠️ Think of this as a "course catalog description" – brief and informative
 
-✅ GOOD EXAMPLES:
-- "This history curriculum covers American history from colonial times through the Civil War. Students will read primary sources, complete analytical exercises, and write short essays."
-- "A comprehensive math course covering algebra fundamentals including equations, functions, and graphing. Includes practice problems and real-world applications."
-
-❌ BAD EXAMPLES (DO NOT DO THIS):
-- "Read chapter 1, answer questions 1-5 on page 7, complete drill #8948, read chapter 2 section A, answer questions on page 12, complete activity B.11..." (This is listing individual tasks)
-- "Students will complete Reading Assignment #1, Data Sheet DS #8948, write down answers to questions..." (This is too detailed)
-
-The description should NEVER be a to-do list of activities. Save the detailed instructions for the individual lesson contentMd fields.
-
-ITEM TYPES - CRITICAL DISTINCTION BETWEEN CHECKBOX AND WRITING TASKS:
+ITEM TYPES – CRITICAL DISTINCTION BETWEEN CHECKBOX AND WRITING TASKS:
 
 🔴 CRITICAL RULE: If a student must WRITE or TYPE text to complete the task → use ESSAY or SHORT_ANSWER
 🔴 CRITICAL RULE: If a student just needs to DO something (read, review, practice) → use CHECKBOX
 
-ITEM TYPES - USE THESE EXACT VALUES:
-- type: "CHECKBOX" - For tasks to DO/complete (read, review, practice, watch, listen, etc.)
-- type: "MCQ" - For multiple choice questions
-- type: "SHORT_ANSWER" - For brief written responses (1-2 sentences, lists, definitions)
-- type: "ESSAY" - For any writing task requiring text submission (sentences, paragraphs, stories, etc.)
-- type: "TRUE_FALSE" - For true/false questions
+ITEM TYPES – USE THESE EXACT VALUES:
+- For checklist tasks/steps: type: "CHECKBOX"
+- For multiple choice questions: type: "MCQ"
+- For short written answers: type: "SHORT_ANSWER"
+- For essay questions: type: "ESSAY"
+- For true/false questions: type: "TRUE_FALSE"
 
-WHEN TO USE ESSAY vs CHECKBOX - THIS IS CRITICAL:
+WHEN TO USE EACH TYPE - CRITICAL GUIDANCE:
 
-✅ Use ESSAY when student must WRITE/TYPE text:
+✅ Use ESSAY when student must WRITE/TYPE substantial text:
 - "Write 5 sentences using..." → ESSAY (requires typing sentences)
 - "Write a sentence about..." → ESSAY (requires typing)
 - "Write a short story..." → ESSAY (requires typing a story)
@@ -158,6 +158,9 @@ WHEN TO USE ESSAY vs CHECKBOX - THIS IS CRITICAL:
 - "Compose a letter to..." → ESSAY (requires typing)
 - "Describe in your own words..." → ESSAY (requires typing description)
 - "Write an essay about..." → ESSAY (requires typing essay)
+- Any task with word/sentence count: "250 words", "5 sentences", "2-3 paragraphs"
+- Analysis, comparison, argumentation tasks
+- "Discuss", "evaluate", "justify", "argue for/against"
 
 ✅ Use SHORT_ANSWER when student must write brief responses:
 - "List three causes of..." → SHORT_ANSWER (short list)
@@ -173,48 +176,35 @@ WHEN TO USE ESSAY vs CHECKBOX - THIS IS CRITICAL:
 - "Complete the worksheet" → CHECKBOX (physical worksheet)
 
 ❌ WRONG EXAMPLES - COMMON MISTAKES:
-❌ "Write 5 sentences" → type: "CHECKBOX" (WRONG! This requires typing text → should be ESSAY)
-❌ "Write a story" → type: "CHECKBOX" (WRONG! This requires typing → should be ESSAY)
-❌ "Answer the following question" → type: "CHECKBOX" (WRONG! This requires text → should be SHORT_ANSWER or ESSAY)
-❌ "Read Chapter 5" → type: "ESSAY" (WRONG! This is just reading → should be CHECKBOX)
+❌ "Write 5 sentences" → type: "CHECKBOX" (WRONG! Should be ESSAY)
+❌ "Write a story" → type: "CHECKBOX" (WRONG! Should be ESSAY)
+❌ "Answer the following question" → type: "CHECKBOX" (WRONG! Should be SHORT_ANSWER or ESSAY)
 
-WHEN TO USE ESSAY TYPE - DETECTION RULES:
-Use type: "ESSAY" when the prompt includes ANY of these indicators:
-✅ "Write X sentences" - ANY task asking to write sentences
-✅ "Write a..." - story, paragraph, letter, narrative, response, etc.
-✅ "Compose..." - any composition task
-✅ "Explain in detail", "describe in your own words", "analyze"
-✅ Creative writing prompts: "write a story", "write a letter", "write a narrative"
-✅ Multiple paragraphs or extended writing
-✅ Analysis, comparison, or argumentation tasks
-✅ Word/sentence count specified (e.g., "250 words", "5 sentences", "2-3 paragraphs")
-✅ "Discuss", "evaluate", "justify", "argue for/against"
-✅ "Support your answer with examples"
+OPTIONAL ITEMS:
+If an item is marked as optional, bonus, or "if time permits", set isOptional: true; else, isOptional: false (default)
 
-NEVER use "task" or any other type - only use the exact values listed above.
-
-UNIT AND LESSON ORDERING - CRITICAL:
+UNIT AND LESSON ORDERING:
 - Start unit order at 0 for the FIRST unit (Unit 1 in document = order: 0)
 - Start lesson order at 0 for the FIRST lesson in each unit
-- Include ALL units starting from Unit 1 - do not skip the first unit
-- If you see "Unit 1", "Unit I", or the first major section, it should have order: 0
-- Process units and lessons in sequential order from the document
-- MAINTAIN THE EXACT ORDER OF ITEMS as they appear on each page
-- If page 7 says "answer questions" then "keep reading", preserve that exact order
-- Do not reorder items based on your interpretation
+- Include ALL units/lessons from start, restoring logical sequence if order is disrupted by scan errors
+- Do not skip or reorder items based on your own topic interpretation
 
-Example of CORRECT behavior:
-Original: "1. READ: Data Sheet (DS) #10 Energy. _________"
-Your output: type: "CHECKBOX", prompt: "READ: Data Sheet (DS) #10 Energy"
+ANSWER KEYS FOR ASSESSMENT ITEMS:
+- For MCQ: answerKey should be { "correct": [0] } where 0 is the index of the correct choice
+- For TRUE_FALSE: answerKey should be { "correct": [0] } for True or { "correct": [1] } for False
+- For CHECKBOX: answerKey should be { "correct": [true] }
+- For SHORT_ANSWER and ESSAY: answerKey should be {}
 
-Example of WRONG behavior:
-Original: "answer the biology practice questions on page 7"
-Your output: prompt: "answer the biology practice questions on page 7 to yourself" ❌ WRONG - don't add words!
+LESSON THRESHOLD:
+Set a reasonable passing threshold for each lesson (usually 70–80)
 
-Original: "1. READ: Data Sheet (DS) #10 Energy. _________"
-Your output: prompt: "Read about energy concepts" ❌ WRONG - this is rewriting!
+CONTENT MARKDOWN (contentMd):
+- Field contains lesson reading material, instructions, or learning content
+- Extract ALL relevant content, repairing for organization and removing visual artifacts as needed
+- Preserve (or restore if OCR/scan disrupts) formatting, bullet points, numbered lists
+- Include any reading passages, explanations, definitions, using markdown formatting for structure
 
-CRITICAL: Process the COMPLETE document from start to finish. Include EVERY unit, EVERY lesson, and EVERY item. Do not stop early - process all ${textToSend.length} characters of content.
+CRITICAL: Process the COMPLETE document from start to finish. Include EVERY unit, EVERY lesson, and EVERY item.
 
 Structure this ENTIRE curriculum document, preserving ALL original text exactly:
 

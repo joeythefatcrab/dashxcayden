@@ -9,6 +9,7 @@ import Link from "next/link";
 import { CurriculumUploader } from "@/components/curriculum/CurriculumUploader";
 import { PDFChecklistGenerator } from "@/components/curriculum/PDFChecklistGenerator";
 import { AssignCurriculumDialog } from "@/components/curriculum/AssignCurriculumDialog";
+import { DeleteCurriculumButton } from "@/components/curriculum/DeleteCurriculumButton";
 import { PendingGradesList } from "@/components/grading/pending-grades-list";
 import { PendingEssaysList } from "@/components/parent/PendingEssaysList";
 import { NotificationBanner } from "@/components/notifications/NotificationBanner";
@@ -140,8 +141,13 @@ export default async function CurriculaPage() {
               return (
                 <Card key={curriculum.id} className="flex h-full flex-col">
                   <CardHeader>
-                    <CardTitle className="flex items-start justify-between">
+                    <CardTitle className="flex items-start justify-between gap-2">
                       <span className="line-clamp-2">{curriculum.name}</span>
+                      <DeleteCurriculumButton
+                        curriculumId={curriculum.id}
+                        curriculumName={curriculum.name}
+                        enrollmentCount={curriculum._count.enrollments}
+                      />
                     </CardTitle>
                     {curriculum.description && (
                       <CardDescription className="line-clamp-2">

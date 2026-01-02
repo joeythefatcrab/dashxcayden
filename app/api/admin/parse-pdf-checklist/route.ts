@@ -62,6 +62,9 @@ export async function POST(request: NextRequest) {
       const pdfData = await pdf(buffer);
       extractedText = pdfData.text;
 
+      // Remove null bytes and other invalid UTF8 characters that PostgreSQL can't handle
+      extractedText = extractedText.replace(/\0/g, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+
       if (!extractedText || extractedText.trim().length === 0) {
         return NextResponse.json(
           { error: "Could not extract text from PDF" },

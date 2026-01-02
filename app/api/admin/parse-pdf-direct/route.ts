@@ -124,35 +124,60 @@ DESCRIPTION FIELD - CRITICAL REQUIREMENT:
 
 The description should NEVER be a to-do list of activities. Save the detailed instructions for the individual lesson contentMd fields.
 
+ITEM TYPES - CRITICAL DISTINCTION BETWEEN CHECKBOX AND WRITING TASKS:
+
+🔴 CRITICAL RULE: If a student must WRITE or TYPE text to complete the task → use ESSAY or SHORT_ANSWER
+🔴 CRITICAL RULE: If a student just needs to DO something (read, review, practice) → use CHECKBOX
+
 ITEM TYPES - USE THESE EXACT VALUES:
-- For checklist tasks/steps: type: "CHECKBOX"
-- For multiple choice questions: type: "MCQ"
-- For short written answers (1-2 sentences): type: "SHORT_ANSWER"
-- For essay questions (detailed writing): type: "ESSAY"
-- For true/false questions: type: "TRUE_FALSE"
+- type: "CHECKBOX" - For tasks to DO/complete (read, review, practice, watch, listen, etc.)
+- type: "MCQ" - For multiple choice questions
+- type: "SHORT_ANSWER" - For brief written responses (1-2 sentences, lists, definitions)
+- type: "ESSAY" - For any writing task requiring text submission (sentences, paragraphs, stories, etc.)
+- type: "TRUE_FALSE" - For true/false questions
 
-WHEN TO USE ESSAY TYPE - CRITICAL DETECTION RULES:
+WHEN TO USE ESSAY vs CHECKBOX - THIS IS CRITICAL:
+
+✅ Use ESSAY when student must WRITE/TYPE text:
+- "Write 5 sentences using..." → ESSAY (requires typing sentences)
+- "Write a sentence about..." → ESSAY (requires typing)
+- "Write a short story..." → ESSAY (requires typing a story)
+- "Write a paragraph explaining..." → ESSAY (requires typing)
+- "Compose a letter to..." → ESSAY (requires typing)
+- "Describe in your own words..." → ESSAY (requires typing description)
+- "Write an essay about..." → ESSAY (requires typing essay)
+
+✅ Use SHORT_ANSWER when student must write brief responses:
+- "List three causes of..." → SHORT_ANSWER (short list)
+- "Define photosynthesis" → SHORT_ANSWER (brief definition)
+- "What is the main idea?" → SHORT_ANSWER (1-2 sentence answer)
+- "Give an example of..." → SHORT_ANSWER (brief example)
+
+✅ Use CHECKBOX only for tasks that DON'T require writing/typing:
+- "Read Chapter 5" → CHECKBOX (just reading)
+- "Review your notes" → CHECKBOX (just reviewing)
+- "Practice the drill" → CHECKBOX (just practicing)
+- "Watch the video" → CHECKBOX (just watching)
+- "Complete the worksheet" → CHECKBOX (physical worksheet)
+
+❌ WRONG EXAMPLES - COMMON MISTAKES:
+❌ "Write 5 sentences" → type: "CHECKBOX" (WRONG! This requires typing text → should be ESSAY)
+❌ "Write a story" → type: "CHECKBOX" (WRONG! This requires typing → should be ESSAY)
+❌ "Answer the following question" → type: "CHECKBOX" (WRONG! This requires text → should be SHORT_ANSWER or ESSAY)
+❌ "Read Chapter 5" → type: "ESSAY" (WRONG! This is just reading → should be CHECKBOX)
+
+WHEN TO USE ESSAY TYPE - DETECTION RULES:
 Use type: "ESSAY" when the prompt includes ANY of these indicators:
-✅ Contains words: "essay", "write a...", "compose", "explain in detail", "analyze", "describe in your own words"
-✅ Requests multiple paragraphs or extended writing
-✅ Asks for analysis, comparison, or argumentation
-✅ Specifies word count (e.g., "250 words", "2-3 pages", "500 word essay")
-✅ Asks to "discuss", "evaluate", "justify", "argue for/against"
-✅ Phrases like "in a well-developed essay", "support your answer with examples"
+✅ "Write X sentences" - ANY task asking to write sentences
+✅ "Write a..." - story, paragraph, letter, narrative, response, etc.
+✅ "Compose..." - any composition task
+✅ "Explain in detail", "describe in your own words", "analyze"
 ✅ Creative writing prompts: "write a story", "write a letter", "write a narrative"
-
-EXAMPLES OF ESSAY ITEMS:
-✅ "Write a 250-word essay explaining the causes of the Civil War"
-✅ "Describe in detail how photosynthesis works"
-✅ "Write a narrative about a time you overcame a challenge"
-✅ "Analyze the main themes in this chapter and support with examples"
-✅ "Compose a persuasive essay arguing for or against school uniforms"
-
-EXAMPLES OF SHORT_ANSWER (NOT ESSAY):
-✅ "List three causes of World War I"
-✅ "Define photosynthesis"
-✅ "What is the main idea of this passage?"
-✅ "Explain in 1-2 sentences why..."
+✅ Multiple paragraphs or extended writing
+✅ Analysis, comparison, or argumentation tasks
+✅ Word/sentence count specified (e.g., "250 words", "5 sentences", "2-3 paragraphs")
+✅ "Discuss", "evaluate", "justify", "argue for/against"
+✅ "Support your answer with examples"
 
 NEVER use "task" or any other type - only use the exact values listed above.
 

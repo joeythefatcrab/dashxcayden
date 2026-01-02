@@ -133,12 +133,60 @@ DESCRIPTION FIELD - CRITICAL REQUIREMENT:
 
 The description should NEVER be a to-do list of activities. Save the detailed instructions for the individual lesson contentMd fields.
 
+ITEM TYPES - CRITICAL DISTINCTION BETWEEN CHECKBOX AND WRITING TASKS:
+
+🔴 CRITICAL RULE: If a student must WRITE or TYPE text to complete the task → use ESSAY or SHORT_ANSWER
+🔴 CRITICAL RULE: If a student just needs to DO something (read, review, practice) → use CHECKBOX
+
 ITEM TYPES - USE THESE EXACT VALUES:
-- For checklist tasks/steps: type: "CHECKBOX"
-- For multiple choice questions: type: "MCQ"
-- For short written answers: type: "SHORT_ANSWER"
-- For essay questions: type: "ESSAY"
-- For true/false questions: type: "TRUE_FALSE"
+- type: "CHECKBOX" - For tasks to DO/complete (read, review, practice, watch, listen, etc.)
+- type: "MCQ" - For multiple choice questions
+- type: "SHORT_ANSWER" - For brief written responses (1-2 sentences, lists, definitions)
+- type: "ESSAY" - For any writing task requiring text submission (sentences, paragraphs, stories, etc.)
+- type: "TRUE_FALSE" - For true/false questions
+
+WHEN TO USE ESSAY vs CHECKBOX - THIS IS CRITICAL:
+
+✅ Use ESSAY when student must WRITE/TYPE text:
+- "Write 5 sentences using..." → ESSAY (requires typing sentences)
+- "Write a sentence about..." → ESSAY (requires typing)
+- "Write a short story..." → ESSAY (requires typing a story)
+- "Write a paragraph explaining..." → ESSAY (requires typing)
+- "Compose a letter to..." → ESSAY (requires typing)
+- "Describe in your own words..." → ESSAY (requires typing description)
+- "Write an essay about..." → ESSAY (requires typing essay)
+
+✅ Use SHORT_ANSWER when student must write brief responses:
+- "List three causes of..." → SHORT_ANSWER (short list)
+- "Define photosynthesis" → SHORT_ANSWER (brief definition)
+- "What is the main idea?" → SHORT_ANSWER (1-2 sentence answer)
+- "Give an example of..." → SHORT_ANSWER (brief example)
+
+✅ Use CHECKBOX only for tasks that DON'T require writing/typing:
+- "Read Chapter 5" → CHECKBOX (just reading)
+- "Review your notes" → CHECKBOX (just reviewing)
+- "Practice the drill" → CHECKBOX (just practicing)
+- "Watch the video" → CHECKBOX (just watching)
+- "Complete the worksheet" → CHECKBOX (physical worksheet)
+
+❌ WRONG EXAMPLES - COMMON MISTAKES:
+❌ "Write 5 sentences" → type: "CHECKBOX" (WRONG! This requires typing text → should be ESSAY)
+❌ "Write a story" → type: "CHECKBOX" (WRONG! This requires typing → should be ESSAY)
+❌ "Answer the following question" → type: "CHECKBOX" (WRONG! This requires text → should be SHORT_ANSWER or ESSAY)
+❌ "Read Chapter 5" → type: "ESSAY" (WRONG! This is just reading → should be CHECKBOX)
+
+WHEN TO USE ESSAY TYPE - DETECTION RULES:
+Use type: "ESSAY" when the prompt includes ANY of these indicators:
+✅ "Write X sentences" - ANY task asking to write sentences
+✅ "Write a..." - story, paragraph, letter, narrative, response, etc.
+✅ "Compose..." - any composition task
+✅ "Explain in detail", "describe in your own words", "analyze"
+✅ Creative writing prompts: "write a story", "write a letter", "write a narrative"
+✅ Multiple paragraphs or extended writing
+✅ Analysis, comparison, or argumentation tasks
+✅ Word/sentence count specified (e.g., "250 words", "5 sentences", "2-3 paragraphs")
+✅ "Discuss", "evaluate", "justify", "argue for/against"
+✅ "Support your answer with examples"
 
 NEVER use "task" or any other type - only use the exact values listed above.
 

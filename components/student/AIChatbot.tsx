@@ -59,58 +59,34 @@ export function AIChatbot({ lessonId, context }: AIChatbotProps) {
     setIsLoading(true);
 
     try {
-      // Use context-aware assistant endpoint if on a lesson page
-      if (lessonId) {
-        const response = await fetch("/api/student/essay-assistant", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: input.trim(),
-            essayContent: "",
-            prompt: "",
-            threadId,
-            lessonId,
-          }),
-        });
+      // Always use context-aware assistant endpoint
+      const response = await fetch("/api/student/essay-assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: input.trim(),
+          essayContent: "",
+          prompt: "",
+          threadId,
+          lessonId: lessonId || undefined,
+        }),
+      });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to get response");
-        }
-
-        if (data.threadId) {
-          setThreadId(data.threadId);
-        }
-
-        const assistantMessage: Message = {
-          role: "assistant",
-          content: data.response,
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      } else {
-        // Use regular chat endpoint
-        const response = await fetch("/api/ai/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: [...messages, userMessage],
-            context,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.details || data.error || "Failed to get response");
-        }
-
-        const assistantMessage: Message = {
-          role: "assistant",
-          content: data.message,
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to get response");
       }
+
+      if (data.threadId) {
+        setThreadId(data.threadId);
+      }
+
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: data.response,
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       const errorMessage: Message = {
         role: "assistant",

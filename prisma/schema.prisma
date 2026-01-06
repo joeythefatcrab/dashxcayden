@@ -139,6 +139,7 @@ model Student {
   notes        Note[]
   monthlyReports MonthlyReport[]
   essaySubmissions EssaySubmission[]
+  dailyQuotes  DailyQuote[]
 
   @@index([parentId])
   @@index([userId])
@@ -529,4 +530,16 @@ model ExternalActivity {
 
   @@index([reportId])
   @@index([date])
+}
+
+// Daily Quotes (track recent quotes to avoid repetition)
+model DailyQuote {
+  id        String   @id @default(cuid())
+  studentId String
+  quote     String   @db.Text
+  createdAt DateTime @default(now())
+
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, createdAt])
 }

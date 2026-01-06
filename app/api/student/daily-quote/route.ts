@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
@@ -17,6 +18,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { studentId } = await req.json();
+
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
         {
@@ -26,11 +29,30 @@ export async function POST(req: Request) {
       );
     }
 
+    // Get the last 10 quotes for this student to avoid repetition
+    const recentQuotes = await db.dailyQuote.findMany({
+      where: { studentId },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: { quote: true },
+    });
+
+    const recentQuotesList = recentQuotes.map(q => q.quote).join("\n- ");
+
+    const userMessage = recentQuotes.length > 0
+      ? `Please give me a fresh, unique motivational quote for today. Here are the quotes I've received recently - DO NOT repeat any of these or create similar variations:
+
+RECENT QUOTES TO AVOID:
+- ${recentQuotesList}
+
+Generate a completely different quote with a new theme and perspective.`
+      : "Please give me a motivational quote for today.";
+
     const thread = await openai.beta.threads.create({
       messages: [
         {
           role: "user",
-          content: "Please give me a motivational quote for today.",
+          content: userMessage,
         },
       ],
     });
@@ -50,13 +72,40 @@ export async function POST(req: Request) {
       throw new Error("No assistant response found");
     }
 
-    const text = latestAssistantMessage.content
+    let quote = latestAssistantMessage.content
       .filter((part) => part.type === "text")
       .map((part) => (part as any).text.value)
       .join("\n");
 
+    // Remove any quote marks the AI might have added
+    quote = quote.replace(/^["']|["']$/g, '').trim();
+
+    // Save the quote to database
+    await db.dailyQuote.create({
+      data: {
+        studentId,
+        quote,
+      },
+    });
+
+    // Clean up old quotes (keep only last 15)
+    const allQuotes = await db.dailyQuote.findMany({
+      where: { studentId },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+
+    if (allQuotes.length > 15) {
+      const quotesToDelete = allQuotes.slice(15);
+      await db.dailyQuote.deleteMany({
+        where: {
+          id: { in: quotesToDelete.map(q => q.id) },
+        },
+      });
+    }
+
     return NextResponse.json({
-      quote: text || "Every day is a new opportunity to learn something amazing!",
+      quote: quote || "Every day is a new opportunity to learn something amazing!",
     });
   } catch (error) {
     console.error("Error fetching daily quote:", error);

@@ -76,7 +76,7 @@ export function DailyGreeting({ studentName, studentId }: DailyGreetingProps) {
               <div className="flex items-start gap-3">
                 <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
                 <p className="text-base italic text-gray-700 dark:text-gray-300 leading-relaxed">
-                  "{quote}"
+                  {quote}
                 </p>
               </div>
             )}

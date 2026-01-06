@@ -54,7 +54,7 @@ export default async function CurriculumDetailPage({
     <div className="px-4 py-8">
       <div className="container mx-auto max-w-5xl">
         <div className="mb-8">
-          <Link href="/parent/curricula">
+          <Link href="/curricula">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Curricula

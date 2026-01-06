@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Users, BarChart3 } from "lucide-react";
 import Link from "next/link";
-import { CurriculumUploader } from "@/components/curriculum/CurriculumUploader";
 import { PDFChecklistGenerator } from "@/components/curriculum/PDFChecklistGenerator";
 import { AssignCurriculumDialog } from "@/components/curriculum/AssignCurriculumDialog";
 import { DeleteCurriculumButton } from "@/components/curriculum/DeleteCurriculumButton";
@@ -100,7 +99,6 @@ export default async function CurriculaPage() {
           </div>
           <div className="flex gap-2">
             <PDFChecklistGenerator />
-            <CurriculumUploader />
           </div>
         </div>
 
@@ -122,12 +120,9 @@ export default async function CurriculaPage() {
               <BookOpen className="mb-4 h-12 w-12 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-semibold">No curricula yet</h3>
               <p className="mb-4 text-center text-sm text-muted-foreground">
-                Import a PDF curriculum or upload a CSV file to get started
+                Import a PDF curriculum to get started
               </p>
-              <div className="flex gap-2">
-                <PDFChecklistGenerator />
-                <CurriculumUploader />
-              </div>
+              <PDFChecklistGenerator />
             </CardContent>
           </Card>
         ) : (

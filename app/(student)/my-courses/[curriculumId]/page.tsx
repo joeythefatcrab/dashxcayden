@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, BookOpen, CheckCircle2, Lock, PlayCircle } from "lucide-react";
 import Link from "next/link";
-import { LessonEssayButton } from "@/components/student/LessonEssayButton";
 
 export default async function CurriculumPage({
   params,
@@ -150,18 +149,11 @@ export default async function CurriculumPage({
 
                       <div className="flex gap-2">
                         {!isLocked ? (
-                          <>
-                            <Link href={`/my-courses/${curriculumId}/lessons/${lesson.id}`}>
-                              <Button size="sm">
-                                {isCompleted ? "Review" : "Start"}
-                              </Button>
-                            </Link>
-                            <LessonEssayButton
-                              studentId={student.id}
-                              lessonId={lesson.id}
-                              lessonTitle={lesson.title}
-                            />
-                          </>
+                          <Link href={`/my-courses/${curriculumId}/lessons/${lesson.id}`}>
+                            <Button size="sm">
+                              {isCompleted ? "Review" : "Start"}
+                            </Button>
+                          </Link>
                         ) : (
                           <Button size="sm" disabled>
                             Locked

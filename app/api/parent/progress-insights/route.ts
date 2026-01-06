@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { stripMarkdown } from "@/lib/markdown-stripper";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy-key",
@@ -156,9 +157,12 @@ Parent's question: ${lastUserMessage.content}`;
       .map((part) => (part as any).text.value)
       .join("\n");
 
+    // Strip markdown formatting for clean display
+    const cleanedText = stripMarkdown(text);
+
     return NextResponse.json({
       success: true,
-      message: text || "Sorry, I couldn't generate a response.",
+      message: cleanedText || "Sorry, I couldn't generate a response.",
       threadId: thread.id,
     });
   } catch (error) {

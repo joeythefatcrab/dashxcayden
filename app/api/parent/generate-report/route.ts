@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { stripMarkdown } from "@/lib/markdown-stripper";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy-key",
@@ -254,18 +255,21 @@ export async function POST(req: Request) {
       .map((part) => (part as any).text.value)
       .join("\n");
 
+    // Strip markdown formatting for clean display
+    const cleanedReportContent = stripMarkdown(reportContent);
+
     // Save the generated report
     const updatedReport = await db.monthlyReport.update({
       where: { id: report.id },
       data: {
-        reportContent,
+        reportContent: cleanedReportContent,
         generatedAt: new Date(),
       },
     });
 
     return NextResponse.json({
       report: updatedReport,
-      reportContent,
+      reportContent: cleanedReportContent,
     });
   } catch (error) {
     console.error("Error generating report:", error);

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AIProgressInsights } from "./AIProgressInsights";
+import { UnenrollButton } from "../student/UnenrollButton";
 
 interface StudentProgressDashboardProps {
   student: any;
@@ -70,6 +71,7 @@ export function StudentProgressDashboard({ student }: StudentProgressDashboardPr
       : 0;
 
     return {
+      enrollmentId: enrollment.id,
       id: curriculum.id,
       name: curriculum.name,
       subject: curriculum.subject,
@@ -228,8 +230,17 @@ export function StudentProgressDashboard({ student }: StudentProgressDashboardPr
                       {course.avgScore > 0 && ` • ${course.avgScore}% average`}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold">{course.percentComplete}%</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <div className="text-2xl font-bold">{course.percentComplete}%</div>
+                    </div>
+                    <UnenrollButton
+                      enrollmentId={course.enrollmentId}
+                      studentName={student.name}
+                      courseName={course.name}
+                      completedLessons={course.completedLessons}
+                      totalLessons={course.totalLessons}
+                    />
                   </div>
                 </div>
                 <Progress value={course.percentComplete} className="h-3" />

@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { Loader2, FileText, Plus, Trash2, Sparkles, Download } from "lucide-react";
 import { ExternalActivityForm } from "./ExternalActivityForm";
+import { AttendanceTracker } from "./AttendanceTracker";
+import { ParentNotesEditor } from "./ParentNotesEditor";
 import { format } from "date-fns";
 
 type Student = {
@@ -278,6 +280,20 @@ export function MonthlyReportViewer({ students }: Props) {
               )}
             </CardContent>
           </Card>
+
+          {/* Attendance Tracking */}
+          <AttendanceTracker
+            reportId={reportData.report.id}
+            initialAttendance={reportData.report.attendanceData as any}
+            onSave={loadReportData}
+          />
+
+          {/* Parent Notes */}
+          <ParentNotesEditor
+            reportId={reportData.report.id}
+            initialNotes={reportData.report.parentNotes || ""}
+            onSave={loadReportData}
+          />
 
           {/* External Activities */}
           <Card>

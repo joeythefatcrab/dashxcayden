@@ -500,6 +500,10 @@ model MonthlyReport {
   reportContent   String?             @db.Text
   generatedAt     DateTime?
 
+  // APS Requirements
+  attendanceData  Json?               @default("{}") // { "present": 20, "sick": 1, "vacation": 2 }
+  parentNotes     String?             @db.Text       // Custom notes from parent
+
   // Metadata
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt

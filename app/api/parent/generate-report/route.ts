@@ -196,6 +196,9 @@ export async function POST(req: Request) {
       "December",
     ];
 
+    // Parse attendance data
+    const attendance = (report.attendanceData as any) || { present: 0, sick: 0, vacation: 0 };
+
     const reportData = {
       student: {
         name: student.name,
@@ -208,6 +211,12 @@ export async function POST(req: Request) {
         month: monthNames[month - 1],
         year: year,
       },
+      attendance: {
+        present: attendance.present || 0,
+        sick: attendance.sick || 0,
+        vacation: attendance.vacation || 0,
+        total: (attendance.present || 0) + (attendance.sick || 0) + (attendance.vacation || 0),
+      },
       courses: courseStats,
       externalActivities: report.externalActivities.map((activity: any) => ({
         title: activity.title,
@@ -219,6 +228,7 @@ export async function POST(req: Request) {
       totalAppHours,
       totalExternalHours,
       totalSchoolHours,
+      parentNotes: report.parentNotes || null,
     };
 
     // Create a thread and send the data to the assistant

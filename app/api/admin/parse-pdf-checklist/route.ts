@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import pdf from "pdf-parse";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export async function POST(request: NextRequest) {
@@ -16,10 +16,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY) {
+    // Check if Anthropic API key is configured
+    if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
-        { error: "OpenAI API key not configured. Please add OPENAI_API_KEY to your environment variables." },
+        { error: "Anthropic API key not configured. Please add ANTHROPIC_API_KEY to your environment variables." },
         { status: 500 }
       );
     }
@@ -74,24 +74,16 @@ export async function POST(request: NextRequest) {
 
       console.log(`Extracted ${extractedText.length} characters from PDF (${pdfData.numpages} pages)`);
 
-      // Use OpenAI Assistant to parse the PDF text into a structured checklist/curriculum
-      const assistantId = "asst_R4hsz2dCZ3DwpaaITjaWCJHV";
-
-      // Create a thread
-      const thread = await openai.beta.threads.create();
-
-      // Determine how much text to send (max ~500k characters for GPT-4 context window)
-      const maxChars = 500000;
+      // Determine how much text to send (Claude Sonnet has 200k token context window, roughly 700k-800k characters)
+      const maxChars = 700000;
       const textToSend = extractedText.slice(0, maxChars);
 
       if (extractedText.length > maxChars) {
         console.warn(`PDF text truncated from ${extractedText.length} to ${maxChars} characters`);
       }
 
-      // Add message with extracted text
-      await openai.beta.threads.messages.create(thread.id, {
-        role: "user",
-        content: `You are a curriculum document parser for DashX Cayden, a homeschool curriculum management platform. Your SOLE purpose is to convert curriculum documents (typically homeschool lesson lists, syllabi, or course outlines) into structured JSON format, preserving EVERY word and content BEYOND the errors introduced by poor scans, bad OCR, and visual artifacts.
+      // Use Claude API to parse the PDF text into a structured checklist/curriculum
+      const systemPrompt = `You are a curriculum document parser for DashX Cayden, a homeschool curriculum management platform. Your SOLE purpose is to convert curriculum documents (typically homeschool lesson lists, syllabi, or course outlines) into structured JSON format, preserving EVERY word and content BEYOND the errors introduced by poor scans, bad OCR, and visual artifacts.
 
 PLATFORM CONTEXT:
 The platform helps parents/instructors manage homeschool curricula with:
@@ -206,118 +198,75 @@ CONTENT MARKDOWN (contentMd):
 
 CRITICAL: Process the COMPLETE document from start to finish. Include EVERY unit, EVERY lesson, and EVERY item.
 
-Structure this ENTIRE curriculum document, preserving ALL original text exactly:
-
-${textToSend}`,
-      });
-
-      // Run the assistant with JSON schema for structured output
-      const run = await openai.beta.threads.runs.create(thread.id, {
-        assistant_id: assistantId,
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "curriculum_response",
-            strict: true,
-            schema: {
-              type: "object",
-              properties: {
-                name: { type: "string" },
-                description: { type: "string" },
-                subject: { type: "string" },
-                grade: { type: ["number", "null"] },
-                units: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      title: { type: "string" },
-                      description: { type: "string" },
-                      order: { type: "number" },
-                      lessons: {
-                        type: "array",
-                        items: {
-                          type: "object",
-                          properties: {
-                            title: { type: "string" },
-                            description: { type: "string" },
-                            contentMd: { type: "string" },
-                            order: { type: "number" },
-                            threshold: { type: "number" },
-                            objectives: {
-                              type: "array",
-                              items: { type: "string" }
-                            },
-                            items: {
-                              type: "array",
-                              items: {
-                                type: "object",
-                                properties: {
-                                  type: {
-                                    type: "string",
-                                    enum: ["CHECKBOX", "MCQ", "SHORT_ANSWER", "ESSAY", "TRUE_FALSE"]
-                                  },
-                                  prompt: { type: "string" },
-                                  order: { type: "number" },
-                                  points: { type: "number" },
-                                  answerKey: { type: "string" }
-                                },
-                                required: ["type", "prompt", "order", "points", "answerKey"],
-                                additionalProperties: false
-                              }
-                            }
-                          },
-                          required: ["title", "description", "contentMd", "order", "threshold", "objectives", "items"],
-                          additionalProperties: false
-                        }
-                      }
-                    },
-                    required: ["title", "description", "order", "lessons"],
-                    additionalProperties: false
-                  }
-                }
-              },
-              required: ["name", "description", "subject", "grade", "units"],
-              additionalProperties: false
+CRITICAL JSON OUTPUT REQUIREMENTS:
+- You MUST respond with ONLY valid JSON, no additional text before or after
+- Use this exact structure:
+{
+  "name": "string",
+  "description": "string (2-3 sentences max)",
+  "subject": "string",
+  "grade": number or null,
+  "units": [
+    {
+      "title": "string",
+      "description": "string",
+      "order": number (starting from 0),
+      "lessons": [
+        {
+          "title": "string",
+          "description": "string",
+          "contentMd": "string (markdown format)",
+          "order": number (starting from 0),
+          "threshold": number (70-100),
+          "objectives": ["string", ...],
+          "items": [
+            {
+              "type": "CHECKBOX" | "MCQ" | "SHORT_ANSWER" | "ESSAY" | "TRUE_FALSE",
+              "prompt": "string",
+              "order": number,
+              "points": number,
+              "answerKey": "string (JSON stringified)"
             }
-          }
+          ]
         }
+      ]
+    }
+  ]
+}`;
+
+      const message = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 16000,
+        system: systemPrompt,
+        messages: [
+          {
+            role: "user",
+            content: `Structure this ENTIRE curriculum document, preserving ALL original text exactly.
+
+Extract this ENTIRE curriculum document into the JSON format. You must process ALL pages and ALL lessons from start to finish.
+
+CRITICAL: Process the COMPLETE document - do not stop early. Include EVERY unit, EVERY lesson, and EVERY item from the beginning to the end of the document.
+
+Respond with ONLY the JSON object, no additional text.
+
+Document (${textToSend.length} characters):
+${textToSend}`
+          }
+        ]
       });
 
-      // Wait for completion
-      let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+      // Extract the response content
+      const responseContent = message.content[0].type === 'text' ? message.content[0].text : null;
 
-      while (runStatus.status !== "completed") {
-        if (runStatus.status === "failed" || runStatus.status === "cancelled" || runStatus.status === "expired") {
-          throw new Error(`Assistant run ${runStatus.status}: ${runStatus.last_error?.message || "Unknown error"}`);
-        }
-
-        // Wait 1 second before checking again
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+      if (!responseContent) {
+        throw new Error("No response from Claude API");
       }
-
-      // Get the assistant's response
-      const messages = await openai.beta.threads.messages.list(thread.id);
-      const lastMessage = messages.data[0];
-
-      if (!lastMessage || lastMessage.role !== "assistant") {
-        throw new Error("No response from assistant");
-      }
-
-      // Extract text content
-      const messageContent = lastMessage.content[0];
-      if (messageContent.type !== "text") {
-        throw new Error("Unexpected message content type");
-      }
-
-      const responseText = messageContent.text.value;
 
       // Log response for debugging
-      console.log("Assistant response:", responseText);
+      console.log("Claude API response received");
 
       // Strip markdown code blocks if present
-      let cleanedResponse = responseText.trim();
+      let cleanedResponse = responseContent.trim();
       if (cleanedResponse.startsWith("```json")) {
         cleanedResponse = cleanedResponse.replace(/^```json\n?/, "").replace(/\n?```$/, "");
       } else if (cleanedResponse.startsWith("```")) {
@@ -329,8 +278,8 @@ ${textToSend}`,
         parsedCurriculum = JSON.parse(cleanedResponse);
       } catch (parseError) {
         console.error("Failed to parse JSON:", parseError);
-        console.error("Response text:", cleanedResponse);
-        throw new Error(`Invalid JSON response from assistant: ${cleanedResponse.slice(0, 200)}`);
+        console.error("Response text:", cleanedResponse.slice(0, 500));
+        throw new Error(`Invalid JSON response from Claude: ${cleanedResponse.slice(0, 200)}`);
       }
     }
 
@@ -397,24 +346,34 @@ ${textToSend}`,
   } catch (error: any) {
     console.error("Error parsing PDF:", error);
 
-    // Handle OpenAI API errors specifically
-    if (error?.status === 403 || error?.message?.includes("Forbidden")) {
+    // Handle Anthropic API errors specifically
+    if (error?.status === 401) {
       return NextResponse.json(
         {
-          error: "OpenAI API access forbidden. Please verify your OPENAI_API_KEY has access to the Assistants API and the assistant ID is correct.",
+          error: "Anthropic API authentication failed. Please verify your ANTHROPIC_API_KEY.",
+          details: error.message
+        },
+        { status: 401 }
+      );
+    }
+
+    if (error?.status === 403) {
+      return NextResponse.json(
+        {
+          error: "Anthropic API access forbidden. Please check your API key permissions.",
           details: error.message
         },
         { status: 403 }
       );
     }
 
-    if (error?.status === 404 && error?.message?.includes("assistant")) {
+    if (error?.status === 429) {
       return NextResponse.json(
         {
-          error: "OpenAI Assistant not found. The assistant ID may be invalid or deleted.",
+          error: "Rate limit exceeded. Please try again later.",
           details: error.message
         },
-        { status: 404 }
+        { status: 429 }
       );
     }
 

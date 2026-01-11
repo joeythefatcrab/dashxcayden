@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RichTextEditor } from "./RichTextEditor";
-import { Loader2, Send, Save, CheckCircle2 } from "lucide-react";
+import { Loader2, Send, Save, CheckCircle2, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 type Props = {
@@ -17,11 +17,13 @@ type Props = {
 type Submission = {
   id: string;
   content: string;
-  status: "DRAFT" | "SUBMITTED" | "GRADED";
+  status: "DRAFT" | "SUBMITTED" | "GRADED" | "REVISION_REQUESTED";
   submittedAt: string | null;
   grade: number | null;
   feedback: string | null;
   gradedAt: string | null;
+  revisionNote: string | null;
+  revisionRequestedAt: string | null;
   updatedAt: string;
 };
 
@@ -90,7 +92,11 @@ export function EssaySubmission({ studentId, lessonId, itemId, prompt }: Props) 
       return;
     }
 
-    if (!confirm("Submit your essay? You won't be able to edit it after submission.")) {
+    const confirmMessage = isRevisionRequested
+      ? "Submit your revised essay? Your parent will review it again."
+      : "Submit your essay? You won't be able to edit it after submission.";
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -133,6 +139,7 @@ export function EssaySubmission({ studentId, lessonId, itemId, prompt }: Props) 
 
   const isSubmitted = submission?.status === "SUBMITTED" || submission?.status === "GRADED";
   const isGraded = submission?.status === "GRADED";
+  const isRevisionRequested = submission?.status === "REVISION_REQUESTED";
 
   return (
     <div className="space-y-4">
@@ -148,6 +155,36 @@ export function EssaySubmission({ studentId, lessonId, itemId, prompt }: Props) 
           />
         </CardContent>
       </Card>
+
+      {/* Revision Requested Alert */}
+      {isRevisionRequested && submission.revisionNote && (
+        <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/20">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <RefreshCw className="h-6 w-6 text-orange-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-1">
+                  Revision Requested
+                </h3>
+                <p className="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">
+                  Your parent has asked you to revise this essay. Here's their feedback:
+                </p>
+                <div className="rounded-md bg-orange-100/50 dark:bg-orange-900/20 p-3 mb-2">
+                  <p className="text-sm text-orange-800 dark:text-orange-200 whitespace-pre-wrap">
+                    {submission.revisionNote}
+                  </p>
+                </div>
+                <p className="text-xs text-orange-600 dark:text-orange-400">
+                  Requested {formatDistanceToNow(new Date(submission.revisionRequestedAt!), { addSuffix: true })}
+                </p>
+                <p className="text-sm text-orange-800 dark:text-orange-200 mt-2">
+                  Make the changes below and resubmit when ready.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Grade Display (if graded) */}
       {isGraded && (
@@ -207,10 +244,10 @@ export function EssaySubmission({ studentId, lessonId, itemId, prompt }: Props) 
             value={content}
             onChange={setContent}
             placeholder="Start writing your essay..."
-            disabled={isSubmitted}
+            disabled={isSubmitted && !isRevisionRequested}
           />
 
-          {!isSubmitted && (
+          {(!isSubmitted || isRevisionRequested) && (
             <div className="flex gap-2 mt-4">
               <Button
                 variant="outline"

@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Send, ArrowLeft } from "lucide-react";
+import { Loader2, Send, ArrowLeft, Trash2, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 type Submission = {
   id: string;
   content: string;
-  status: "DRAFT" | "SUBMITTED" | "GRADED";
+  status: "DRAFT" | "SUBMITTED" | "GRADED" | "REVISION_REQUESTED";
   submittedAt: string | null;
   grade: number | null;
   feedback: string | null;
@@ -40,6 +40,10 @@ export function EssayGrading({ onBack }: Props) {
   const [isGrading, setIsGrading] = useState(false);
   const [grade, setGrade] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [showRevisionForm, setShowRevisionForm] = useState(false);
+  const [revisionNote, setRevisionNote] = useState("");
+  const [isRequestingRevision, setIsRequestingRevision] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadPendingEssays();
@@ -123,6 +127,73 @@ export function EssayGrading({ onBack }: Props) {
       alert("Failed to grade essay");
     } finally {
       setIsGrading(false);
+    }
+  };
+
+  const handleRequestRevision = async () => {
+    if (!selectedSubmission) return;
+
+    if (!revisionNote.trim()) {
+      alert("Please provide a note explaining what needs to be revised");
+      return;
+    }
+
+    setIsRequestingRevision(true);
+    try {
+      const response = await fetch("/api/parent/essay/request-revision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          submissionId: selectedSubmission.id,
+          revisionNote: revisionNote.trim(),
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to request revision");
+
+      alert("Revision requested successfully! The student will see your feedback.");
+      setSelectedSubmission(null);
+      setGrade("");
+      setFeedback("");
+      setRevisionNote("");
+      setShowRevisionForm(false);
+      loadPendingEssays();
+    } catch (error) {
+      console.error("Error requesting revision:", error);
+      alert("Failed to request revision");
+    } finally {
+      setIsRequestingRevision(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedSubmission) return;
+
+    if (!confirm("Are you sure you want to delete this essay? This action cannot be undone.")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(
+        `/api/parent/essay/delete?id=${selectedSubmission.id}`,
+        { method: "DELETE" }
+      );
+
+      if (!response.ok) throw new Error("Failed to delete essay");
+
+      alert("Essay deleted successfully");
+      setSelectedSubmission(null);
+      setGrade("");
+      setFeedback("");
+      setRevisionNote("");
+      setShowRevisionForm(false);
+      loadPendingEssays();
+    } catch (error) {
+      console.error("Error deleting essay:", error);
+      alert("Failed to delete essay");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -280,23 +351,103 @@ export function EssayGrading({ onBack }: Props) {
               />
             </div>
 
-            {/* Submit Button */}
-            <Button
-              onClick={handleGradeSubmit}
-              disabled={isGrading || !grade.trim()}
-            >
-              {isGrading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting Grade...
-                </>
-              ) : (
-                <>
-                  <Send className="mr-2 h-4 w-4" />
-                  Submit Grade
-                </>
-              )}
-            </Button>
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3">
+              {/* Submit Grade Button */}
+              <Button
+                onClick={handleGradeSubmit}
+                disabled={isGrading || !grade.trim()}
+              >
+                {isGrading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting Grade...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Submit Grade
+                  </>
+                )}
+              </Button>
+
+              {/* Request Revision Button */}
+              <Button
+                variant="outline"
+                onClick={() => setShowRevisionForm(!showRevisionForm)}
+                disabled={isGrading || isRequestingRevision || isDeleting}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Request Revision
+              </Button>
+
+              {/* Delete Button */}
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={isGrading || isRequestingRevision || isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Essay
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Revision Request Form */}
+            {showRevisionForm && (
+              <div className="mt-4 p-4 rounded-lg border-2 border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/20">
+                <h4 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">
+                  Request Revision
+                </h4>
+                <p className="text-sm text-orange-800 dark:text-orange-200 mb-3">
+                  Explain what needs to be improved. The student will see this feedback and can resubmit.
+                </p>
+                <Textarea
+                  value={revisionNote}
+                  onChange={(e) => setRevisionNote(e.target.value)}
+                  placeholder="Example: Your thesis is strong, but please add more supporting evidence in paragraph 3. Also, check your conclusion for grammar errors."
+                  rows={4}
+                  className="mb-3"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleRequestRevision}
+                    disabled={isRequestingRevision || !revisionNote.trim()}
+                    size="sm"
+                  >
+                    {isRequestingRevision ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Requesting...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Send Revision Request
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowRevisionForm(false);
+                      setRevisionNote("");
+                    }}
+                    size="sm"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

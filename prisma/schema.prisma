@@ -311,6 +311,7 @@ enum EssayStatus {
   DRAFT
   SUBMITTED
   GRADED
+  REVISION_REQUESTED
 }
 
 model EssaySubmission {
@@ -339,6 +340,11 @@ model EssaySubmission {
   feedback    String?     @db.Text // Parent's additional feedback (optional)
   gradedAt    DateTime?
   gradedBy    String?     // Parent/Admin user ID
+
+  // Revision Requests
+  revisionNote String?    @db.Text // Parent's note when requesting revision
+  revisionRequestedAt DateTime?
+  revisionRequestedBy String?     // Parent/Admin user ID
 
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt

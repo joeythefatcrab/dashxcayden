@@ -245,7 +245,7 @@ CRITICAL JSON OUTPUT REQUIREMENTS:
       // Use streaming to handle long-running requests
       const stream = await anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 200000, // Massive token budget to capture ALL content verbatim
+        max_tokens: 64000, // Maximum allowed for Claude Sonnet 4
         system: systemPrompt,
         messages: [
           {

@@ -191,15 +191,28 @@ LESSON THRESHOLD:
 Set a reasonable passing threshold for each lesson (usually 70–80)
 
 CONTENT MARKDOWN (contentMd):
-- Field contains lesson reading material, instructions, or learning content
-- Extract ALL relevant content, repairing for organization and removing visual artifacts as needed
-- Preserve (or restore if OCR/scan disrupts) formatting, bullet points, numbered lists
-- Include any reading passages, explanations, definitions, using markdown formatting for structure
+- KEEP IT BRIEF: Use 1-2 sentences or short bullet points per lesson
+- Extract only KEY instructions and main points - avoid lengthy passages
+- Summarize reading content concisely to save token space
+- Your token budget is LIMITED - prioritize completing ALL lessons over detail
+
+CRITICAL TOKEN MANAGEMENT:
+⚠️ You MUST complete the entire curriculum - all units, lessons, and items
+⚠️ Keep contentMd fields BRIEF (max 2-3 short sentences) so everything fits
+⚠️ Better to have ALL lessons with minimal content than some lessons with detail
+⚠️ ALWAYS properly close all JSON arrays and objects before hitting token limit
 
 CRITICAL: Process the COMPLETE document from start to finish. Include EVERY unit, EVERY lesson, and EVERY item.
 
 CRITICAL JSON OUTPUT REQUIREMENTS:
-- You MUST respond with ONLY valid JSON, no additional text before or after
+- You MUST respond with ONLY valid, properly-formatted JSON
+- Properly escape ALL special characters in strings:
+  * Use \\" for quotes inside strings
+  * Use \\\\ for backslashes
+  * Use \\n for newlines (never use actual line breaks in string values)
+  * Use \\t for tabs
+- NEVER break strings across multiple lines in the JSON
+- ALWAYS close all arrays and objects properly with matching brackets
 - Use this exact structure:
 {
   "name": "string",
@@ -234,9 +247,10 @@ CRITICAL JSON OUTPUT REQUIREMENTS:
   ]
 }`;
 
-      const message = await anthropic.messages.create({
+      // Use streaming to handle long-running requests
+      const stream = await anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 16000,
+        max_tokens: 40000, // Large enough for 27+ lesson curricula
         system: systemPrompt,
         messages: [
           {
@@ -247,16 +261,24 @@ Extract this ENTIRE curriculum document into the JSON format. You must process A
 
 CRITICAL: Process the COMPLETE document - do not stop early. Include EVERY unit, EVERY lesson, and EVERY item from the beginning to the end of the document.
 
+REMINDER: Keep contentMd fields BRIEF (1-2 sentences max) so the entire curriculum fits in your token budget.
+
 Respond with ONLY the JSON object, no additional text.
 
 Document (${textToSend.length} characters):
 ${textToSend}`
           }
-        ]
+        ],
+        stream: true,
       });
 
-      // Extract the response content
-      const responseContent = message.content[0].type === 'text' ? message.content[0].text : null;
+      // Collect streamed response
+      let responseContent = '';
+      for await (const event of stream) {
+        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+          responseContent += event.delta.text;
+        }
+      }
 
       if (!responseContent) {
         throw new Error("No response from Claude API");
@@ -265,21 +287,37 @@ ${textToSend}`
       // Log response for debugging
       console.log("Claude API response received");
 
-      // Strip markdown code blocks if present
+      // Extract JSON from response (handle markdown code blocks and explanatory text)
       let cleanedResponse = responseContent.trim();
-      if (cleanedResponse.startsWith("```json")) {
-        cleanedResponse = cleanedResponse.replace(/^```json\n?/, "").replace(/\n?```$/, "");
-      } else if (cleanedResponse.startsWith("```")) {
-        cleanedResponse = cleanedResponse.replace(/^```\n?/, "").replace(/\n?```$/, "");
+
+      // Check if response contains ```json code block
+      const jsonBlockMatch = cleanedResponse.match(/```json\s*\n?([\s\S]*?)\n?```/);
+      if (jsonBlockMatch) {
+        cleanedResponse = jsonBlockMatch[1].trim();
+      } else {
+        // Check for generic ``` code block
+        const codeBlockMatch = cleanedResponse.match(/```\s*\n?([\s\S]*?)\n?```/);
+        if (codeBlockMatch) {
+          cleanedResponse = codeBlockMatch[1].trim();
+        } else {
+          // Try to extract JSON object from text (find first { to last })
+          const firstBrace = cleanedResponse.indexOf('{');
+          const lastBrace = cleanedResponse.lastIndexOf('}');
+          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            cleanedResponse = cleanedResponse.substring(firstBrace, lastBrace + 1);
+          }
+        }
       }
 
       // Parse JSON response
       try {
         parsedCurriculum = JSON.parse(cleanedResponse);
-      } catch (parseError) {
+      } catch (parseError: any) {
         console.error("Failed to parse JSON:", parseError);
-        console.error("Response text:", cleanedResponse.slice(0, 500));
-        throw new Error(`Invalid JSON response from Claude: ${cleanedResponse.slice(0, 200)}`);
+        console.error("Response length:", cleanedResponse.length);
+        console.error("Response start:", cleanedResponse.slice(0, 500));
+        console.error("Response end:", cleanedResponse.slice(-500));
+        throw new Error(`Invalid JSON response from Claude. ${parseError.message}`);
       }
     }
 

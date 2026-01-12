@@ -191,18 +191,13 @@ LESSON THRESHOLD:
 Set a reasonable passing threshold for each lesson (usually 70–80)
 
 CONTENT MARKDOWN (contentMd):
-- KEEP IT BRIEF: Use 1-2 sentences or short bullet points per lesson
-- Extract only KEY instructions and main points - avoid lengthy passages
-- Summarize reading content concisely to save token space
-- Your token budget is LIMITED - prioritize completing ALL lessons over detail
+- Field contains lesson reading material, instructions, or learning content
+- Extract ALL relevant content VERBATIM - include complete reading passages, full explanations, all definitions
+- Preserve (or restore if OCR/scan disrupts) ALL formatting, bullet points, numbered lists
+- Include EVERYTHING from the document - do not summarize or shorten any content
+- Use markdown formatting to preserve document structure exactly as written
 
-CRITICAL TOKEN MANAGEMENT:
-⚠️ You MUST complete the entire curriculum - all units, lessons, and items
-⚠️ Keep contentMd fields BRIEF (max 2-3 short sentences) so everything fits
-⚠️ Better to have ALL lessons with minimal content than some lessons with detail
-⚠️ ALWAYS properly close all JSON arrays and objects before hitting token limit
-
-CRITICAL: Process the COMPLETE document from start to finish. Include EVERY unit, EVERY lesson, and EVERY item.
+CRITICAL: Process the COMPLETE document from start to finish. Include EVERY unit, EVERY lesson, EVERY item, and ALL content in full.
 
 CRITICAL JSON OUTPUT REQUIREMENTS:
 - You MUST respond with ONLY valid, properly-formatted JSON
@@ -250,7 +245,7 @@ CRITICAL JSON OUTPUT REQUIREMENTS:
       // Use streaming to handle long-running requests
       const stream = await anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 40000, // Large enough for 27+ lesson curricula
+        max_tokens: 200000, // Massive token budget to capture ALL content verbatim
         system: systemPrompt,
         messages: [
           {
@@ -261,7 +256,7 @@ Extract this ENTIRE curriculum document into the JSON format. You must process A
 
 CRITICAL: Process the COMPLETE document - do not stop early. Include EVERY unit, EVERY lesson, and EVERY item from the beginning to the end of the document.
 
-REMINDER: Keep contentMd fields BRIEF (1-2 sentences max) so the entire curriculum fits in your token budget.
+IMPORTANT: Include ALL content verbatim in contentMd fields - do not summarize or shorten anything.
 
 Respond with ONLY the JSON object, no additional text.
 

@@ -257,7 +257,7 @@ CRITICAL JSON OUTPUT REQUIREMENTS:
 
       // Use streaming with GPT-5 mini for fast, efficient parsing
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o-mini", // Fast and efficient model
+        model: "gpt-5-mini", // GPT-5 mini model
         max_tokens: 16000, // Optimized for speed
         temperature: 0, // Deterministic output
         messages: [
@@ -329,7 +329,7 @@ ${textToSend}`
         console.error("Response length:", cleanedResponse.length);
         console.error("Response start:", cleanedResponse.slice(0, 500));
         console.error("Response end:", cleanedResponse.slice(-500));
-        throw new Error(`Invalid JSON response from Claude. ${parseError.message}`);
+        throw new Error(`Invalid JSON response from OpenAI. ${parseError.message}`);
       }
     }
 

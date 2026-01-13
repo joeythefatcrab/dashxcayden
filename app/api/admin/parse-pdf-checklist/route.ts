@@ -192,12 +192,13 @@ Set a reasonable passing threshold for each lesson (usually 70–80)
 
 CONTENT MARKDOWN (contentMd):
 - Field contains lesson reading material, instructions, or learning content
-- Extract ALL relevant content VERBATIM - include complete reading passages, full explanations, all definitions
-- Preserve (or restore if OCR/scan disrupts) ALL formatting, bullet points, numbered lists
-- Include EVERYTHING from the document - do not summarize or shorten any content
-- Use markdown formatting to preserve document structure exactly as written
+- Extract ALL essential instructional content: complete task descriptions, key instructions, learning objectives
+- Include important reading passages and definitions that are central to understanding the lesson
+- Be thorough but efficient: avoid repeating lengthy boilerplate or overly verbose passages
+- Preserve formatting, bullet points, numbered lists for clarity
+- Balance completeness with conciseness to stay within processing time limits
 
-CRITICAL: Process the COMPLETE document from start to finish. Include EVERY unit, EVERY lesson, EVERY item, and ALL content in full.
+CRITICAL: Process the COMPLETE document from start to finish. Include EVERY unit, EVERY lesson, and EVERY item.
 
 CRITICAL JSON OUTPUT REQUIREMENTS:
 - You MUST respond with ONLY valid, properly-formatted JSON
@@ -245,18 +246,18 @@ CRITICAL JSON OUTPUT REQUIREMENTS:
       // Use streaming to handle long-running requests
       const stream = await anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 64000, // Maximum allowed for Claude Sonnet 4
+        max_tokens: 32000, // Balanced for completeness and speed (Vercel 5min timeout)
         system: systemPrompt,
         messages: [
           {
             role: "user",
-            content: `Structure this ENTIRE curriculum document, preserving ALL original text exactly.
+            content: `Structure this ENTIRE curriculum document efficiently.
 
 Extract this ENTIRE curriculum document into the JSON format. You must process ALL pages and ALL lessons from start to finish.
 
 CRITICAL: Process the COMPLETE document - do not stop early. Include EVERY unit, EVERY lesson, and EVERY item from the beginning to the end of the document.
 
-IMPORTANT: Include ALL content verbatim in contentMd fields - do not summarize or shorten anything.
+IMPORTANT: Include all essential instructional content in contentMd fields. Be thorough but efficient to complete within time constraints.
 
 Respond with ONLY the JSON object, no additional text.
 

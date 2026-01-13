@@ -258,7 +258,7 @@ CRITICAL JSON OUTPUT REQUIREMENTS:
       // Use streaming with GPT-5 mini for fast, efficient parsing
       const stream = await openai.chat.completions.create({
         model: "gpt-5-mini", // GPT-5 mini model
-        max_tokens: 16000, // Optimized for speed
+        max_tokens: 64000, // Large enough for complete curricula
         temperature: 0, // Deterministic output
         messages: [
           {

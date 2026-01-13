@@ -225,12 +225,19 @@ export async function POST(request: NextRequest) {
         const allUnits = previousUnitsJson ? JSON.parse(previousUnitsJson) : [];
         allUnits.push(...batchUnits);
 
-        // Combine results and renumber lessons globally
+        // Combine results and renumber everything globally to avoid conflicts
+        let globalUnitOrder = 0;
         let globalLessonOrder = 0;
+
         for (const unit of allUnits) {
+          // Renumber units
+          unit.order = globalUnitOrder++;
+
           if (unit.lessons) {
             for (const lesson of unit.lessons) {
+              // Renumber lessons globally across all units
               lesson.order = globalLessonOrder++;
+
               // Renumber items within each lesson
               if (lesson.items) {
                 for (let i = 0; i < lesson.items.length; i++) {

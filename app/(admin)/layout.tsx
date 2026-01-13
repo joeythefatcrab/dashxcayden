@@ -14,7 +14,9 @@ export default async function AdminLayout({
   }
 
   // @ts-ignore - role exists in session
-  if (!["ADMIN", "SUPERADMIN"].includes(session.user.role)) {
+  // Check realRole if impersonating, otherwise check current role
+  const userRole = session.user.realRole || session.user.role;
+  if (!["ADMIN", "SUPERADMIN"].includes(userRole)) {
     redirect("/dashboard");
   }
 

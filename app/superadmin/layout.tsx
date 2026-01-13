@@ -11,7 +11,10 @@ export default async function SuperAdminLayout({
   const session = await auth();
 
   // Only SUPERADMIN role can access this area
-  if (!session?.user || session.user.role !== "SUPERADMIN") {
+  // Check realRole if impersonating, otherwise check current role
+  // @ts-ignore
+  const userRole = session?.user?.realRole || session?.user?.role;
+  if (!session?.user || userRole !== "SUPERADMIN") {
     redirect("/dashboard");
   }
 

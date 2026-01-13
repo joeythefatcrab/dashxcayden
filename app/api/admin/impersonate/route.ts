@@ -8,7 +8,10 @@ export async function POST(req: NextRequest) {
     const session = await auth();
 
     // Only SUPERADMIN can impersonate
-    if (!session?.user || session.user.role !== "SUPERADMIN") {
+    // Check realRole if impersonating, otherwise check current role
+    // @ts-ignore
+    const userRole = session?.user?.realRole || session?.user?.role;
+    if (!session?.user || userRole !== "SUPERADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

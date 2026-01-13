@@ -41,16 +41,17 @@ export function ImpersonateUserList({ users }: ImpersonateUserListProps) {
       });
 
       if (response.ok) {
-        router.refresh();
-        router.push("/dashboard");
+        // Force a full page reload to ensure session is refreshed properly
+        window.location.href = "/dashboard";
       } else {
         const data = await response.json();
-        alert(`Failed to impersonate: ${data.error}`);
+        console.error("Impersonation failed:", { status: response.status, data });
+        alert(`Failed to impersonate: ${data.error || "Unknown error"}`);
+        setImpersonating(null);
       }
     } catch (error) {
       console.error("Impersonation error:", error);
       alert("Failed to impersonate user");
-    } finally {
       setImpersonating(null);
     }
   };

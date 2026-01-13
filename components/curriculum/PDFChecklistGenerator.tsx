@@ -70,32 +70,57 @@ export function PDFChecklistGenerator() {
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("name", name);
-      formData.append("description", description);
-      formData.append("subject", subject);
-      formData.append("saveToDatabase", "false"); // Don't save yet, just generate
+      let allUnits: any[] = [];
+      let startChunk = 0;
+      let hasMoreChunks = true;
+      let totalChunks = 0;
 
-      const response = await fetch("/api/admin/parse-pdf-checklist", {
-        method: "POST",
-        body: formData,
-      });
+      // Keep making requests until all chunks are processed
+      while (hasMoreChunks) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("name", name);
+        formData.append("description", description);
+        formData.append("subject", subject);
+        formData.append("saveToDatabase", "false"); // Don't save yet, just generate
+        formData.append("startChunk", startChunk.toString());
+        if (allUnits.length > 0) {
+          formData.append("previousUnits", JSON.stringify(allUnits));
+        }
 
-      const data = await response.json();
+        console.log(`Processing chunk batch starting at ${startChunk}...`);
 
-      if (!response.ok) {
-        // Log full error details for debugging
-        console.error("Full error response:", data);
-        console.error("Error details:", data.details);
-        console.error("Error stack:", data.stack);
-        throw new Error(data.details || data.error || "Failed to parse PDF");
+        const response = await fetch("/api/admin/parse-pdf-checklist", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          // Log full error details for debugging
+          console.error("Full error response:", data);
+          console.error("Error details:", data.details);
+          console.error("Error stack:", data.stack);
+          throw new Error(data.details || data.error || "Failed to parse PDF");
+        }
+
+        // Check if this is a partial response (more chunks to process)
+        if (data.partial && data.progress) {
+          // Add units from this batch
+          allUnits.push(...data.units);
+          startChunk = data.progress.nextStartChunk;
+          totalChunks = data.progress.totalChunks;
+          console.log(`Processed ${data.progress.processedChunks}/${totalChunks} chunks. Continuing...`);
+        } else {
+          // Final response - all chunks processed
+          hasMoreChunks = false;
+          // Show preview with complete curriculum
+          setPreviewCurriculum(data.curriculum);
+          setShowPreview(true);
+          setIsOpen(false); // Close upload dialog
+        }
       }
-
-      // Show preview
-      setPreviewCurriculum(data.curriculum);
-      setShowPreview(true);
-      setIsOpen(false); // Close upload dialog
     } catch (err: any) {
       console.error("Generate error:", err);
       setError(err.message || "Failed to generate checklist");

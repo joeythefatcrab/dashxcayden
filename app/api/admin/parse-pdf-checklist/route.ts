@@ -168,7 +168,8 @@ export async function POST(request: NextRequest) {
       console.log(`Extracted ${extractedText.length} characters from PDF (${pdfData.numpages} pages)`);
 
       // For large documents, use chunked processing to avoid timeouts
-      const CHUNK_SIZE = 20000; // Process 20K characters at a time
+      const CHUNK_SIZE = 35000; // Process 35K characters at a time
+      const CHUNKS_PER_REQUEST = 2; // Process 2 chunks per request to stay under timeout
       const needsChunking = extractedText.length > CHUNK_SIZE;
 
       if (needsChunking) {
@@ -180,20 +181,49 @@ export async function POST(request: NextRequest) {
           chunks.push(extractedText.slice(i, i + CHUNK_SIZE));
         }
 
-        console.log(`Split into ${chunks.length} chunks`);
+        console.log(`Split into ${chunks.length} chunks. Processing ${CHUNKS_PER_REQUEST} chunks per request.`);
 
-        // Process each chunk
-        const allUnits: any[] = [];
+        // Determine which chunks to process this request
+        const startChunk = parseInt(formData.get("startChunk") as string || "0");
+        const endChunk = Math.min(startChunk + CHUNKS_PER_REQUEST, chunks.length);
 
-        for (let i = 0; i < chunks.length; i++) {
+        console.log(`Processing chunks ${startChunk} to ${endChunk - 1}...`);
+
+        // Process chunks for this batch
+        const batchUnits: any[] = [];
+
+        for (let i = startChunk; i < endChunk; i++) {
           const chunk = chunks[i];
           console.log(`Processing chunk ${i + 1}/${chunks.length} (${chunk.length} chars)...`);
 
           const chunkResult = await processChunk(chunk, i, chunks.length);
           if (chunkResult && chunkResult.units) {
-            allUnits.push(...chunkResult.units);
+            batchUnits.push(...chunkResult.units);
           }
         }
+
+        // Check if there are more chunks to process
+        const hasMoreChunks = endChunk < chunks.length;
+
+        if (hasMoreChunks) {
+          // Return partial results and tell frontend to continue
+          return NextResponse.json({
+            success: true,
+            partial: true,
+            progress: {
+              processedChunks: endChunk,
+              totalChunks: chunks.length,
+              nextStartChunk: endChunk,
+            },
+            units: batchUnits,
+            message: `Processed chunks ${startChunk + 1}-${endChunk} of ${chunks.length}. Continue processing...`
+          });
+        }
+
+        // All chunks processed - combine with any previously processed units
+        const previousUnitsJson = formData.get("previousUnits") as string;
+        const allUnits = previousUnitsJson ? JSON.parse(previousUnitsJson) : [];
+        allUnits.push(...batchUnits);
 
         // Combine results and renumber lessons globally
         let globalLessonOrder = 0;

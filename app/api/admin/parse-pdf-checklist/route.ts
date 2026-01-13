@@ -425,6 +425,7 @@ ${textToSend}`
         console.error("Response end:", cleanedResponse.slice(-500));
         throw new Error(`Invalid JSON response from OpenAI. ${parseError.message}`);
       }
+      } // End of else block for small documents
     }
 
     // Override with user-provided values
@@ -490,11 +491,11 @@ ${textToSend}`
   } catch (error: any) {
     console.error("Error parsing PDF:", error);
 
-    // Handle Anthropic API errors specifically
+    // Handle OpenAI API errors specifically
     if (error?.status === 401) {
       return NextResponse.json(
         {
-          error: "Anthropic API authentication failed. Please verify your ANTHROPIC_API_KEY.",
+          error: "OpenAI API authentication failed. Please verify your OPENAI_API_KEY.",
           details: error.message
         },
         { status: 401 }
@@ -504,7 +505,7 @@ ${textToSend}`
     if (error?.status === 403) {
       return NextResponse.json(
         {
-          error: "Anthropic API access forbidden. Please check your API key permissions.",
+          error: "OpenAI API access forbidden. Please check your API key permissions.",
           details: error.message
         },
         { status: 403 }

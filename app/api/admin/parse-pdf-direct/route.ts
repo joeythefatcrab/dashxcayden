@@ -259,7 +259,6 @@ CRITICAL JSON OUTPUT REQUIREMENTS:
       const stream = await openai.chat.completions.create({
         model: "gpt-5-mini", // GPT-5 mini model
         max_completion_tokens: 64000, // Large enough for complete curricula
-        temperature: 0, // Deterministic output
         messages: [
           {
             role: "system",

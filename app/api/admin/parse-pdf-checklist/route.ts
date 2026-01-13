@@ -12,7 +12,26 @@ const openai = new OpenAI({
 async function processChunk(chunkText: string, chunkIndex: number, totalChunks: number) {
   const chunkPrompt = `Extract curriculum content from this section of a document (chunk ${chunkIndex + 1} of ${totalChunks}).
 
-Extract all units, lessons, and items from this text section. Return ONLY valid JSON with this structure:
+CRITICAL: Extract ALL units, lessons, and assessment items. Each lesson should have items (questions/tasks).
+
+ITEM TYPES - Determine the correct type for each task:
+- CHECKBOX: Simple tasks to complete (read, do, practice, show teacher, etc.)
+- SHORT_ANSWER: Questions requiring brief written responses
+- ESSAY: Questions requiring longer written responses or compositions
+- MCQ: Multiple choice questions with options
+- TRUE_FALSE: True/false questions
+
+For CHECKBOX items:
+- Use for action items: "READ lesson X", "DO practice problems", "SHOW your teacher", "CHECK your answers"
+- answerKey: "{\"correct\": [true]}"
+
+For answer keys:
+- CHECKBOX: {"correct": [true]}
+- MCQ: {"correct": [0]} (index of correct choice)
+- TRUE_FALSE: {"correct": [0]} for True or {"correct": [1]} for False
+- SHORT_ANSWER/ESSAY: {}
+
+Return ONLY valid JSON with this structure:
 {
   "units": [
     {
@@ -33,7 +52,7 @@ Extract all units, lessons, and items from this text section. Return ONLY valid 
               "prompt": "string",
               "order": number,
               "points": number,
-              "answerKey": "string"
+              "answerKey": "string (JSON stringified)"
             }
           ]
         }
@@ -149,7 +168,7 @@ export async function POST(request: NextRequest) {
       console.log(`Extracted ${extractedText.length} characters from PDF (${pdfData.numpages} pages)`);
 
       // For large documents, use chunked processing to avoid timeouts
-      const CHUNK_SIZE = 50000; // Process 50K characters at a time
+      const CHUNK_SIZE = 20000; // Process 20K characters at a time
       const needsChunking = extractedText.length > CHUNK_SIZE;
 
       if (needsChunking) {
@@ -176,7 +195,22 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Combine results
+        // Combine results and renumber lessons globally
+        let globalLessonOrder = 0;
+        for (const unit of allUnits) {
+          if (unit.lessons) {
+            for (const lesson of unit.lessons) {
+              lesson.order = globalLessonOrder++;
+              // Renumber items within each lesson
+              if (lesson.items) {
+                for (let i = 0; i < lesson.items.length; i++) {
+                  lesson.items[i].order = i;
+                }
+              }
+            }
+          }
+        }
+
         parsedCurriculum = {
           name: name,
           description: description || "Curriculum parsed from PDF",
@@ -185,7 +219,7 @@ export async function POST(request: NextRequest) {
           units: allUnits
         };
 
-        console.log(`Chunked processing complete. Total units: ${allUnits.length}`);
+        console.log(`Chunked processing complete. Total units: ${allUnits.length}, Total lessons: ${globalLessonOrder}`);
       } else {
         // Original single-request processing for small documents
         const textToSend = extractedText;

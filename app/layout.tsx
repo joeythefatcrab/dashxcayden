@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "@/styles/globals.css";
 import { SessionProvider } from "@/components/auth/session-provider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ImpersonationWidget } from "@/components/admin/ImpersonationWidget";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -36,6 +37,14 @@ export default async function RootLayout({
         <ThemeProvider theme={userTheme}>
           <SessionProvider>
             {children}
+            {session?.user && (
+              <ImpersonationWidget
+                // @ts-ignore
+                isImpersonating={session.user.isImpersonating}
+                // @ts-ignore
+                impersonatedUserEmail={session.user.email}
+              />
+            )}
           </SessionProvider>
         </ThemeProvider>
       </body>

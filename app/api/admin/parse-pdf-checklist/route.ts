@@ -8,6 +8,80 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Helper function to process a single chunk
+async function processChunk(chunkText: string, chunkIndex: number, totalChunks: number) {
+  const chunkPrompt = `Extract curriculum content from this section of a document (chunk ${chunkIndex + 1} of ${totalChunks}).
+
+Extract all units, lessons, and items from this text section. Return ONLY valid JSON with this structure:
+{
+  "units": [
+    {
+      "title": "string",
+      "description": "string",
+      "order": number,
+      "lessons": [
+        {
+          "title": "string",
+          "description": "string",
+          "contentMd": "string",
+          "order": number,
+          "threshold": number,
+          "objectives": ["string"],
+          "items": [
+            {
+              "type": "CHECKBOX" | "MCQ" | "SHORT_ANSWER" | "ESSAY" | "TRUE_FALSE",
+              "prompt": "string",
+              "order": number,
+              "points": number,
+              "answerKey": "string"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+Text to parse:
+${chunkText}`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-5-mini",
+      max_completion_tokens: 16000, // Smaller limit for chunks
+      messages: [
+        { role: "user", content: chunkPrompt }
+      ],
+    });
+
+    const responseText = completion.choices[0]?.message?.content;
+    if (!responseText) {
+      console.error(`Chunk ${chunkIndex + 1}: No response`);
+      return null;
+    }
+
+    // Extract JSON
+    let cleanedResponse = responseText.trim();
+    const jsonBlockMatch = cleanedResponse.match(/```json\s*\n?([\s\S]*?)\n?```/);
+    if (jsonBlockMatch) {
+      cleanedResponse = jsonBlockMatch[1].trim();
+    } else {
+      const firstBrace = cleanedResponse.indexOf('{');
+      const lastBrace = cleanedResponse.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        cleanedResponse = cleanedResponse.substring(firstBrace, lastBrace + 1);
+      }
+    }
+
+    const parsed = JSON.parse(cleanedResponse);
+    console.log(`Chunk ${chunkIndex + 1}: Extracted ${parsed.units?.length || 0} units`);
+    return parsed;
+  } catch (error) {
+    console.error(`Error processing chunk ${chunkIndex + 1}:`, error);
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -74,15 +148,47 @@ export async function POST(request: NextRequest) {
 
       console.log(`Extracted ${extractedText.length} characters from PDF (${pdfData.numpages} pages)`);
 
-      // Determine how much text to send (Claude Sonnet has 200k token context window, roughly 700k-800k characters)
-      const maxChars = 700000;
-      const textToSend = extractedText.slice(0, maxChars);
+      // For large documents, use chunked processing to avoid timeouts
+      const CHUNK_SIZE = 50000; // Process 50K characters at a time
+      const needsChunking = extractedText.length > CHUNK_SIZE;
 
-      if (extractedText.length > maxChars) {
-        console.warn(`PDF text truncated from ${extractedText.length} to ${maxChars} characters`);
-      }
+      if (needsChunking) {
+        console.log(`Large document detected (${extractedText.length} chars). Using chunked processing...`);
 
-      // Use Claude API to parse the PDF text into a structured checklist/curriculum
+        // Split into chunks
+        const chunks: string[] = [];
+        for (let i = 0; i < extractedText.length; i += CHUNK_SIZE) {
+          chunks.push(extractedText.slice(i, i + CHUNK_SIZE));
+        }
+
+        console.log(`Split into ${chunks.length} chunks`);
+
+        // Process each chunk
+        const allUnits: any[] = [];
+
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i];
+          console.log(`Processing chunk ${i + 1}/${chunks.length} (${chunk.length} chars)...`);
+
+          const chunkResult = await processChunk(chunk, i, chunks.length);
+          if (chunkResult && chunkResult.units) {
+            allUnits.push(...chunkResult.units);
+          }
+        }
+
+        // Combine results
+        parsedCurriculum = {
+          name: name,
+          description: description || "Curriculum parsed from PDF",
+          subject: subject || "General",
+          grade: null,
+          units: allUnits
+        };
+
+        console.log(`Chunked processing complete. Total units: ${allUnits.length}`);
+      } else {
+        // Original single-request processing for small documents
+        const textToSend = extractedText;
       const systemPrompt = `You are a curriculum document parser for DashX Cayden, a homeschool curriculum management platform. Your SOLE purpose is to convert curriculum documents (typically homeschool lesson lists, syllabi, or course outlines) into structured JSON format, preserving EVERY word and content BEYOND the errors introduced by poor scans, bad OCR, and visual artifacts.
 
 PLATFORM CONTEXT:

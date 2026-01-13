@@ -27,6 +27,8 @@ export function PDFChecklistGenerator() {
   const [isApproving, setIsApproving] = useState(false);
   const [error, setError] = useState("");
 
+  const [processingProgress, setProcessingProgress] = useState({ current: 0, total: 0 });
+
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -68,6 +70,7 @@ export function PDFChecklistGenerator() {
 
     setIsGenerating(true);
     setError("");
+    setProcessingProgress({ current: 0, total: 0 });
 
     try {
       let allUnits: any[] = [];
@@ -87,8 +90,6 @@ export function PDFChecklistGenerator() {
         if (allUnits.length > 0) {
           formData.append("previousUnits", JSON.stringify(allUnits));
         }
-
-        console.log(`Processing chunk batch starting at ${startChunk}...`);
 
         const response = await fetch("/api/admin/parse-pdf-checklist", {
           method: "POST",
@@ -111,7 +112,8 @@ export function PDFChecklistGenerator() {
           allUnits.push(...data.units);
           startChunk = data.progress.nextStartChunk;
           totalChunks = data.progress.totalChunks;
-          console.log(`Processed ${data.progress.processedChunks}/${totalChunks} chunks. Continuing...`);
+          // Update progress
+          setProcessingProgress({ current: data.progress.processedChunks, total: totalChunks });
         } else {
           // Final response - all chunks processed
           hasMoreChunks = false;
@@ -126,6 +128,7 @@ export function PDFChecklistGenerator() {
       setError(err.message || "Failed to generate checklist");
     } finally {
       setIsGenerating(false);
+      setProcessingProgress({ current: 0, total: 0 });
     }
   };
 
@@ -305,7 +308,9 @@ export function PDFChecklistGenerator() {
                 {isGenerating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating Preview...
+                    {processingProgress.total > 0
+                      ? `Processing chunk ${processingProgress.current}/${processingProgress.total}...`
+                      : "Generating Preview..."}
                   </>
                 ) : (
                   <>

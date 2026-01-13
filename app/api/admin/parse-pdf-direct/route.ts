@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import pdf from "pdf-parse";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(request: NextRequest) {
@@ -16,10 +16,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if Anthropic API key is configured
-    if (!process.env.ANTHROPIC_API_KEY) {
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
-        { error: "Anthropic API key not configured. Please add ANTHROPIC_API_KEY to your environment variables." },
+        { error: "OpenAI API key not configured. Please add OPENAI_API_KEY to your environment variables." },
         { status: 500 }
       );
     }
@@ -255,12 +255,16 @@ CRITICAL JSON OUTPUT REQUIREMENTS:
   ]
 }`;
 
-      // Use streaming to handle long-running requests
-      const stream = await anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 32000, // Balanced for completeness and speed (Vercel 5min timeout)
-        system: systemPrompt,
+      // Use streaming with GPT-5 mini for fast, efficient parsing
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini", // Fast and efficient model
+        max_tokens: 16000, // Optimized for speed
+        temperature: 0, // Deterministic output
         messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
           {
             role: "user",
             content: `Extract this ENTIRE curriculum document into the JSON format efficiently. You must process ALL pages and ALL lessons from start to finish.
@@ -282,9 +286,10 @@ ${textToSend}`
 
       // Collect streamed response
       let responseContent = '';
-      for await (const event of stream) {
-        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-          responseContent += event.delta.text;
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content;
+        if (content) {
+          responseContent += content;
         }
       }
 
@@ -292,7 +297,7 @@ ${textToSend}`
         throw new Error("No response from AI");
       }
 
-      console.log("Claude API response received, parsing JSON...");
+      console.log("OpenAI API response received, parsing JSON...");
 
       // Extract JSON from response (handle markdown code blocks and explanatory text)
       let cleanedResponse = responseContent.trim();

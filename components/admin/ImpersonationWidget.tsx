@@ -31,14 +31,14 @@ export function ImpersonationWidget({
       });
 
       if (response.ok) {
-        router.refresh();
-        router.push("/dashboard");
+        // Force a full page reload to ensure session is refreshed properly
+        window.location.href = "/dashboard";
       } else {
         console.error("Failed to end impersonation");
+        setIsEnding(false);
       }
     } catch (error) {
       console.error("Error ending impersonation:", error);
-    } finally {
       setIsEnding(false);
     }
   };

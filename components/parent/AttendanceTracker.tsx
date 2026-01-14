@@ -139,7 +139,7 @@ export function AttendanceTracker({ reportId, initialAttendance, onSave }: Props
         </div>
 
         <div className="mt-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-950 dark:text-blue-200">
-          <strong>Note:</strong> Arizona homeschool requirements specify at least 175 days of instruction per year.
+          Days are automatically calculated based on present, sick, and vacation days.
         </div>
       </CardContent>
     </Card>

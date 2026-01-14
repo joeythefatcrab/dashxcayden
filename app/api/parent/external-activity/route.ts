@@ -39,12 +39,14 @@ export async function POST(req: Request) {
     }
 
     // Create the external activity
+    // Parse date string (YYYY-MM-DD) and create Date at midnight UTC to avoid timezone issues
+    const [year, month, day] = date.split('-').map(Number);
     const activity = await db.externalActivity.create({
       data: {
         reportId,
         title,
         description,
-        date: new Date(date),
+        date: new Date(Date.UTC(year, month - 1, day)), // month is 0-indexed
         hoursSpent: hoursSpent ? parseFloat(hoursSpent) : null,
         category,
       },

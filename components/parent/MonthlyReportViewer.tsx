@@ -349,8 +349,13 @@ export function MonthlyReportViewer({ students }: Props) {
                           <div>
                             <h4 className="font-semibold">{activity.title}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {/* Display date in UTC to avoid timezone shift */}
-                              {format(new Date(activity.date.substring(0, 10) + "T00:00:00Z"), "MMMM d, yyyy")}
+                              {/* Display date directly from string to avoid timezone shift */}
+                              {(() => {
+                                const [year, month, day] = activity.date.substring(0, 10).split('-');
+                                const monthNames = ["January", "February", "March", "April", "May", "June",
+                                  "July", "August", "September", "October", "November", "December"];
+                                return `${monthNames[parseInt(month) - 1]} ${parseInt(day)}, ${year}`;
+                              })()}
                               {activity.category && ` • ${activity.category}`}
                               {activity.hoursSpent && ` • ${activity.hoursSpent} hours`}
                             </p>

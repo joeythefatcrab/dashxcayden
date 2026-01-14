@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, RotateCcw, MessageSquare } from "lucide-react";
+import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, RotateCcw, MessageSquare, UserCog } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -41,6 +41,7 @@ export function DashboardNav() {
     { name: "My Courses", href: "/my-courses", icon: BookOpen, roles: ["STUDENT"] },
     { name: "Browse Courses", href: "/browse-courses", icon: Search, roles: ["STUDENT"] },
     { name: "Manage Parents", href: "/parents", icon: Users, roles: ["ADMIN"] },
+    { name: "Assign Students", href: "/assign-students", icon: UserCog, roles: ["ADMIN", "SUPERADMIN"] },
     { name: "Messages", href: "/messages", icon: MessageSquare, roles: ["ADMIN", "SUPERADMIN"] },
     { name: "Curricula", href: "/curricula", icon: BookOpen, roles: ["PARENT", "ADMIN"] },
     { name: "Students", href: "/students", icon: Users, roles: ["PARENT"] },

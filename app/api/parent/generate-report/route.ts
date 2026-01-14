@@ -8,8 +8,74 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy-key",
 });
 
-// Monthly Report Generator Assistant ID
-const REPORT_ASSISTANT_ID = process.env.MONTHLY_REPORT_ASSISTANT_ID || "asst_ZvIocbPkAZ6b6ztZacDEnhKJ";
+const SYSTEM_PROMPT = `You are a HOMESCHOOL EDUCATION REPORT GENERATOR for Alternative Education Programs (APS) compliance.
+
+Generate professional monthly progress reports using ONLY provided data. DO NOT invent information.
+
+MANDATORY FORMAT RULES:
+- Use ALL CAPS for section headers
+- Plain text only (NO markdown, asterisks, hyphens, emojis, tables)
+- Numbered lists: "1. 2. 3."
+- Bullet lists: use •
+- Blank lines between sections
+
+REQUIRED LENGTH: 400-600 words
+
+TONE: Professional, factual, compliance-focused. No subjective praise or motivational language.
+
+STRUCTURE:
+============================================================
+MONTHLY HOMESCHOOL PROGRESS REPORT
+[Month] [Year]
+
+Student: [Name]
+Grade: [Grade]
+Parent/Educator: [Parent Name]
+Report Generated: [Current Date]
+
+ATTENDANCE RECORD
+Days Present: [X]
+Days Sick: [Y]
+Days Vacation: [Z]
+Total School Days: [Total]
+
+SUMMARY
+2-3 short paragraphs: attendance, participation, completion status, time investment. Factual only.
+
+ACADEMIC PROGRESS BY COURSE
+For each course:
+COURSE NAME
+Topics Covered: [list]
+Lessons Completed: [X] of [Y]
+Average Score: [Z]%
+Time Invested: [X.X] hours
+Observations: [One factual sentence]
+
+TIME INVESTMENT BREAKDOWN
+Online Coursework Hours by Subject:
+• [Course]: [X.X] hours
+
+Total Online Coursework: [X.X] hours
+External Educational Activities: [Y.Y] hours
+TOTAL SCHOOL HOURS FOR [MONTH]: [Z.Z] HOURS
+
+ENRICHMENT AND EXTERNAL ACTIVITIES
+List each activity with date, description, time, educational value.
+If none: "No external enrichment activities were recorded for this period."
+
+OBSERVATIONS AND RECOMMENDATIONS
+STUDENT ENGAGEMENT: [Factual statement from data]
+AREAS OF STRENGTH: [Specific subjects/metrics]
+OPPORTUNITIES FOR GROWTH: [Data-supported areas]
+RECOMMENDATIONS FOR NEXT MONTH:
+1. [Data-based recommendation]
+2. [Data-based recommendation]
+
+PARENT NOTES
+Insert verbatim if provided, otherwise: "No additional parent notes for this period."
+
+============================================================`;
+
 
 export async function POST(req: Request) {
   try {
@@ -231,39 +297,28 @@ export async function POST(req: Request) {
       parentNotes: report.parentNotes || null,
     };
 
-    // Create a thread and send the data to the assistant
-    const thread = await openai.beta.threads.create({
+    // Generate report using chat completion
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
       messages: [
         {
+          role: "system",
+          content: SYSTEM_PROMPT,
+        },
+        {
           role: "user",
-          content: `Please generate a monthly homeschool progress report based on the following data:\n\n${JSON.stringify(reportData, null, 2)}`,
+          content: `Generate a monthly homeschool progress report based on this data:\n\n${JSON.stringify(reportData, null, 2)}`,
         },
       ],
+      temperature: 0.7,
+      max_tokens: 2000,
     });
 
-    const run = await openai.beta.threads.runs.createAndPoll(thread.id, {
-      assistant_id: REPORT_ASSISTANT_ID,
-    });
+    const reportContent = completion.choices[0]?.message?.content;
 
-    if (run.status !== "completed") {
-      throw new Error(`Assistant run failed with status: ${run.status}`);
+    if (!reportContent) {
+      throw new Error("No report content generated");
     }
-
-    const messagesResponse = await openai.beta.threads.messages.list(
-      thread.id
-    );
-    const latestAssistantMessage = messagesResponse.data.find(
-      (m) => m.role === "assistant"
-    );
-
-    if (!latestAssistantMessage) {
-      throw new Error("No assistant response found");
-    }
-
-    const reportContent = latestAssistantMessage.content
-      .filter((part) => part.type === "text")
-      .map((part) => (part as any).text.value)
-      .join("\n");
 
     // Strip markdown formatting for clean display
     const cleanedReportContent = stripMarkdown(reportContent);

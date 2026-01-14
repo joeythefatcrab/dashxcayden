@@ -85,46 +85,57 @@ export const {
         // @ts-ignore - role exists in our User model
         session.user.role = token.role;
 
-        const cookieStore = await cookies();
+        // Skip database queries in Edge Runtime (middleware)
+        // Check if we're in Edge Runtime by checking if db methods are available
+        const isEdgeRuntime = typeof EdgeRuntime !== "undefined";
 
-        // Check for full user impersonation (superadmin backdoor for testing)
-        const impersonateUserId = cookieStore.get("impersonate_user_id");
-        const impersonateAdminId = cookieStore.get("impersonate_admin_id");
+        if (!isEdgeRuntime) {
+          try {
+            const cookieStore = await cookies();
 
-        if (token.role === "SUPERADMIN" && impersonateUserId?.value && impersonateAdminId?.value) {
-          // Load the impersonated user's data
-          const impersonatedUser = await db.user.findUnique({
-            where: { id: impersonateUserId.value },
-            select: { id: true, email: true, name: true, role: true },
-          });
+            // Check for full user impersonation (superadmin backdoor for testing)
+            const impersonateUserId = cookieStore.get("impersonate_user_id");
+            const impersonateAdminId = cookieStore.get("impersonate_admin_id");
 
-          if (impersonatedUser) {
-            // Override session with impersonated user
-            // @ts-ignore
-            session.user.id = impersonatedUser.id;
-            // @ts-ignore
-            session.user.email = impersonatedUser.email;
-            // @ts-ignore
-            session.user.name = impersonatedUser.name;
-            // @ts-ignore
-            session.user.role = impersonatedUser.role;
-            // @ts-ignore - Mark as impersonating
-            session.user.isImpersonating = true;
-            // @ts-ignore - Store real admin info
-            session.user.realAdminId = impersonateAdminId.value;
-            session.user.realRole = token.role;
-          }
-        } else {
-          // Check for role-only impersonation (legacy QA feature)
-          const impersonateRole = cookieStore.get("impersonate_role");
+            if (token.role === "SUPERADMIN" && impersonateUserId?.value && impersonateAdminId?.value) {
+              // Load the impersonated user's data
+              const impersonatedUser = await db.user.findUnique({
+                where: { id: impersonateUserId.value },
+                select: { id: true, email: true, name: true, role: true },
+              });
 
-          if (token.role === "SUPERADMIN" && impersonateRole?.value) {
-            // @ts-ignore - Override role for QA testing
-            session.user.role = impersonateRole.value;
-            // @ts-ignore - Mark that this is impersonation
-            session.user.isImpersonating = true;
-            // @ts-ignore - Store real role
-            session.user.realRole = token.role;
+              if (impersonatedUser) {
+                // Override session with impersonated user
+                // @ts-ignore
+                session.user.id = impersonatedUser.id;
+                // @ts-ignore
+                session.user.email = impersonatedUser.email;
+                // @ts-ignore
+                session.user.name = impersonatedUser.name;
+                // @ts-ignore
+                session.user.role = impersonatedUser.role;
+                // @ts-ignore - Mark as impersonating
+                session.user.isImpersonating = true;
+                // @ts-ignore - Store real admin info
+                session.user.realAdminId = impersonateAdminId.value;
+                session.user.realRole = token.role;
+              }
+            } else {
+              // Check for role-only impersonation (legacy QA feature)
+              const impersonateRole = cookieStore.get("impersonate_role");
+
+              if (token.role === "SUPERADMIN" && impersonateRole?.value) {
+                // @ts-ignore - Override role for QA testing
+                session.user.role = impersonateRole.value;
+                // @ts-ignore - Mark that this is impersonation
+                session.user.isImpersonating = true;
+                // @ts-ignore - Store real role
+                session.user.realRole = token.role;
+              }
+            }
+          } catch (error) {
+            // Silently fail in edge runtime - impersonation won't work in middleware but that's ok
+            console.log("Session callback skipped database query (edge runtime)");
           }
         }
       }

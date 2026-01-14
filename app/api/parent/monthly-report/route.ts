@@ -128,6 +128,20 @@ export async function GET(req: Request) {
         },
       },
     });
+    // Get daily time logs for this month
+    const dailyTimeLogs = await db.dailyTimeLog.findMany({
+      where: {
+        studentId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        curriculumId: true,
+        minutesSpent: true,
+      },
+    });
 
     // Calculate course statistics
     const courseStats = enrollments.map((enrollment) => {
@@ -137,6 +151,11 @@ export async function GET(req: Request) {
 
       const uniqueLessons = new Set(courseAttempts.map((a) => a.lessonId));
       const totalTime = courseAttempts.reduce(
+      // Get daily time log minutes for this curriculum
+      const timeLogMinutes = dailyTimeLogs
+        .filter((log) => log.curriculumId === enrollment.curriculum.id)
+        .reduce((sum, log) => sum + log.minutesSpent, 0);
+
         (sum: number, a: any) => sum + (a.timeSpent || 0),
         0
       );
@@ -152,8 +171,8 @@ export async function GET(req: Request) {
         subject: enrollment.curriculum.subject,
         lessonsCompleted: uniqueLessons.size,
         averageScore: Math.round(avgScore),
-        timeSpentSeconds: totalTime,
-        timeSpentHours: parseFloat((totalTime / 3600).toFixed(1)),
+        timeSpentSeconds: totalTime + (timeLogMinutes * 60),
+        timeSpentHours: parseFloat(((totalTime + (timeLogMinutes * 60)) / 3600).toFixed(1)),
       };
     });
 
@@ -162,7 +181,14 @@ export async function GET(req: Request) {
       (sum: number, a: any) => sum + (a.timeSpent || 0),
       0
     );
-    const totalAppHours = parseFloat((totalAppSeconds / 3600).toFixed(1));
+    // Add daily time log minutes (converted to seconds)
+    const totalTimeLogMinutes = dailyTimeLogs.reduce(
+      (sum, log) => sum + log.minutesSpent,
+      0
+    );
+    const totalTimeLogSeconds = totalTimeLogMinutes * 60;
+
+    const totalAppHours = parseFloat(((totalAppSeconds + totalTimeLogSeconds) / 3600).toFixed(1));
 
     const totalExternalHours = report.externalActivities.reduce(
       (sum: number, activity: any) => sum + (activity.hoursSpent || 0),

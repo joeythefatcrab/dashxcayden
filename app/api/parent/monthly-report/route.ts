@@ -151,14 +151,18 @@ export async function GET(req: Request) {
 
       const uniqueLessons = new Set(courseAttempts.map((a) => a.lessonId));
       const totalTime = courseAttempts.reduce(
+        (sum: number, a: any) => sum + (a.timeSpent || 0),
+        0
+      );
+
       // Get daily time log minutes for this curriculum
       const timeLogMinutes = dailyTimeLogs
         .filter((log) => log.curriculumId === enrollment.curriculum.id)
         .reduce((sum, log) => sum + log.minutesSpent, 0);
 
-        (sum: number, a: any) => sum + (a.timeSpent || 0),
-        0
-      );
+      // Combine attempt time with daily log time (convert minutes to seconds)
+      const totalTimeSeconds = totalTime + (timeLogMinutes * 60);
+
       const avgScore =
         courseAttempts.length > 0
           ? courseAttempts.reduce((sum: number, a: any) => sum + a.score, 0) /
@@ -171,8 +175,8 @@ export async function GET(req: Request) {
         subject: enrollment.curriculum.subject,
         lessonsCompleted: uniqueLessons.size,
         averageScore: Math.round(avgScore),
-        timeSpentSeconds: totalTime + (timeLogMinutes * 60),
-        timeSpentHours: parseFloat(((totalTime + (timeLogMinutes * 60)) / 3600).toFixed(1)),
+        timeSpentSeconds: totalTimeSeconds,
+        timeSpentHours: parseFloat((totalTimeSeconds / 3600).toFixed(1)),
       };
     });
 

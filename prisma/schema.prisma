@@ -553,3 +553,14 @@ model DailyQuote {
 
   @@index([studentId, createdAt])
 }
+
+// System Settings (for superadmin configuration)
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique // e.g., "signup_code"
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+}

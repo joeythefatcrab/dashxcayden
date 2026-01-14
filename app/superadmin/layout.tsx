@@ -35,8 +35,8 @@ export default async function SuperAdminLayout({
       icon: Eye,
     },
     {
-      name: "Settings",
-      href: "/settings",
+      name: "System Settings",
+      href: "/superadmin/settings",
       icon: Settings,
     },
   ];

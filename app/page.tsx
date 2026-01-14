@@ -37,7 +37,7 @@ export default function HomePage() {
 
             {/* Minimal CTA Buttons */}
             <div className="flex flex-wrap items-center justify-center gap-4">
-              <Link href="/sign-up">
+              <Link href="/signup-gate">
                 <Button
                   size="lg"
                   className="h-12 rounded-lg bg-blue-600 px-8 text-base font-semibold shadow-md transition-all hover:bg-blue-700 hover:shadow-lg"
@@ -196,7 +196,7 @@ export default function HomePage() {
             Join thousands of families making homeschool simple and joyful
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link href="/sign-up">
+            <Link href="/signup-gate">
               <Button
                 size="lg"
                 className="h-12 rounded-lg bg-white px-10 text-base font-semibold text-blue-600 shadow-lg transition-all hover:bg-gray-50 hover:shadow-xl"

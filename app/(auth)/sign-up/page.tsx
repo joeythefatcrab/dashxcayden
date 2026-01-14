@@ -7,17 +7,50 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const [isValidated, setIsValidated] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    // Check if the signup code was validated
+    const checkValidation = async () => {
+      try {
+        const response = await fetch("/api/auth/check-signup-validation");
+        const data = await response.json();
+
+        if (!data.validated) {
+          // Redirect to signup gate if not validated
+          router.push("/signup-gate");
+        } else {
+          setIsValidated(true);
+        }
+      } catch (error) {
+        router.push("/signup-gate");
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkValidation();
+  }, [router]);
+
+  if (isChecking || !isValidated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

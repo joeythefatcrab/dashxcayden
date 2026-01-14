@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,13 +15,23 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
+type Activity = {
+  id: string;
+  title: string;
+  description: string | null;
+  date: string;
+  hoursSpent: number | null;
+  category: string | null;
+};
+
 type Props = {
   reportId: string;
   onSuccess: () => void;
   onCancel: () => void;
+  activity?: Activity; // Optional: for editing existing activity
 };
 
-export function ExternalActivityForm({ reportId, onSuccess, onCancel }: Props) {
+export function ExternalActivityForm({ reportId, onSuccess, onCancel, activity }: Props) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(
@@ -30,6 +40,20 @@ export function ExternalActivityForm({ reportId, onSuccess, onCancel }: Props) {
   const [hoursSpent, setHoursSpent] = useState("");
   const [category, setCategory] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Populate form when editing
+  useEffect(() => {
+    if (activity) {
+      setTitle(activity.title);
+      setDescription(activity.description || "");
+      // Convert UTC date to local date string
+      const activityDate = new Date(activity.date);
+      const localDate = new Date(activityDate.getTime() - activityDate.getTimezoneOffset() * 60000);
+      setDate(localDate.toISOString().split("T")[0]);
+      setHoursSpent(activity.hoursSpent?.toString() || "");
+      setCategory(activity.category || "");
+    }
+  }, [activity]);
 
   const categories = [
     "Field Trip",
@@ -49,8 +73,14 @@ export function ExternalActivityForm({ reportId, onSuccess, onCancel }: Props) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/parent/external-activity", {
-        method: "POST",
+      const url = activity
+        ? `/api/parent/external-activity?id=${activity.id}`
+        : "/api/parent/external-activity";
+
+      const method = activity ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           reportId,
@@ -63,13 +93,13 @@ export function ExternalActivityForm({ reportId, onSuccess, onCancel }: Props) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add activity");
+        throw new Error(activity ? "Failed to update activity" : "Failed to add activity");
       }
 
       onSuccess();
     } catch (error) {
-      console.error("Error adding activity:", error);
-      alert("Failed to add activity. Please try again.");
+      console.error("Error saving activity:", error);
+      alert(activity ? "Failed to update activity. Please try again." : "Failed to add activity. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -162,10 +192,10 @@ export function ExternalActivityForm({ reportId, onSuccess, onCancel }: Props) {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Adding...
+                  {activity ? "Updating..." : "Adding..."}
                 </>
               ) : (
-                "Add Activity"
+                activity ? "Update Activity" : "Add Activity"
               )}
             </Button>
           </div>

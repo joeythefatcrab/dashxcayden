@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, FileText, Plus, Trash2, Sparkles, Download } from "lucide-react";
+import { Loader2, FileText, Plus, Trash2, Sparkles, Download, Pencil } from "lucide-react";
 import { ExternalActivityForm } from "./ExternalActivityForm";
 import { AttendanceTracker } from "./AttendanceTracker";
 import { ParentNotesEditor } from "./ParentNotesEditor";
@@ -41,6 +41,7 @@ export function MonthlyReportViewer({ students }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showActivityForm, setShowActivityForm] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<any>(null);
 
   const months = [
     "January", "February", "March", "April", "May", "June",
@@ -310,15 +311,20 @@ export function MonthlyReportViewer({ students }: Props) {
               </div>
             </CardHeader>
             <CardContent>
-              {showActivityForm && (
+              {(showActivityForm || editingActivity) && (
                 <div className="mb-4">
                   <ExternalActivityForm
                     reportId={reportData.report.id}
+                    activity={editingActivity}
                     onSuccess={() => {
                       setShowActivityForm(false);
+                      setEditingActivity(null);
                       loadReportData();
                     }}
-                    onCancel={() => setShowActivityForm(false)}
+                    onCancel={() => {
+                      setShowActivityForm(false);
+                      setEditingActivity(null);
+                    }}
                   />
                 </div>
               )}
@@ -345,13 +351,25 @@ export function MonthlyReportViewer({ students }: Props) {
                               {activity.hoursSpent && ` • ${activity.hoursSpent} hours`}
                             </p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteActivity(activity.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingActivity(activity);
+                                setShowActivityForm(false);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteActivity(activity.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </div>
                         {activity.description && (
                           <p className="mt-2 text-sm">{activity.description}</p>

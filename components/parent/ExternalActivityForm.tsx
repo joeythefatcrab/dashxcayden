@@ -46,10 +46,9 @@ export function ExternalActivityForm({ reportId, onSuccess, onCancel, activity }
     if (activity) {
       setTitle(activity.title);
       setDescription(activity.description || "");
-      // Convert UTC date to local date string
-      const activityDate = new Date(activity.date);
-      const localDate = new Date(activityDate.getTime() - activityDate.getTimezoneOffset() * 60000);
-      setDate(localDate.toISOString().split("T")[0]);
+      // Extract date in UTC (YYYY-MM-DD format) to avoid timezone conversion
+      const dateStr = activity.date.substring(0, 10); // Get YYYY-MM-DD part
+      setDate(dateStr);
       setHoursSpent(activity.hoursSpent?.toString() || "");
       setCategory(activity.category || "");
     }

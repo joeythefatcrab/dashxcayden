@@ -177,13 +177,14 @@ export async function PATCH(req: Request) {
     }
 
     // Update the external activity
-    // Parse date as local time by appending time to prevent timezone shift
+    // Parse date string (YYYY-MM-DD) and create Date at midnight UTC to avoid timezone issues
+    const [year, month, day] = date.split('-').map(Number);
     const activity = await db.externalActivity.update({
       where: { id: activityId },
       data: {
         title,
         description,
-        date: new Date(date + "T12:00:00"), // Add noon time to ensure correct date
+        date: new Date(Date.UTC(year, month - 1, day)), // month is 0-indexed
         hoursSpent: hoursSpent ? parseFloat(hoursSpent) : null,
         category,
       },

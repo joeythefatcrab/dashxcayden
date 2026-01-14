@@ -303,7 +303,10 @@ export function MonthlyReportViewer({ students }: Props) {
                 <CardTitle>External Activities</CardTitle>
                 <Button
                   size="sm"
-                  onClick={() => setShowActivityForm(!showActivityForm)}
+                  onClick={() => {
+                    setShowActivityForm(!showActivityForm);
+                    setEditingActivity(null); // Clear any editing state
+                  }}
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Add Activity
@@ -346,7 +349,8 @@ export function MonthlyReportViewer({ students }: Props) {
                           <div>
                             <h4 className="font-semibold">{activity.title}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {format(new Date(activity.date), "MMMM d, yyyy")}
+                              {/* Display date in UTC to avoid timezone shift */}
+                              {format(new Date(activity.date.substring(0, 10) + "T00:00:00Z"), "MMMM d, yyyy")}
                               {activity.category && ` • ${activity.category}`}
                               {activity.hoursSpent && ` • ${activity.hoursSpent} hours`}
                             </p>

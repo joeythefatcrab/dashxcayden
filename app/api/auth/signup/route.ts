@@ -66,6 +66,16 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Sign up error:", error);
 
+    // Handle Prisma unique constraint violation
+    if (error instanceof Error) {
+      if (error.message.includes("Unique constraint failed on the fields: (`email`)")) {
+        return NextResponse.json(
+          { error: "This email is already registered. Please use a different email or sign in." },
+          { status: 409 }
+        );
+      }
+    }
+
     // Send the actual error message for debugging
     const errorMessage = error instanceof Error ? error.message : "Failed to create user";
 

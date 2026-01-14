@@ -72,6 +72,10 @@ export default function SignUpPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Handle specific error cases
+        if (response.status === 409) {
+          throw new Error("This email is already registered. Please sign in instead or use a different email.");
+        }
         throw new Error(data.error || "Sign up failed");
       }
 

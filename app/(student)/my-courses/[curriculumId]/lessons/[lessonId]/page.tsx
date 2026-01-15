@@ -111,6 +111,7 @@ export default async function LessonPage({
       previousLesson={previousLesson}
       attempts={attempts}
       bestScore={bestAttempt?.score}
+      bestAttempt={bestAttempt}
     />
   );
 }

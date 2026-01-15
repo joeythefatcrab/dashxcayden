@@ -21,6 +21,7 @@ interface LessonPlayerProps {
   previousLesson: any;
   attempts: any[];
   bestScore?: number;
+  bestAttempt?: any;
 }
 
 export function LessonPlayer({
@@ -31,9 +32,24 @@ export function LessonPlayer({
   previousLesson,
   attempts,
   bestScore,
+  bestAttempt,
 }: LessonPlayerProps) {
   const router = useRouter();
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+
+  // Initialize answers with previous best attempt if available
+  const [answers, setAnswers] = useState<Record<string, any>>(() => {
+    if (bestAttempt?.detail) {
+      const initialAnswers: Record<string, any> = {};
+      Object.entries(bestAttempt.detail).forEach(([itemId, itemData]: [string, any]) => {
+        if (itemData.answer !== undefined && itemData.answer !== null) {
+          initialAnswers[itemId] = itemData.answer;
+        }
+      });
+      return initialAnswers;
+    }
+    return {};
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [showContent, setShowContent] = useState(true);
@@ -325,16 +341,30 @@ export function LessonPlayer({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {lesson.items.map((item: any, idx: number) => (
-            <div key={item.id} className="rounded-lg border p-4">
-              <div className="mb-4">
-                <Label className="text-base font-medium">
-                  {idx + 1}. {item.prompt}
-                </Label>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  {item.points} {item.points === 1 ? "point" : "points"}
+          {lesson.items.map((item: any, idx: number) => {
+            // Check if this item was completed correctly in the best attempt
+            const itemResult = bestAttempt?.detail?.[item.id];
+            const wasCorrect = itemResult?.correct === true;
+            const wasCompleted = itemResult?.answer !== undefined && itemResult?.answer !== null;
+
+            return (
+              <div key={item.id} className={`rounded-lg border p-4 ${wasCorrect ? 'border-green-200 bg-green-50/30' : ''}`}>
+                <div className="mb-4 flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-base font-medium">
+                        {idx + 1}. {item.prompt}
+                      </Label>
+                      {wasCorrect && (
+                        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" title="Previously completed correctly" />
+                      )}
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {item.points} {item.points === 1 ? "point" : "points"}
+                      {wasCompleted && !wasCorrect && " • Previously attempted"}
+                    </div>
+                  </div>
                 </div>
-              </div>
 
               {item.type === "MCQ" && (
                 <RadioGroup
@@ -430,7 +460,8 @@ export function LessonPlayer({
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
 

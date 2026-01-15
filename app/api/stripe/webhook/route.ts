@@ -31,7 +31,7 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
 
         // Activate subscription
-        if (session.mode === "subscription") {
+        if ((session as any).mode === "subscription") {
           await handleSubscriptionCreated(session);
         }
         break;
@@ -76,9 +76,9 @@ export async function POST(req: Request) {
 }
 
 async function handleSubscriptionCreated(session: Stripe.Checkout.Session) {
-  const userId = session.metadata?.userId;
-  const studentId = session.metadata?.studentId;
-  const subscriptionId = session.subscription as string;
+  const userId = (session as any).metadata?.userId;
+  const studentId = (session as any).metadata?.studentId;
+  const subscriptionId = (session as any).subscription as string;
 
   if (!userId || !studentId || !subscriptionId) {
     console.error("Missing metadata in checkout session");
@@ -141,7 +141,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     },
   });
 
-  console.log(`Subscription updated for student ${studentId}: ${subscription.status}`);
+  console.log(`Subscription updated for student ${studentId}: ${(subscription as any).status}`);
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -175,7 +175,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string;
+  const subscriptionId = (invoice as any).subscription as string;
 
   if (!subscriptionId) return;
 
@@ -199,7 +199,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string;
+  const subscriptionId = (invoice as any).subscription as string;
 
   if (!subscriptionId) return;
 

@@ -83,6 +83,7 @@ export async function POST(req: Request) {
           quantity: 1,
         },
       ],
+      allow_promotion_codes: true, // Enable promo code input on checkout page
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}&success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?canceled=true`,
       metadata: {

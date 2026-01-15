@@ -177,20 +177,6 @@ export function ParentDashboard({ parentName, students }: Props) {
               </CardContent>
             </Card>
           </Link>
-
-          <Link href="/reports">
-            <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
-              <CardContent className="flex items-center gap-3 p-4">
-                <FileText className="h-8 w-8 text-primary" />
-                <div>
-                  <h4 className="font-semibold">Export Data</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Download reports
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
         </div>
       </div>
 

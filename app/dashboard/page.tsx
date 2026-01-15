@@ -23,7 +23,12 @@ export default async function DashboardPage() {
     const [students, parent] = await Promise.all([
       db.student.findMany({
         where: { parentId: user.id },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          grade: true,
+          subscriptionActive: true,
+          subscriptionEndDate: true,
           user: {
             select: {
               email: true,

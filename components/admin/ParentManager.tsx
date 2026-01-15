@@ -28,7 +28,6 @@ import {
   Edit,
   Key,
 } from "lucide-react";
-import { AIProgressReport } from "@/components/student/AIProgressReport";
 
 type Parent = {
   id: string;
@@ -618,9 +617,6 @@ export function ParentManager({ parents: initialParents }: ParentManagerProps) {
                               </div>
                             </div>
                           )}
-
-                          {/* AI Progress Report */}
-                          <AIProgressReport studentId={student.id} studentName={student.name} />
                         </div>
                       ))
                     )}

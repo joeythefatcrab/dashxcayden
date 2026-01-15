@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import { UserPlus, BookOpen, Trash2, BarChart } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { AIProgressReport } from "@/components/student/AIProgressReport";
 import Link from "next/link";
 
 interface Student {
@@ -284,14 +283,11 @@ export function StudentManager({ students, curricula }: StudentManagerProps) {
                 )}
 
                 <Link href={`/students/${student.id}`}>
-                  <Button variant="outline" className="w-full mb-4">
+                  <Button variant="outline" className="w-full">
                     <BarChart className="mr-2 h-4 w-4" />
                     View Detailed Progress
                   </Button>
                 </Link>
-
-                {/* AI Progress Report */}
-                <AIProgressReport studentId={student.id} studentName={student.name} />
               </CardContent>
             </Card>
           ))

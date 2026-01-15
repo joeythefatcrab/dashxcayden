@@ -86,9 +86,9 @@ async function handleSubscriptionCreated(session: Stripe.Checkout.Session) {
   }
 
   // Get subscription details
-  const subscription = (await stripe.subscriptions.retrieve(subscriptionId)) as Stripe.Subscription;
-  const periodEnd = subscription.current_period_end;
-  const priceId = subscription.items.data[0]?.price?.id;
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const periodEnd = (subscription as any).current_period_end;
+  const priceId = (subscription as any).items?.data?.[0]?.price?.id;
 
   // Update parent with subscription info
   await db.user.update({
@@ -113,16 +113,16 @@ async function handleSubscriptionCreated(session: Stripe.Checkout.Session) {
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  const userId = subscription.metadata?.userId;
-  const studentId = subscription.metadata?.studentId;
+  const userId = (subscription as any).metadata?.userId;
+  const studentId = (subscription as any).metadata?.studentId;
 
   if (!userId || !studentId) {
     console.error("Missing metadata in subscription");
     return;
   }
 
-  const isActive = subscription.status === "active" || subscription.status === "trialing";
-  const periodEnd = subscription.current_period_end;
+  const isActive = (subscription as any).status === "active" || (subscription as any).status === "trialing";
+  const periodEnd = (subscription as any).current_period_end;
 
   // Update parent subscription info
   await db.user.update({
@@ -145,8 +145,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  const userId = subscription.metadata?.userId;
-  const studentId = subscription.metadata?.studentId;
+  const userId = (subscription as any).metadata?.userId;
+  const studentId = (subscription as any).metadata?.studentId;
 
   if (!userId || !studentId) {
     console.error("Missing metadata in subscription");
@@ -179,10 +179,10 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 
   if (!subscriptionId) return;
 
-  const subscription = (await stripe.subscriptions.retrieve(subscriptionId)) as Stripe.Subscription;
-  const userId = subscription.metadata?.userId;
-  const studentId = subscription.metadata?.studentId;
-  const periodEnd = subscription.current_period_end;
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const userId = (subscription as any).metadata?.userId;
+  const studentId = (subscription as any).metadata?.studentId;
+  const periodEnd = (subscription as any).current_period_end;
 
   if (!userId || !studentId) return;
 
@@ -203,9 +203,9 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
   if (!subscriptionId) return;
 
-  const subscription = (await stripe.subscriptions.retrieve(subscriptionId)) as Stripe.Subscription;
-  const userId = subscription.metadata?.userId;
-  const studentId = subscription.metadata?.studentId;
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const userId = (subscription as any).metadata?.userId;
+  const studentId = (subscription as any).metadata?.studentId;
 
   if (!userId || !studentId) return;
 

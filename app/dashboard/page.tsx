@@ -20,34 +20,49 @@ export default async function DashboardPage() {
 
   // Show parent dashboard
   if (user.role === "PARENT") {
-    const students = await db.student.findMany({
-      where: { parentId: user.id },
-      include: {
-        user: {
-          select: {
-            email: true,
+    const [students, parent] = await Promise.all([
+      db.student.findMany({
+        where: { parentId: user.id },
+        include: {
+          user: {
+            select: {
+              email: true,
+            },
           },
-        },
-        enrollments: {
-          include: {
-            curriculum: {
-              select: {
-                id: true,
-                name: true,
-                subject: true,
+          enrollments: {
+            include: {
+              curriculum: {
+                select: {
+                  id: true,
+                  name: true,
+                  subject: true,
+                },
               },
             },
           },
         },
-      },
-      orderBy: { name: "asc" },
-    });
+        orderBy: { name: "asc" },
+      }),
+      db.user.findUnique({
+        where: { id: user.id },
+        select: {
+          stripeCustomerId: true,
+          stripeSubscriptionId: true,
+        },
+      }),
+    ]);
+
+    const hasAnySubscription = !!parent?.stripeSubscriptionId;
 
     return (
       <div className="px-4 py-8">
         <div className="container mx-auto">
           <NotificationBanner />
-          <ParentDashboard parentName={user.name || "there"} students={students} />
+          <ParentDashboard
+            parentName={user.name || "there"}
+            students={students}
+            hasAnySubscription={hasAnySubscription}
+          />
         </div>
       </div>
     );

@@ -115,10 +115,18 @@ model User {
   // UI preferences
   theme           String @default("light") // light, dark, system
 
+  // Stripe subscription tracking (for parents)
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?   @unique
+  stripePriceId          String?
+  stripeCurrentPeriodEnd DateTime?
+
   @@index([email])
   @@index([adminId])
   @@index([organizationId])
   @@index([role])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
 }
 
 // Student Profile
@@ -130,6 +138,10 @@ model Student {
   grade        Int?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+
+  // Subscription status
+  subscriptionActive  Boolean   @default(false)
+  subscriptionEndDate DateTime?
 
   user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   parent       User         @relation("StudentParent", fields: [parentId], references: [id], onDelete: Cascade)
@@ -143,6 +155,7 @@ model Student {
   dailyTimeLogs DailyTimeLog[]
 
   @@index([parentId])
+  @@index([subscriptionActive])
   @@index([userId])
 }
 

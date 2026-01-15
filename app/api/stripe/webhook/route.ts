@@ -87,14 +87,16 @@ async function handleSubscriptionCreated(session: Stripe.Checkout.Session) {
 
   // Get subscription details
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const periodEnd = subscription.current_period_end;
+  const priceId = subscription.items.data[0]?.price?.id;
 
   // Update parent with subscription info
   await db.user.update({
     where: { id: userId },
     data: {
       stripeSubscriptionId: subscriptionId,
-      stripePriceId: subscription.items.data[0].price.id,
-      stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      stripePriceId: priceId,
+      stripeCurrentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
     },
   });
 
@@ -103,7 +105,7 @@ async function handleSubscriptionCreated(session: Stripe.Checkout.Session) {
     where: { id: studentId },
     data: {
       subscriptionActive: true,
-      subscriptionEndDate: new Date(subscription.current_period_end * 1000),
+      subscriptionEndDate: periodEnd ? new Date(periodEnd * 1000) : null,
     },
   });
 
@@ -120,12 +122,13 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   }
 
   const isActive = subscription.status === "active" || subscription.status === "trialing";
+  const periodEnd = subscription.current_period_end;
 
   // Update parent subscription info
   await db.user.update({
     where: { id: userId },
     data: {
-      stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      stripeCurrentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
     },
   });
 
@@ -134,7 +137,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     where: { id: studentId },
     data: {
       subscriptionActive: isActive,
-      subscriptionEndDate: new Date(subscription.current_period_end * 1000),
+      subscriptionEndDate: periodEnd ? new Date(periodEnd * 1000) : null,
     },
   });
 
@@ -179,6 +182,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const userId = subscription.metadata?.userId;
   const studentId = subscription.metadata?.studentId;
+  const periodEnd = subscription.current_period_end;
 
   if (!userId || !studentId) return;
 
@@ -187,7 +191,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     where: { id: studentId },
     data: {
       subscriptionActive: true,
-      subscriptionEndDate: new Date(subscription.current_period_end * 1000),
+      subscriptionEndDate: periodEnd ? new Date(periodEnd * 1000) : null,
     },
   });
 

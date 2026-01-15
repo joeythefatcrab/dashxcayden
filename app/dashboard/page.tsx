@@ -60,7 +60,10 @@ export default async function DashboardPage() {
           <NotificationBanner />
           <ParentDashboard
             parentName={user.name || "there"}
-            students={students}
+            students={students.map(s => ({
+              ...s,
+              subscriptionEndDate: s.subscriptionEndDate?.toISOString() || null,
+            }))}
             hasAnySubscription={hasAnySubscription}
           />
         </div>

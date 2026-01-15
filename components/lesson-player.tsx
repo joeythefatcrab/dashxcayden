@@ -356,7 +356,9 @@ export function LessonPlayer({
                         {idx + 1}. {item.prompt}
                       </Label>
                       {wasCorrect && (
-                        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" title="Previously completed correctly" />
+                        <span title="Previously completed correctly">
+                          <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        </span>
                       )}
                     </div>
                     <div className="mt-1 text-xs text-muted-foreground">

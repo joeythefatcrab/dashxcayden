@@ -44,7 +44,53 @@ For development, use **TEST** keys (not live keys):
 5. Click **"Add endpoint"**
 6. **Copy the Webhook signing secret** (starts with `whsec_`)
 
-## Step 4: Environment Variables
+## Step 4: Create Promotion Codes (Optional)
+
+You can create discount coupons and promotion codes for your customers:
+
+### Create a Coupon:
+
+1. Go to https://dashboard.stripe.com/test/coupons
+2. Click **"+ New"**
+3. Choose discount type:
+   - **Percent off**: e.g., 25% off
+   - **Amount off**: e.g., $20 off
+4. Set **Duration**:
+   - **Once**: Applies to first payment only
+   - **Forever**: Applies to every payment
+   - **Multi-month**: Applies for specific number of months
+5. Optional settings:
+   - **Redeem by date**: Set expiration date
+   - **Max redemptions**: Limit total uses
+6. Click **"Create coupon"**
+
+### Create Promotion Code:
+
+1. After creating a coupon, click **"Add promotion code"**
+2. Enter a **Code** (e.g., `LAUNCH25`, `EARLYBIRD`) or leave blank to auto-generate
+3. Optional restrictions:
+   - **Customer**: Limit to specific customer
+   - **First time customer**: Only for new customers
+   - **Minimum amount**: Require minimum purchase
+   - **Max redemptions**: Limit how many times code can be used
+   - **Expiration date**: When code expires
+4. Click **"Create promotion code"**
+
+### How Customers Use Codes:
+
+When customers click "Subscribe" and reach the Stripe checkout page, they'll see:
+- A **"Add promotion code"** link above the payment button
+- They can enter any valid promotion code
+- The discount is applied immediately and shown in the order summary
+
+### Example Coupons:
+
+- **WELCOME25**: 25% off first month (Duration: Once)
+- **EARLYBIRD**: $50 off (Duration: Once)
+- **HOMESCHOOL20**: 20% off forever (Duration: Forever)
+- **SUMMER3**: $30 off for 3 months (Duration: Multi-month, 3 months)
+
+## Step 5: Environment Variables
 
 Add these to your `.env.local` file:
 
@@ -59,7 +105,7 @@ STRIPE_PRICE_ID=price_...
 NEXT_PUBLIC_APP_URL=http://localhost:3000  # or your production URL
 ```
 
-## Step 5: Run Database Migration
+## Step 6: Run Database Migration
 
 Run the SQL migration in your Neon database:
 
@@ -74,20 +120,22 @@ Or if you have DATABASE_URL set:
 npx prisma db push
 ```
 
-## Step 6: Test the Integration
+## Step 7: Test the Integration
 
 1. Start your app: `npm run dev`
 2. Log in as a parent
 3. You should see the subscription card on the dashboard
 4. Click "Subscribe" on a student
-5. Use Stripe test card: `4242 4242 4242 4242`
+5. On the Stripe checkout page:
+   - (Optional) Click "Add promotion code" to test discount codes
+   - Use Stripe test card: `4242 4242 4242 4242`
    - Any future expiry date
    - Any 3-digit CVC
    - Any ZIP code
 6. Complete checkout
 7. You should be redirected back and see the subscription as "Active"
 
-## Step 7: Test Webhook Locally (Optional)
+## Step 8: Test Webhook Locally (Optional)
 
 Install Stripe CLI:
 ```bash

@@ -86,7 +86,7 @@ async function handleSubscriptionCreated(session: Stripe.Checkout.Session) {
   }
 
   // Get subscription details
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscription = (await stripe.subscriptions.retrieve(subscriptionId)) as Stripe.Subscription;
   const periodEnd = subscription.current_period_end;
   const priceId = subscription.items.data[0]?.price?.id;
 
@@ -179,7 +179,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 
   if (!subscriptionId) return;
 
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscription = (await stripe.subscriptions.retrieve(subscriptionId)) as Stripe.Subscription;
   const userId = subscription.metadata?.userId;
   const studentId = subscription.metadata?.studentId;
   const periodEnd = subscription.current_period_end;
@@ -203,7 +203,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
   if (!subscriptionId) return;
 
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscription = (await stripe.subscriptions.retrieve(subscriptionId)) as Stripe.Subscription;
   const userId = subscription.metadata?.userId;
   const studentId = subscription.metadata?.studentId;
 

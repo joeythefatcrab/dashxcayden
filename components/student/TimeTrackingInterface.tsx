@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle2, AlertCircle, Plus, Calendar } from "lucide-react";
+import { Clock, CheckCircle2, AlertCircle, Plus, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type Curriculum = {
@@ -40,6 +40,7 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
   const router = useRouter();
   const [timeLogs, setTimeLogs] = useState(initialTimeLogs);
   const [loading, setLoading] = useState(false);
+  const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set());
 
   // Form state for new entry
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -96,6 +97,26 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
     }
   };
 
+  const toggleDateCollapse = (date: string) => {
+    setCollapsedDates(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(date)) {
+        newSet.delete(date);
+      } else {
+        newSet.add(date);
+      }
+      return newSet;
+    });
+  };
+
+  const formatTime = (minutes: number) => {
+    const hrs = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hrs === 0) return `${mins}m`;
+    if (mins === 0) return `${hrs}h`;
+    return `${hrs}h ${mins}m`;
+  };
+
   // Group logs by date
   const logsByDate = timeLogs.reduce((acc, log) => {
     const dateKey = new Date(log.date).toLocaleDateString();
@@ -120,8 +141,8 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
                 <Clock className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{Math.round(totalMinutesThisMonth / 60)}</p>
-                <p className="text-sm text-muted-foreground">Hours This Month</p>
+                <p className="text-2xl font-bold">{formatTime(totalMinutesThisMonth)}</p>
+                <p className="text-sm text-muted-foreground">Total Time This Month</p>
               </div>
             </div>
           </CardContent>
@@ -249,50 +270,70 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
             </p>
           ) : (
             <div className="space-y-4">
-              {Object.entries(logsByDate).map(([date, logs]) => (
-                <div key={date} className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    {date}
-                  </div>
-                  <div className="space-y-2 ml-6">
-                    {logs.map((log) => (
-                      <div
-                        key={log.id}
-                        className="flex items-center justify-between rounded-lg border p-3"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium">
-                              {log.curriculum.subject || log.curriculum.name}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {Math.floor(log.minutesSpent / 60)}h {log.minutesSpent % 60}m
-                            </p>
-                          </div>
-                        </div>
-                        <Badge
-                          variant={log.verifiedByParent ? "default" : "secondary"}
-                          className={log.verifiedByParent ? "bg-green-600" : ""}
-                        >
-                          {log.verifiedByParent ? (
-                            <>
-                              <CheckCircle2 className="mr-1 h-3 w-3" />
-                              Verified
-                            </>
-                          ) : (
-                            <>
-                              <AlertCircle className="mr-1 h-3 w-3" />
-                              Pending
-                            </>
-                          )}
+              {Object.entries(logsByDate).map(([date, logs]) => {
+                const totalMinutesForDay = logs.reduce((sum, log) => sum + log.minutesSpent, 0);
+                const isCollapsed = collapsedDates.has(date);
+
+                return (
+                  <div key={date} className="space-y-2">
+                    <button
+                      onClick={() => toggleDateCollapse(date)}
+                      className="flex items-center justify-between w-full rounded-lg border p-3 hover:bg-accent transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{date}</span>
+                        <Badge variant="outline" className="font-normal">
+                          {formatTime(totalMinutesForDay)}
                         </Badge>
                       </div>
-                    ))}
+                      {isCollapsed ? (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                    {!isCollapsed && (
+                      <div className="space-y-2 ml-6">
+                        {logs.map((log) => (
+                          <div
+                            key={log.id}
+                            className="flex items-center justify-between rounded-lg border p-3"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <div>
+                                <p className="font-medium">
+                                  {log.curriculum.subject || log.curriculum.name}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {formatTime(log.minutesSpent)}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge
+                              variant={log.verifiedByParent ? "default" : "secondary"}
+                              className={log.verifiedByParent ? "bg-green-600" : ""}
+                            >
+                              {log.verifiedByParent ? (
+                                <>
+                                  <CheckCircle2 className="mr-1 h-3 w-3" />
+                                  Verified
+                                </>
+                              ) : (
+                                <>
+                                  <AlertCircle className="mr-1 h-3 w-3" />
+                                  Pending
+                                </>
+                              )}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

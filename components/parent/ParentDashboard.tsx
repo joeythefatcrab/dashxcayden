@@ -6,6 +6,7 @@ import Link from "next/link";
 import { PendingGradesList } from "@/components/grading/pending-grades-list";
 import { PendingEssaysList } from "@/components/parent/PendingEssaysList";
 import { StudentSubscriptionCard } from "@/components/parent/StudentSubscriptionCard";
+import { PendingVerificationsCard } from "@/components/parent/PendingVerificationsCard";
 
 type Student = {
   id: string;
@@ -64,6 +65,7 @@ export function ParentDashboard({ parentName, students, hasAnySubscription }: Pr
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Items Needing Your Attention</h3>
 
+        <PendingVerificationsCard />
         <PendingGradesList />
         <PendingEssaysList />
       </div>

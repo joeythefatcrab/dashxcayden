@@ -548,6 +548,12 @@ model ExternalActivity {
   hoursSpent      Float?         // Hours spent on activity
   category        String?        // e.g., "Field Trip", "Reading", "Project"
 
+  // Verification tracking
+  verifiedByParent Boolean   @default(false)
+  verifiedAt       DateTime?
+  verifiedBy       String?   // Parent user ID who verified
+  submittedBy      String?   // "student" or "parent"
+
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -555,6 +561,7 @@ model ExternalActivity {
 
   @@index([reportId])
   @@index([date])
+  @@index([verifiedByParent])
 }
 
 // Daily Quotes (track recent quotes to avoid repetition)
@@ -587,6 +594,13 @@ model DailyTimeLog {
   date         DateTime // The date this log is for
   curriculumId String
   minutesSpent Int      // Minutes spent on this curriculum
+
+  // Verification tracking
+  verifiedByParent Boolean  @default(false)
+  verifiedAt       DateTime?
+  verifiedBy       String?  // Parent user ID who verified
+  submittedBy      String?  // "student" or "parent"
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -596,4 +610,5 @@ model DailyTimeLog {
   @@unique([studentId, date, curriculumId])
   @@index([studentId, date])
   @@index([curriculumId])
+  @@index([verifiedByParent])
 }

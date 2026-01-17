@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { markAttendance } from "@/lib/attendance";
 
 export async function POST(req: Request) {
   try {
@@ -65,9 +66,6 @@ export async function POST(req: Request) {
       },
       update: {
         minutesSpent,
-        verifiedByParent: false, // Reset verification when updated
-        verifiedAt: null,
-        verifiedBy: null,
         submittedBy: "student",
       },
       create: {
@@ -75,10 +73,12 @@ export async function POST(req: Request) {
         date: logDate,
         curriculumId,
         minutesSpent,
-        verifiedByParent: false,
         submittedBy: "student",
       },
     });
+
+    // Auto-mark attendance for this date
+    await markAttendance(student.id, logDate);
 
     return NextResponse.json({ success: true, timeLog });
   } catch (error) {

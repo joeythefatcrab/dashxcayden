@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { markAttendance } from "@/lib/attendance";
 
 export async function POST(req: Request) {
   try {
@@ -65,20 +66,24 @@ export async function POST(req: Request) {
       });
     }
 
-    // Create the external activity with verification tracking
+    // Create the external activity
     const [activityYear, activityMonth, activityDay] = date.split('-').map(Number);
+    const activityDateObj = new Date(Date.UTC(activityYear, activityMonth - 1, activityDay));
+
     const activity = await db.externalActivity.create({
       data: {
         reportId: monthlyReport.id,
         title,
         description,
-        date: new Date(Date.UTC(activityYear, activityMonth - 1, activityDay)),
+        date: activityDateObj,
         hoursSpent: hoursSpent ? parseFloat(hoursSpent) : null,
         category,
-        verifiedByParent: false,
         submittedBy: "student",
       },
     });
+
+    // Auto-mark attendance for this date
+    await markAttendance(student.id, activityDateObj);
 
     return NextResponse.json(activity);
   } catch (error) {

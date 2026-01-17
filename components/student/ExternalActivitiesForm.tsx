@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, CheckCircle2, AlertCircle, Trash2, Calendar } from "lucide-react";
+import { Plus, Trash2, Calendar } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type ExternalActivity = {
@@ -18,7 +18,6 @@ type ExternalActivity = {
   date: Date;
   hoursSpent: number | null;
   category: string | null;
-  verifiedByParent: boolean;
 };
 
 type Props = {
@@ -121,40 +120,22 @@ export function ExternalActivitiesForm({ studentId, initialActivities }: Props) 
     }
   };
 
-  const pendingCount = activities.filter(a => !a.verifiedByParent).length;
-
   return (
     <div className="space-y-6">
       {/* Summary */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-primary/10 p-3">
-                <Calendar className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{activities.length}</p>
-                <p className="text-sm text-muted-foreground">Total Activities</p>
-              </div>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-primary/10 p-3">
+              <Calendar className="h-6 w-6 text-primary" />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-yellow-500/10 p-3">
-                <AlertCircle className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingCount}</p>
-                <p className="text-sm text-muted-foreground">Pending Verification</p>
-              </div>
+            <div>
+              <p className="text-2xl font-bold">{activities.length}</p>
+              <p className="text-sm text-muted-foreground">Total Activities This Month</p>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Add Activity Form */}
       <Card>
@@ -266,25 +247,7 @@ export function ExternalActivitiesForm({ studentId, initialActivities }: Props) 
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold">{activity.title}</h4>
-                        <Badge
-                          variant={activity.verifiedByParent ? "default" : "secondary"}
-                          className={activity.verifiedByParent ? "bg-green-600" : ""}
-                        >
-                          {activity.verifiedByParent ? (
-                            <>
-                              <CheckCircle2 className="mr-1 h-3 w-3" />
-                              Verified
-                            </>
-                          ) : (
-                            <>
-                              <AlertCircle className="mr-1 h-3 w-3" />
-                              Pending
-                            </>
-                          )}
-                        </Badge>
-                      </div>
+                      <h4 className="font-semibold mb-1">{activity.title}</h4>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
                         <span>{new Date(activity.date).toLocaleDateString()}</span>
                         {activity.category && <span>• {activity.category}</span>}

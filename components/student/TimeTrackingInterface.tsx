@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle2, AlertCircle, Plus, Calendar, ChevronDown, ChevronUp } from "lucide-react";
+import { Clock, Plus, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type Curriculum = {
@@ -20,7 +20,6 @@ type TimeLog = {
   id: string;
   date: Date;
   minutesSpent: number;
-  verifiedByParent: boolean;
   curriculum: {
     name: string;
     subject: string | null;
@@ -128,12 +127,12 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
   }, {} as Record<string, TimeLog[]>);
 
   const totalMinutesThisMonth = timeLogs.reduce((sum, log) => sum + log.minutesSpent, 0);
-  const pendingVerification = timeLogs.filter(log => !log.verifiedByParent).length;
+  const totalEntries = timeLogs.length;
 
   return (
     <div className="space-y-6">
       {/* Summary Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -152,25 +151,11 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-green-500/10 p-3">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
+                <Calendar className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{timeLogs.filter(l => l.verifiedByParent).length}</p>
-                <p className="text-sm text-muted-foreground">Verified Entries</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-yellow-500/10 p-3">
-                <AlertCircle className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingVerification}</p>
-                <p className="text-sm text-muted-foreground">Pending Verification</p>
+                <p className="text-2xl font-bold">{totalEntries}</p>
+                <p className="text-sm text-muted-foreground">Total Entries</p>
               </div>
             </div>
           </CardContent>
@@ -298,35 +283,17 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
                         {logs.map((log) => (
                           <div
                             key={log.id}
-                            className="flex items-center justify-between rounded-lg border p-3"
+                            className="flex items-center gap-3 rounded-lg border p-3"
                           >
-                            <div className="flex items-center gap-3">
-                              <Clock className="h-4 w-4 text-muted-foreground" />
-                              <div>
-                                <p className="font-medium">
-                                  {log.curriculum.subject || log.curriculum.name}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {formatTime(log.minutesSpent)}
-                                </p>
-                              </div>
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <div className="flex-1">
+                              <p className="font-medium">
+                                {log.curriculum.subject || log.curriculum.name}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {formatTime(log.minutesSpent)}
+                              </p>
                             </div>
-                            <Badge
-                              variant={log.verifiedByParent ? "default" : "secondary"}
-                              className={log.verifiedByParent ? "bg-green-600" : ""}
-                            >
-                              {log.verifiedByParent ? (
-                                <>
-                                  <CheckCircle2 className="mr-1 h-3 w-3" />
-                                  Verified
-                                </>
-                              ) : (
-                                <>
-                                  <AlertCircle className="mr-1 h-3 w-3" />
-                                  Pending
-                                </>
-                              )}
-                            </Badge>
                           </div>
                         ))}
                       </div>

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { markAttendance } from "@/lib/attendance";
 
 export async function POST(req: Request) {
   try {
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
     // Verify the report belongs to this parent
     const report = await db.monthlyReport.findUnique({
       where: { id: reportId },
-      select: { parentId: true },
+      select: { parentId: true, studentId: true },
     });
 
     if (!report) {
@@ -41,16 +42,22 @@ export async function POST(req: Request) {
     // Create the external activity
     // Parse date string (YYYY-MM-DD) and create Date at midnight UTC to avoid timezone issues
     const [year, month, day] = date.split('-').map(Number);
+    const activityDate = new Date(Date.UTC(year, month - 1, day));
+
     const activity = await db.externalActivity.create({
       data: {
         reportId,
         title,
         description,
-        date: new Date(Date.UTC(year, month - 1, day)), // month is 0-indexed
+        date: activityDate,
         hoursSpent: hoursSpent ? parseFloat(hoursSpent) : null,
         category,
+        submittedBy: "parent",
       },
     });
+
+    // Auto-mark attendance for this date
+    await markAttendance(report.studentId, activityDate);
 
     return NextResponse.json(activity);
   } catch (error) {

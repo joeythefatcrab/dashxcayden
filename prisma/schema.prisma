@@ -153,6 +153,7 @@ model Student {
   essaySubmissions EssaySubmission[]
   dailyQuotes  DailyQuote[]
   dailyTimeLogs DailyTimeLog[]
+  dailyAttendance DailyAttendance[]
 
   @@index([parentId])
   @@index([subscriptionActive])
@@ -548,10 +549,7 @@ model ExternalActivity {
   hoursSpent      Float?         // Hours spent on activity
   category        String?        // e.g., "Field Trip", "Reading", "Project"
 
-  // Verification tracking
-  verifiedByParent Boolean   @default(false)
-  verifiedAt       DateTime?
-  verifiedBy       String?   // Parent user ID who verified
+  // Track who submitted
   submittedBy      String?   // "student" or "parent"
 
   createdAt       DateTime       @default(now())
@@ -561,7 +559,21 @@ model ExternalActivity {
 
   @@index([reportId])
   @@index([date])
-  @@index([verifiedByParent])
+}
+
+// Daily Attendance (auto-tracked when student logs in or logs activity)
+model DailyAttendance {
+  id        String   @id @default(cuid())
+  studentId String
+  date      DateTime // The date this attendance is for
+  present   Boolean  @default(true) // Present by default when created
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, date])
+  @@index([studentId, date])
 }
 
 // Daily Quotes (track recent quotes to avoid repetition)
@@ -595,10 +607,7 @@ model DailyTimeLog {
   curriculumId String
   minutesSpent Int      // Minutes spent on this curriculum
 
-  // Verification tracking
-  verifiedByParent Boolean  @default(false)
-  verifiedAt       DateTime?
-  verifiedBy       String?  // Parent user ID who verified
+  // Track who submitted
   submittedBy      String?  // "student" or "parent"
 
   createdAt    DateTime @default(now())
@@ -610,5 +619,4 @@ model DailyTimeLog {
   @@unique([studentId, date, curriculumId])
   @@index([studentId, date])
   @@index([curriculumId])
-  @@index([verifiedByParent])
 }

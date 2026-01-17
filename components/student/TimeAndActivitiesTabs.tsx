@@ -15,7 +15,6 @@ type TimeLog = {
   id: string;
   date: Date;
   minutesSpent: number;
-  verifiedByParent: boolean;
   curriculum: {
     name: string;
     subject: string | null;
@@ -29,7 +28,6 @@ type ExternalActivity = {
   date: Date;
   hoursSpent: number | null;
   category: string | null;
-  verifiedByParent: boolean;
 };
 
 type Props = {

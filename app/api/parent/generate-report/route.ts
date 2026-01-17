@@ -275,6 +275,26 @@ export async function POST(req: Request) {
       },
     });
 
+    // Get time log data for manually logged hours
+    const timeLogs = await db.dailyTimeLog.findMany({
+      where: {
+        studentId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: {
+        curriculum: {
+          select: {
+            id: true,
+            name: true,
+            subject: true,
+          },
+        },
+      },
+    });
+
     // Calculate course stats
     const courseStats = enrollments
       .map((enrollment) => {
@@ -282,16 +302,34 @@ export async function POST(req: Request) {
           (a) => a.lesson.unit.curriculumId === enrollment.curriculum.id
         );
 
-        if (courseAttempts.length === 0) return null;
+        // Get manually logged time for this course
+        const courseTimeLogs = timeLogs.filter(
+          (log) => log.curriculumId === enrollment.curriculum.id
+        );
 
-        const uniqueLessons = new Set(courseAttempts.map((a) => a.lessonId));
-        const totalTime = courseAttempts.reduce(
+        // Calculate total time: attempts (in seconds) + time logs (in minutes converted to seconds)
+        const attemptTimeSeconds = courseAttempts.reduce(
           (sum: number, a: any) => sum + (a.timeSpent || 0),
           0
         );
-        const avgScore =
-          courseAttempts.reduce((sum: number, a: any) => sum + a.score, 0) /
-          courseAttempts.length;
+        const loggedTimeSeconds = courseTimeLogs.reduce(
+          (sum: number, log: any) => sum + (log.minutesSpent * 60),
+          0
+        );
+        const totalTimeSeconds = attemptTimeSeconds + loggedTimeSeconds;
+
+        // Skip course if no activity at all
+        if (courseAttempts.length === 0 && courseTimeLogs.length === 0) {
+          return null;
+        }
+
+        const uniqueLessons = new Set(courseAttempts.map((a) => a.lessonId));
+
+        // Only calculate average score if there are attempts with scores
+        const avgScore = courseAttempts.length > 0
+          ? courseAttempts.reduce((sum: number, a: any) => sum + a.score, 0) /
+            courseAttempts.length
+          : null;
 
         // Get topics studied (unique unit titles)
         const topics = [
@@ -302,17 +340,23 @@ export async function POST(req: Request) {
           name: enrollment.curriculum.name,
           subject: enrollment.curriculum.subject,
           lessonsCompleted: uniqueLessons.size,
-          averageScore: Math.round(avgScore),
-          hoursSpent: parseFloat((totalTime / 3600).toFixed(1)),
+          averageScore: avgScore ? Math.round(avgScore) : null,
+          hoursSpent: parseFloat((totalTimeSeconds / 3600).toFixed(1)),
           topicsStudied: topics,
         };
       })
       .filter(Boolean);
 
-    const totalAppSeconds = attempts.reduce(
+    // Calculate total time from both attempts and time logs
+    const totalAttemptSeconds = attempts.reduce(
       (sum: number, a: any) => sum + (a.timeSpent || 0),
       0
     );
+    const totalLoggedSeconds = timeLogs.reduce(
+      (sum: number, log: any) => sum + (log.minutesSpent * 60),
+      0
+    );
+    const totalAppSeconds = totalAttemptSeconds + totalLoggedSeconds;
     const totalAppHours = parseFloat((totalAppSeconds / 3600).toFixed(1));
 
     const totalExternalHours = report.externalActivities.reduce(

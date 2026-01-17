@@ -20,10 +20,20 @@ export function RecentTimeLogsNotification() {
         const response = await fetch("/api/parent/recent-time-logs");
         if (response.ok) {
           const data = await response.json();
-          setRecentLogs(data.recentLogs || []);
+          // Ensure data.recentLogs is an array
+          if (Array.isArray(data.recentLogs)) {
+            setRecentLogs(data.recentLogs);
+          } else {
+            console.warn("Recent logs data is not an array:", data);
+            setRecentLogs([]);
+          }
+        } else {
+          console.error("Failed to fetch recent logs:", response.status, response.statusText);
+          setRecentLogs([]);
         }
       } catch (error) {
         console.error("Error fetching recent logs:", error);
+        setRecentLogs([]);
       } finally {
         setLoading(false);
       }

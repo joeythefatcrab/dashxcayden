@@ -7,6 +7,7 @@ import { BookOpen, Clock } from "lucide-react";
 import Link from "next/link";
 import { DailyGreeting } from "@/components/student/DailyGreeting";
 import { NotificationBanner } from "@/components/notifications/NotificationBanner";
+import { markAttendance } from "@/lib/attendance";
 
 export default async function MyCoursesPage() {
   const session = await auth();
@@ -49,6 +50,9 @@ export default async function MyCoursesPage() {
       </div>
     );
   }
+
+  // Mark attendance when student accesses their courses
+  await markAttendance(student.id);
 
   // Get enrollments with curriculum details
   const enrollments = await db.enrollment.findMany({

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { NotificationBanner } from "@/components/notifications/NotificationBanner";
 import { ParentDashboard } from "@/components/parent/ParentDashboard";
+import { markAttendance } from "@/lib/attendance";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -77,6 +78,17 @@ export default async function DashboardPage() {
   }
 
   // Only students should reach this point
+  // Get student record to mark attendance
+  const student = await db.student.findFirst({
+    where: { userId: user.id },
+    select: { id: true },
+  });
+
+  // Mark attendance for today if student logs in
+  if (student) {
+    await markAttendance(student.id);
+  }
+
   return (
     <div className="px-4 py-8">
       <div className="container mx-auto">

@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { markAttendance } from "@/lib/attendance";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -188,6 +189,9 @@ export async function POST(
         },
       },
     });
+
+    // Auto-mark attendance for today
+    await markAttendance(studentId);
 
     return NextResponse.json({
       success: true,

@@ -46,8 +46,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
-    const inviteUrl = `${baseUrl}/accept-invite?code=${inviteCode}&email=${encodeURIComponent(email)}`;
+    // Get the correct base URL from the request headers
+    const headersList = request.headers;
+    const host = headersList.get("host") || "";
+    const protocol = headersList.get("x-forwarded-proto") || "https";
+    const baseUrl = host ? `${protocol}://${host}` : (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+
+    const inviteUrl = `${baseUrl.replace(/\/+$/, "")}/accept-invite?code=${inviteCode}&email=${encodeURIComponent(email)}`;
 
     return NextResponse.json({
       success: true,

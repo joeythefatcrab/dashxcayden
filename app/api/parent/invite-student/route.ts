@@ -69,8 +69,17 @@ export async function POST(req: Request) {
       },
     });
 
+    // Get the correct base URL from the request headers
+    const headersList = req.headers;
+    const host = headersList.get("host") || "";
+    const protocol = headersList.get("x-forwarded-proto") || "https";
+    const baseUrl = `${protocol}://${host}`;
+
+    // Fallback to environment variable if host is not available
+    const appUrl = host ? baseUrl : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
     // Send invitation email
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/accept-invite/${token}`;
+    const inviteUrl = `${appUrl}/accept-invite/${token}`;
 
     const emailContent = `
 <!DOCTYPE html>

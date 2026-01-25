@@ -22,6 +22,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Student ID required" }, { status: 400 });
     }
 
+    // Get the correct base URL from the request headers
+    const headersList = req.headers;
+    const host = headersList.get("host") || "";
+    const protocol = headersList.get("x-forwarded-proto") || "https";
+    const baseUrl = `${protocol}://${host}`;
+
+    // Fallback to environment variable if host is not available
+    const appUrl = host ? baseUrl : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
     // Verify student belongs to this parent
     const student = await db.student.findUnique({
       where: { id: studentId },
@@ -84,8 +93,8 @@ export async function POST(req: Request) {
         },
       ],
       allow_promotion_codes: true, // Enable promo code input on checkout page
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}&success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?canceled=true`,
+      success_url: `${appUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}&success=true`,
+      cancel_url: `${appUrl}/dashboard?canceled=true`,
       metadata: {
         userId: parent.id,
         studentId: student.id,

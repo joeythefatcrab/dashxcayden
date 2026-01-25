@@ -15,6 +15,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Only parents can access billing" }, { status: 403 });
     }
 
+    // Get the correct base URL from the request headers
+    const headersList = req.headers;
+    const host = headersList.get("host") || "";
+    const protocol = headersList.get("x-forwarded-proto") || "https";
+    const baseUrl = `${protocol}://${host}`;
+
+    // Fallback to environment variable if host is not available
+    const appUrl = host ? baseUrl : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
     const parent = await db.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -29,7 +38,7 @@ export async function POST(req: Request) {
     // Create Stripe billing portal session
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: parent.stripeCustomerId,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+      return_url: `${appUrl}/dashboard`,
     });
 
     return NextResponse.json({ url: portalSession.url });

@@ -32,7 +32,7 @@ type ActivityResponse = {
 };
 
 const ACTIVITY_TYPES = [
-  { value: "", label: "All Types" },
+  { value: "ALL", label: "All Types" },
   { value: "LOGIN", label: "Login" },
   { value: "LOGOUT", label: "Logout" },
   { value: "CREATE", label: "Create" },
@@ -45,7 +45,7 @@ export default function ActivityLogsPage() {
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [typeFilter, setTypeFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [limit] = useState(50);
   const [offset, setOffset] = useState(0);
@@ -58,7 +58,7 @@ export default function ActivityLogsPage() {
         offset: offset.toString(),
       });
 
-      if (typeFilter) params.set("type", typeFilter);
+      if (typeFilter && typeFilter !== "ALL") params.set("type", typeFilter);
 
       const response = await fetch(`/api/superadmin/activity-logs?${params}`);
       if (response.ok) {

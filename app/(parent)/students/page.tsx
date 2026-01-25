@@ -40,12 +40,21 @@ export default async function StudentsPage() {
     orderBy: { name: "asc" },
   });
 
-  // Get available curricula for assignment
+  // Get curricula this parent has access to
+  // 1. Curricula they created themselves
+  // 2. Curricula explicitly granted by admin
+  const parentAccessRecords = await db.parentCurriculumAccess.findMany({
+    where: { parentId: session.user.id },
+    select: { curriculumId: true },
+  });
+
+  const accessibleCurriculumIds = parentAccessRecords.map((record) => record.curriculumId);
+
   const curricula = await db.curriculum.findMany({
     where: {
       OR: [
         { createdById: session.user.id },
-        { isPublic: true },
+        { id: { in: accessibleCurriculumIds } },
       ],
     },
     select: {

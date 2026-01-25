@@ -105,6 +105,7 @@ model User {
   curricula     Curriculum[] @relation("CurriculumCreator")
   userActivities UserActivity[]
   sentMessages  Message[] @relation("SentMessages")
+  curriculumAccess ParentCurriculumAccess[]
 
   // Parent settings
   digestFrequency String @default("daily") // daily, weekly, none
@@ -182,6 +183,7 @@ model Curriculum {
   units       Unit[]
   enrollments Enrollment[]
   dailyTimeLogs DailyTimeLog[]
+  parentAccess ParentCurriculumAccess[]
 
   @@index([createdById])
 }
@@ -574,6 +576,22 @@ model DailyAttendance {
 
   @@unique([studentId, date])
   @@index([studentId, date])
+}
+
+// Parent Curriculum Access Control
+model ParentCurriculumAccess {
+  id           String     @id @default(cuid())
+  parentId     String
+  curriculumId String
+  grantedAt    DateTime   @default(now())
+  grantedBy    String?    // Admin who granted access
+
+  parent       User       @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, curriculumId])
+  @@index([parentId])
+  @@index([curriculumId])
 }
 
 // Daily Quotes (track recent quotes to avoid repetition)

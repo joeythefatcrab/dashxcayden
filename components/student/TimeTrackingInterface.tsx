@@ -68,6 +68,7 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
   const [activityDescription, setActivityDescription] = useState("");
   const [activityDate, setActivityDate] = useState(new Date().toISOString().split('T')[0]);
   const [activityHours, setActivityHours] = useState("");
+  const [activityMinutes, setActivityMinutes] = useState("");
   const [activityCategory, setActivityCategory] = useState("");
 
   const handleCourseTimeSubmit = async (e: React.FormEvent) => {
@@ -133,6 +134,9 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
         return;
       }
 
+      // Calculate total hours from hours and minutes
+      const totalHours = (parseInt(activityHours) || 0) + (parseInt(activityMinutes) || 0) / 60;
+
       const response = await fetch("/api/student/external-activity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -140,7 +144,7 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
           title: activityTitle,
           description: activityDescription || null,
           date: activityDate,
-          hoursSpent: activityHours ? parseFloat(activityHours) : null,
+          hoursSpent: totalHours > 0 ? totalHours : null,
           category: activityCategory || null,
         }),
       });
@@ -154,6 +158,7 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
       setActivityTitle("");
       setActivityDescription("");
       setActivityHours("");
+      setActivityMinutes("");
       setActivityCategory("");
       setDialogOpen(false);
 
@@ -372,34 +377,46 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select value={activityCategory} onValueChange={setActivityCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ACTIVITY_CATEGORIES.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Select value={activityCategory} onValueChange={setActivityCategory}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ACTIVITY_CATEGORIES.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="activity-hours">Hours Spent</Label>
+                    <Label htmlFor="activity-hours">Hours</Label>
                     <Input
                       id="activity-hours"
                       type="number"
-                      step="0.5"
                       min="0"
                       max="24"
-                      placeholder="e.g., 2.5"
+                      placeholder="0"
                       value={activityHours}
                       onChange={(e) => setActivityHours(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="activity-minutes">Minutes</Label>
+                    <Input
+                      id="activity-minutes"
+                      type="number"
+                      min="0"
+                      max="59"
+                      placeholder="0"
+                      value={activityMinutes}
+                      onChange={(e) => setActivityMinutes(e.target.value)}
                     />
                   </div>
                 </div>

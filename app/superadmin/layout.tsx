@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { Users, LayoutDashboard, Settings, Eye } from "lucide-react";
+import { Users, LayoutDashboard, Settings, Eye, Activity } from "lucide-react";
 import Link from "next/link";
 
 export default async function SuperAdminLayout({
@@ -28,6 +28,11 @@ export default async function SuperAdminLayout({
       name: "Users",
       href: "/superadmin/users",
       icon: Users,
+    },
+    {
+      name: "Activity Logs",
+      href: "/superadmin/activity-logs",
+      icon: Activity,
     },
     {
       name: "Impersonate",

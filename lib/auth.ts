@@ -70,6 +70,29 @@ export const {
     error: "/error",
   },
   callbacks: {
+    async signIn({ user }) {
+      // Log user sign-in activity
+      if (user?.id) {
+        try {
+          await db.userActivity.create({
+            data: {
+              userId: user.id,
+              type: "LOGIN",
+              description: `User ${user.email} signed in`,
+              metadata: {
+                email: user.email,
+                name: user.name,
+                timestamp: new Date().toISOString(),
+              },
+            },
+          });
+        } catch (error) {
+          console.error("Failed to log sign-in activity:", error);
+          // Don't block sign-in if logging fails
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;

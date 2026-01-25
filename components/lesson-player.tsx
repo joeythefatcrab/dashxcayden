@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +55,28 @@ export function LessonPlayer({
   const [showContent, setShowContent] = useState(true);
   const [essayPopupOpen, setEssayPopupOpen] = useState(false);
   const [selectedEssayItem, setSelectedEssayItem] = useState<any>(null);
+
+  // Reset state when lesson changes
+  useEffect(() => {
+    // Reset all form state when switching to a new lesson
+    setResult(null);
+    setShowContent(true);
+    setEssayPopupOpen(false);
+    setSelectedEssayItem(null);
+
+    // Re-initialize answers from best attempt for the new lesson
+    if (bestAttempt?.detail) {
+      const initialAnswers: Record<string, any> = {};
+      Object.entries(bestAttempt.detail).forEach(([itemId, itemData]: [string, any]) => {
+        if (itemData.answer !== undefined && itemData.answer !== null) {
+          initialAnswers[itemId] = itemData.answer;
+        }
+      });
+      setAnswers(initialAnswers);
+    } else {
+      setAnswers({});
+    }
+  }, [lesson.id, bestAttempt]); // Re-run when lesson ID or best attempt changes
 
   const handleAnswerChange = (itemId: string, value: any) => {
     setAnswers((prev) => ({ ...prev, [itemId]: value }));

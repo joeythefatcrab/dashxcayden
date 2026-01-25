@@ -606,6 +606,7 @@ model DailyTimeLog {
   date         DateTime // The date this log is for
   curriculumId String
   minutesSpent Int      // Minutes spent on this curriculum
+  description  String?  @db.Text // What they worked on
 
   // Track who submitted
   submittedBy      String?  // "student" or "parent"

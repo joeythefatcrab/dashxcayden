@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, RotateCcw, MessageSquare, UserCog, Clock } from "lucide-react";
+import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, RotateCcw, MessageSquare, UserCog, Clock, Shield } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -43,6 +43,7 @@ export function DashboardNav() {
     { name: "Browse Courses", href: "/browse-courses", icon: Search, roles: ["STUDENT"] },
     { name: "Manage Parents", href: "/parents", icon: Users, roles: ["ADMIN"] },
     { name: "Assign Students", href: "/assign-students", icon: UserCog, roles: ["ADMIN", "SUPERADMIN"] },
+    { name: "Curriculum Access", href: "/curriculum-access", icon: Shield, roles: ["ADMIN", "SUPERADMIN"] },
     { name: "Messages", href: "/messages", icon: MessageSquare, roles: ["ADMIN", "SUPERADMIN"] },
     { name: "Curricula", href: "/curricula", icon: BookOpen, roles: ["PARENT", "ADMIN"] },
     { name: "Students", href: "/students", icon: Users, roles: ["PARENT"] },
@@ -66,7 +67,7 @@ export function DashboardNav() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap"
               >
                 <item.icon className="h-4 w-4" />
                 {item.name}

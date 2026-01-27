@@ -56,18 +56,18 @@ export function DashboardNav() {
   return (
     <header className="border-b bg-background">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-8">
-          <Link href="/dashboard" className="text-xl font-bold">
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard" className="text-xl font-bold whitespace-nowrap">
             HomeschoolHero
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-6 md:flex">
+          <nav className="hidden items-center gap-3 lg:flex">
             {filteredNav.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap"
               >
                 <item.icon className="h-4 w-4" />
                 {item.name}

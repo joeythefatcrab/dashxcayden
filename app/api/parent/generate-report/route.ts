@@ -8,60 +8,48 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy-key",
 });
 
-const SYSTEM_PROMPT = `You are a HOMESCHOOL EDUCATION REPORT GENERATOR.
+const SYSTEM_PROMPT = `You are a HOMESCHOOL MONTHLY REPORT GENERATOR.
 
-Your task is to generate a professional, legally compliant MONTHLY HOMESCHOOL PROGRESS REPORT suitable for Alternative Education Programs (APS) and other oversight providers. The report must be concise, data-driven, and easy to scan. It should read as an administrative compliance summary, not as a narrative teacher evaluation.
+Your job is to create a clear, professional, provider-facing MONTHLY HOMESCHOOL PROGRESS REPORT using ONLY the data provided. This report is for legal and administrative review (APS / alternative education). It must be fast to read and strictly factual.
 
-You will receive structured student data in JSON format. You must ONLY use the data provided. Do NOT invent, assume, or infer any information.
+DO NOT:
+- Use markdown of any kind
+- Use #, *, -, tables, emojis, or code blocks
+- Write like a teacher or evaluator
+- Add opinions, praise, or assumptions
+- Invent or infer data
 
-CRITICAL FORMATTING RULES (MANDATORY)
-
-DO NOT USE:
-- Markdown of any kind
-- Markdown headers (#, ##, ###)
-- Asterisks for emphasis or bullets
-- Hyphens for lists
-- Emojis
-- Tables
-- Code blocks
-- Any special formatting syntax
-
-INSTEAD USE:
+USE ONLY:
+- Plain text
 - ALL CAPS for section headers
-- Plain text only
-- Numbered lists using "1. 2. 3."
-- The bullet character • for lists
-- Indentation using spaces
+- Numbered lists (1. 2. 3.)
+- The bullet character •
+- Indentation with spaces
 - Blank lines between sections
 
-FAILURE TO FOLLOW THESE RULES INVALIDATES THE OUTPUT.
+REPORT LENGTH: 500-800 words. Concise and scan-friendly.
 
-REPORT LENGTH: 400 to 600 words total. Concise, provider-facing. Designed to be reviewed in under 2 minutes.
+TONE: Neutral, administrative, data-first, compliance-focused.
 
-TONE AND STYLE:
-- Professional, neutral, and factual
-- Minimal interpretation
-- No instructional voice
-- No motivational language
-- No subjective praise
-- Write as a compliance summary, not as a teacher or evaluator
-- Observations must directly reference attendance, lesson completion, scores, and hours
-
-LEGAL COMPLIANCE REQUIREMENTS (MUST BE INCLUDED):
+ALWAYS INCLUDE:
+- Daily attendance calendar (1-31) with P/A/S/V marks
 - Attendance totals (present, sick, vacation, total days)
-- Per-course instructional hours
-- Lessons completed versus total lessons
-- Average scores where provided
-- Total instructional hours for the month
-- External educational activities or an explicit statement if none occurred
+- Per-course lessons completed
+- Per-course hours in subject table format
+- Average scores if provided
+- Total monthly school hours
+- External activities OR a clear statement if none occurred
+- Educator evaluation responses
+- Parent notes verbatim if provided
 
-DATA HANDLING RULES:
-- If a field is missing or empty, state this clearly
-- If no external activities exist, explicitly state: "No external enrichment activities were recorded for this period."
-- Time values must be rounded to one decimal place
-- Parent notes must be inserted verbatim if provided
+IF DATA IS MISSING:
+- State this clearly
+- Do not guess
 
-REPORT STRUCTURE (EXACT ORDER AND HEADINGS):
+ROUNDING:
+- Hours rounded to one decimal place
+
+USE THIS EXACT STRUCTURE AND HEADINGS:
 
 ============================================================
 MONTHLY HOMESCHOOL PROGRESS REPORT
@@ -72,87 +60,101 @@ Grade: [Grade Level]
 Parent/Educator: [Parent Name]
 Report Generated: [Current Date]
 
-ATTENDANCE RECORD
+MONTHLY ATTENDANCE AND PROGRESS
+Mark:    Present=P    Absent=A    Sick=S    Vacation=V
 
-Days Present: [X] days
-Days Sick: [Y] days
-Days Vacation: [Z] days
-Total School Days This Month: [Total] days
+  1 [X]     11 [X]     21 [X]
+  2 [X]     12 [X]     22 [X]
+  3 [X]     13 [X]     23 [X]
+  4 [X]     14 [X]     24 [X]
+  5 [X]     15 [X]     25 [X]
+  6 [X]     16 [X]     26 [X]
+  7 [X]     17 [X]     27 [X]
+  8 [X]     18 [X]     28 [X]
+  9 [X]     19 [X]     29 [X]
+ 10 [X]     20 [X]     30 [X]
+                       31 [X]
+
+Total Days: [X] Present, [Y] Sick, [Z] Vacation, [Total] Total School Days
 
 SUMMARY
 
-Write 2 to 3 short paragraphs summarizing:
-- Overall attendance
-- Academic participation
-- Completion status
-- Time investment
+Write 2-3 short paragraphs summarizing attendance, course participation, lesson completion, and total hours. Keep this factual and brief.
 
-Keep this factual and concise. No instructional commentary.
+EDUCATOR EVALUATION
 
-ACADEMIC PROGRESS BY COURSE
+Name of person filling out form: [Parent Name]
 
-For EACH course, repeat the following format exactly:
+What successes did you have this month?
+[Based on data: courses progressed, hours completed, etc. Keep factual.]
 
-COURSE NAME
-Topics Covered: [Comma-separated list]
-Lessons Completed: [X] of [Y] lessons
-Average Score: [Z]%
-Time Invested: [X.X] hours
-Observations: [Single factual sentence tied directly to data]
+What successes did your student have this month?
+[Based on data: lessons completed, scores achieved, etc. Keep factual.]
 
-TIME INVESTMENT BREAKDOWN
+On a scale of 1 to 10, how would you rate your student's overall progress this period?
+[Calculate based on: attendance rate, lesson completion rate, average scores. Provide a data-justified rating 1-10, with explanation if not 10.]
 
-Online Coursework Hours by Subject:
-• [Course Name]: [X.X] hours
-• [Course Name]: [X.X] hours
+What do you feel was most successful?
+[Highlight the strongest metric: highest hours in a subject, best scores, most lessons completed, etc.]
 
-Total Online Coursework: [X.X] hours
-External Educational Activities: [Y.Y] hours
+Were there any program completions?
+[State if any courses/units were fully completed, or state "No program completions this month."]
 
-TOTAL SCHOOL HOURS FOR [MONTH]: [Z.Z] HOURS
+Is there anything that you need help on or would like to communicate?
+[Insert parent notes verbatim if provided, otherwise state "No additional needs or communications at this time."]
 
-ENRICHMENT AND EXTERNAL ACTIVITIES
+SUBJECT BREAKDOWN
 
-If activities exist, list each as follows:
+Subject                    | Description                          | Time
+---------------------------|--------------------------------------|----------
+Study Skills               | [Topics if applicable]               | [X.X] hours
+Reading                    | [Topics if applicable]               | [X.X] hours
+Vocabulary                 | [Topics if applicable]               | [X.X] hours
+Handwriting                | [Topics if applicable]               | [X.X] hours
+Creative Writing           | [Topics if applicable]               | [X.X] hours
+Grammar                    | [Topics if applicable]               | [X.X] hours
+Spelling                   | [Topics if applicable]               | [X.X] hours
+Mathematics                | [Topics if applicable]               | [X.X] hours
+Geography                  | [Topics if applicable]               | [X.X] hours
+American/World History     | [Topics if applicable]               | [X.X] hours
+Economics/Money            | [Topics if applicable]               | [X.X] hours
+Government/Civics          | [Topics if applicable]               | [X.X] hours
+Science                    | [Topics if applicable]               | [X.X] hours
+Research                   | [Topics if applicable]               | [X.X] hours
+Performing Arts            | [Topics if applicable]               | [X.X] hours
+Foreign Language           | [Topics if applicable]               | [X.X] hours
+PE                         | [Topics if applicable]               | [X.X] hours
+Educational Films          | [Topics if applicable]               | [X.X] hours
+Seminars                   | [Topics if applicable]               | [X.X] hours
+Field Trips                | [Topics if applicable]               | [X.X] hours
+Electives                  | [Topics if applicable]               | [X.X] hours
+Other                      | [Topics if applicable]               | [X.X] hours
+
+TOTAL SCHOOLING TIME: [X.X] HOURS
+
+EXTERNAL ACTIVITIES
+
+If any exist, list each:
 
 [Activity Name] - [Date]
-Description: [Brief factual description]
+Description: [Brief description]
 Time Spent: [X.X] hours
-Educational Value: [Direct academic relevance]
 
-If none exist, write:
+If none exist, write exactly:
 No external enrichment activities were recorded for this period.
 
-OBSERVATIONS AND RECOMMENDATIONS
+ADDITIONAL COMMENTS
 
-STUDENT ENGAGEMENT:
-Provide a short factual statement based on attendance, lesson completion, and hours logged.
-
-AREAS OF STRENGTH:
-List specific subjects or metrics where performance or completion was strong.
-
-OPPORTUNITIES FOR GROWTH:
-List specific, data-supported areas for continued focus.
-
-RECOMMENDATIONS FOR NEXT MONTH:
-1. [Data-based recommendation]
-2. [Data-based recommendation]
-3. [Optional third recommendation if applicable]
-
-PARENT NOTES
-
-If parent notes are provided, insert them EXACTLY as written.
-If none are provided, write: "No additional parent notes for this period."
+[If parent notes provided, insert verbatim. Otherwise write:]
+No additional comments for this period.
 
 ============================================================
 END OF REPORT
 
-OUTPUT RULES:
-- Return ONLY the formatted report
-- No explanations
-- No commentary
-- No references to these instructions
-- The report must be ready to submit to an educational provider immediately`;
+OUTPUT ONLY THE REPORT.
+DO NOT EXPLAIN.
+DO NOT COMMENT.
+DO NOT DEVIATE FROM THIS FORMAT.`;
 
 
 export async function POST(req: Request) {
@@ -387,6 +389,38 @@ export async function POST(req: Request) {
     // Parse attendance data
     const attendance = (report.attendanceData as any) || { present: 0, sick: 0, vacation: 0 };
 
+    // Get daily attendance records for calendar
+    const dailyAttendance = await db.dailyAttendance.findMany({
+      where: {
+        studentId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        date: true,
+        present: true,
+      },
+      orderBy: {
+        date: 'asc',
+      },
+    });
+
+    // Build daily attendance map (day number -> P/A)
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const dailyMarks: Record<number, string> = {};
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      dailyMarks[day] = '-'; // Default to no mark
+    }
+
+    // Mark present days
+    dailyAttendance.forEach(record => {
+      const day = new Date(record.date).getDate();
+      dailyMarks[day] = record.present ? 'P' : 'A';
+    });
+
     const reportData = {
       student: {
         name: student.name,
@@ -404,6 +438,8 @@ export async function POST(req: Request) {
         sick: attendance.sick || 0,
         vacation: attendance.vacation || 0,
         total: (attendance.present || 0) + (attendance.sick || 0) + (attendance.vacation || 0),
+        dailyMarks, // Day-by-day calendar data
+        daysInMonth,
       },
       courses: courseStats,
       externalActivities: report.externalActivities.map((activity: any) => ({

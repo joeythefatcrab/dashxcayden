@@ -1,9 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, RotateCcw, MessageSquare, UserCog, Clock, Shield } from "lucide-react";
+import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, RotateCcw, MessageSquare, UserCog, Clock, Shield, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -36,43 +42,194 @@ export function DashboardNav() {
     }
   };
 
-  const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: Home, roles: ["PARENT", "STUDENT", "ADMIN"] },
-    { name: "My Courses", href: "/my-courses", icon: BookOpen, roles: ["STUDENT"] },
-    { name: "My Time", href: "/my-time", icon: Clock, roles: ["STUDENT"] },
-    { name: "Browse Courses", href: "/browse-courses", icon: Search, roles: ["STUDENT"] },
-    { name: "Manage Parents", href: "/parents", icon: Users, roles: ["ADMIN"] },
-    { name: "Assign Students", href: "/assign-students", icon: UserCog, roles: ["ADMIN", "SUPERADMIN"] },
-    { name: "Curriculum Access", href: "/curriculum-access", icon: Shield, roles: ["ADMIN", "SUPERADMIN"] },
-    { name: "Messages", href: "/messages", icon: MessageSquare, roles: ["ADMIN", "SUPERADMIN"] },
-    { name: "Curricula", href: "/curricula", icon: BookOpen, roles: ["PARENT", "ADMIN"] },
-    { name: "Students", href: "/students", icon: Users, roles: ["PARENT"] },
-    { name: "Reports", href: "/monthly-reports", icon: FileText, roles: ["PARENT", "ADMIN"] },
-    { name: "Settings", href: "/settings", icon: Settings, roles: ["PARENT", "ADMIN", "STUDENT", "SUPERADMIN"] },
+  // Admin navigation groups
+  const adminPeopleMenu = [
+    { name: "Manage Parents", href: "/parents", icon: Users },
+    { name: "Assign Students", href: "/assign-students", icon: UserCog },
   ];
 
-  const filteredNav = navigation.filter((item) => item.roles.includes(role));
+  const adminCurriculumMenu = [
+    { name: "Curricula", href: "/curricula", icon: BookOpen },
+    { name: "Curriculum Access", href: "/curriculum-access", icon: Shield },
+  ];
+
+  // Student navigation
+  const studentNav = [
+    { name: "Dashboard", href: "/dashboard", icon: Home },
+    { name: "My Courses", href: "/my-courses", icon: BookOpen },
+    { name: "My Time", href: "/my-time", icon: Clock },
+    { name: "Browse Courses", href: "/browse-courses", icon: Search },
+    { name: "Settings", href: "/settings", icon: Settings },
+  ];
+
+  // Parent navigation
+  const parentNav = [
+    { name: "Dashboard", href: "/dashboard", icon: Home },
+    { name: "Students", href: "/students", icon: Users },
+    { name: "Curricula", href: "/curricula", icon: BookOpen },
+    { name: "Reports", href: "/monthly-reports", icon: FileText },
+    { name: "Settings", href: "/settings", icon: Settings },
+  ];
+
+  const renderAdminNav = () => (
+    <>
+      <Link href="/dashboard" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap">
+        <Home className="h-4 w-4" />
+        Dashboard
+      </Link>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap outline-none">
+          <Users className="h-4 w-4" />
+          People
+          <ChevronDown className="h-3 w-3" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          {adminPeopleMenu.map((item) => (
+            <DropdownMenuItem key={item.name} asChild>
+              <Link href={item.href} className="flex items-center gap-2 cursor-pointer">
+                <item.icon className="h-4 w-4" />
+                {item.name}
+              </Link>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap outline-none">
+          <BookOpen className="h-4 w-4" />
+          Curriculum
+          <ChevronDown className="h-3 w-3" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          {adminCurriculumMenu.map((item) => (
+            <DropdownMenuItem key={item.name} asChild>
+              <Link href={item.href} className="flex items-center gap-2 cursor-pointer">
+                <item.icon className="h-4 w-4" />
+                {item.name}
+              </Link>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Link href="/messages" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap">
+        <MessageSquare className="h-4 w-4" />
+        Messages
+      </Link>
+
+      <Link href="/monthly-reports" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap">
+        <FileText className="h-4 w-4" />
+        Reports
+      </Link>
+
+      <Link href="/settings" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap">
+        <Settings className="h-4 w-4" />
+        Settings
+      </Link>
+    </>
+  );
+
+  const renderStudentNav = () => (
+    <>
+      {studentNav.map((item) => (
+        <Link
+          key={item.name}
+          href={item.href}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap"
+        >
+          <item.icon className="h-4 w-4" />
+          {item.name}
+        </Link>
+      ))}
+    </>
+  );
+
+  const renderParentNav = () => (
+    <>
+      {parentNav.map((item) => (
+        <Link
+          key={item.name}
+          href={item.href}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap"
+        >
+          <item.icon className="h-4 w-4" />
+          {item.name}
+        </Link>
+      ))}
+    </>
+  );
+
+  // Mobile navigation
+  const renderMobileNav = () => {
+    if (role === "ADMIN" || role === "SUPERADMIN") {
+      return (
+        <>
+          <Link href="/dashboard" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+            <Home className="h-4 w-4" />
+            Dashboard
+          </Link>
+          <div className="pl-2 space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase">People</p>
+            {adminPeopleMenu.map((item) => (
+              <Link key={item.name} href={item.href} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground pl-4" onClick={() => setMobileMenuOpen(false)}>
+                <item.icon className="h-4 w-4" />
+                {item.name}
+              </Link>
+            ))}
+          </div>
+          <div className="pl-2 space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase">Curriculum</p>
+            {adminCurriculumMenu.map((item) => (
+              <Link key={item.name} href={item.href} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground pl-4" onClick={() => setMobileMenuOpen(false)}>
+                <item.icon className="h-4 w-4" />
+                {item.name}
+              </Link>
+            ))}
+          </div>
+          <Link href="/messages" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+            <MessageSquare className="h-4 w-4" />
+            Messages
+          </Link>
+          <Link href="/monthly-reports" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+            <FileText className="h-4 w-4" />
+            Reports
+          </Link>
+          <Link href="/settings" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+            <Settings className="h-4 w-4" />
+            Settings
+          </Link>
+        </>
+      );
+    } else if (role === "PARENT") {
+      return parentNav.map((item) => (
+        <Link key={item.name} href={item.href} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+          <item.icon className="h-4 w-4" />
+          {item.name}
+        </Link>
+      ));
+    } else {
+      return studentNav.map((item) => (
+        <Link key={item.name} href={item.href} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+          <item.icon className="h-4 w-4" />
+          {item.name}
+        </Link>
+      ));
+    }
+  };
 
   return (
     <header className="border-b bg-background">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <Link href="/dashboard" className="text-xl font-bold whitespace-nowrap">
             HomeschoolHero
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-3 lg:flex">
-            {filteredNav.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap"
-              >
-                <item.icon className="h-4 w-4" />
-                {item.name}
-              </Link>
-            ))}
+          <nav className="hidden items-center gap-4 lg:flex">
+            {role === "ADMIN" || role === "SUPERADMIN" ? renderAdminNav() : role === "PARENT" ? renderParentNav() : renderStudentNav()}
           </nav>
         </div>
 
@@ -112,7 +269,7 @@ export function DashboardNav() {
           <Button
             variant="ghost"
             size="sm"
-            className="md:hidden"
+            className="lg:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             <Menu className="h-5 w-5" />
@@ -122,7 +279,7 @@ export function DashboardNav() {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="border-t bg-background px-4 py-4 md:hidden">
+        <div className="border-t bg-background px-4 py-4 lg:hidden">
           <nav className="flex flex-col gap-4">
             {/* QA Mode Exit Button (Mobile) */}
             {isImpersonating && (
@@ -135,17 +292,7 @@ export function DashboardNav() {
                 Exit QA Mode
               </button>
             )}
-            {filteredNav.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.name}
-              </Link>
-            ))}
+            {renderMobileNav()}
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
               className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"

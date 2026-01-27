@@ -5,8 +5,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle, Undo2 } from "lucide-react";
 
 interface GradingItem {
   itemId: string;
@@ -39,6 +40,8 @@ export function GradingModal({ isOpen, onClose, pendingGrade, onGradeSubmitted }
   const [grades, setGrades] = useState<Record<string, { points: number; feedback: string }>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [revisionNote, setRevisionNote] = useState("");
+  const [showRevisionInput, setShowRevisionInput] = useState(false);
 
   if (!pendingGrade) return null;
 
@@ -88,6 +91,44 @@ export function GradingModal({ isOpen, onClose, pendingGrade, onGradeSubmitted }
     } catch (error) {
       console.error("Error submitting grades:", error);
       alert("Failed to submit grades. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRequestRevision = async () => {
+    if (!revisionNote.trim()) {
+      alert("Please provide a revision note explaining what needs to be improved");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/grading/request-revision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          attemptId: pendingGrade.attemptId,
+          revisionNote: revisionNote.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to request revision");
+      }
+
+      setSuccess(true);
+      setTimeout(() => {
+        onGradeSubmitted();
+        onClose();
+        setSuccess(false);
+        setGrades({});
+        setRevisionNote("");
+        setShowRevisionInput(false);
+      }, 1500);
+    } catch (error) {
+      console.error("Error requesting revision:", error);
+      alert("Failed to request revision. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -184,20 +225,80 @@ export function GradingModal({ isOpen, onClose, pendingGrade, onGradeSubmitted }
               ))}
             </div>
 
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button onClick={handleSubmit} disabled={!allItemsGraded || isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting...
-                  </>
+            {showRevisionInput && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Request Revision</CardTitle>
+                  <CardDescription>
+                    Explain what the student needs to improve or revise
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Enter your feedback about what needs to be revised..."
+                    value={revisionNote}
+                    onChange={(e) => setRevisionNote(e.target.value)}
+                    rows={4}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="flex justify-between gap-3">
+              <div>
+                {!showRevisionInput ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowRevisionInput(true)}
+                    disabled={isSubmitting}
+                  >
+                    <Undo2 className="mr-2 h-4 w-4" />
+                    Request Revision
+                  </Button>
                 ) : (
-                  "Submit Grades"
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowRevisionInput(false);
+                      setRevisionNote("");
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    Cancel Revision
+                  </Button>
                 )}
-              </Button>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+                  Cancel
+                </Button>
+                {showRevisionInput ? (
+                  <Button onClick={handleRequestRevision} disabled={!revisionNote.trim() || isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Requesting...
+                      </>
+                    ) : (
+                      <>
+                        <Undo2 className="mr-2 h-4 w-4" />
+                        Send for Revision
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <Button onClick={handleSubmit} disabled={!allItemsGraded || isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit Grades"
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         )}

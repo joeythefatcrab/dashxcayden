@@ -89,7 +89,7 @@ function buildCurriculumFromRows(rows: any[]): ParsedCurriculum {
         description: row.lesson_description || "",
         contentMd: row.content || row.lesson_content || "",
         order: lessonsMap.size,
-        threshold: parseInt(row.threshold) || 70,
+        threshold: parseInt(row.threshold) || 100,
         objectives: row.objectives ? row.objectives.split(";") : [],
         items: [],
       });

@@ -5,6 +5,7 @@ import { EmailPreferencesForm } from "@/components/settings/EmailPreferencesForm
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { DashboardNav } from "@/components/auth/dashboard-nav";
+import { StudentSubscriptionCard } from "@/components/parent/StudentSubscriptionCard";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -22,6 +23,8 @@ export default async function SettingsPage() {
       name: true,
       role: true,
       theme: true,
+      stripeCustomerId: true,
+      stripeSubscriptionId: true,
     },
   });
 
@@ -30,6 +33,23 @@ export default async function SettingsPage() {
   }
 
   const isParent = user.role === "PARENT";
+
+  // Fetch students for parents (for subscription management)
+  let students: any[] = [];
+  let hasAnySubscription = false;
+  if (isParent) {
+    students = await db.student.findMany({
+      where: { parentId: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        subscriptionActive: true,
+        subscriptionEndDate: true,
+      },
+      orderBy: { name: "asc" },
+    });
+    hasAnySubscription = !!user.stripeSubscriptionId;
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -95,6 +115,19 @@ export default async function SettingsPage() {
                   />
                 </CardContent>
               </Card>
+            )}
+
+            {/* Subscription Management - Only for Parents */}
+            {isParent && students.length > 0 && (
+              <StudentSubscriptionCard
+                students={students.map(s => ({
+                  id: s.id,
+                  name: s.name,
+                  subscriptionActive: s.subscriptionActive || false,
+                  subscriptionEndDate: s.subscriptionEndDate?.toISOString() || null,
+                }))}
+                hasAnySubscription={hasAnySubscription}
+              />
             )}
           </div>
         </div>

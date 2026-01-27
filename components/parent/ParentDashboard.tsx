@@ -5,15 +5,12 @@ import { BookOpen, GraduationCap, FileText, Users } from "lucide-react";
 import Link from "next/link";
 import { PendingGradesList } from "@/components/grading/pending-grades-list";
 import { PendingEssaysList } from "@/components/parent/PendingEssaysList";
-import { StudentSubscriptionCard } from "@/components/parent/StudentSubscriptionCard";
 import { RecentTimeLogsNotification } from "@/components/parent/RecentTimeLogsNotification";
 
 type Student = {
   id: string;
   name: string;
   grade: number | null;
-  subscriptionActive?: boolean;
-  subscriptionEndDate?: string | null;
   user?: {
     email: string;
   } | null;
@@ -30,10 +27,9 @@ type Student = {
 type Props = {
   parentName: string;
   students: Student[];
-  hasAnySubscription: boolean;
 };
 
-export function ParentDashboard({ parentName, students, hasAnySubscription }: Props) {
+export function ParentDashboard({ parentName, students }: Props) {
   const totalEnrollments = students.reduce((sum, student) => sum + student.enrollments.length, 0);
 
   return (
@@ -47,19 +43,6 @@ export function ParentDashboard({ parentName, students, hasAnySubscription }: Pr
           Here's an overview of your students' progress and items that need your attention.
         </p>
       </div>
-
-      {/* Subscription Status */}
-      {students.length > 0 && (
-        <StudentSubscriptionCard
-          students={students.map(s => ({
-            id: s.id,
-            name: s.name,
-            subscriptionActive: s.subscriptionActive || false,
-            subscriptionEndDate: s.subscriptionEndDate || null,
-          }))}
-          hasAnySubscription={hasAnySubscription}
-        />
-      )}
 
       {/* Pending Items Section */}
       <div className="space-y-4">

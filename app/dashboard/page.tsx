@@ -21,44 +21,31 @@ export default async function DashboardPage() {
 
   // Show parent dashboard
   if (user.role === "PARENT") {
-    const [students, parent] = await Promise.all([
-      db.student.findMany({
-        where: { parentId: user.id },
-        select: {
-          id: true,
-          name: true,
-          grade: true,
-          subscriptionActive: true,
-          subscriptionEndDate: true,
-          user: {
-            select: {
-              email: true,
-            },
+    const students = await db.student.findMany({
+      where: { parentId: user.id },
+      select: {
+        id: true,
+        name: true,
+        grade: true,
+        user: {
+          select: {
+            email: true,
           },
-          enrollments: {
-            include: {
-              curriculum: {
-                select: {
-                  id: true,
-                  name: true,
-                  subject: true,
-                },
+        },
+        enrollments: {
+          include: {
+            curriculum: {
+              select: {
+                id: true,
+                name: true,
+                subject: true,
               },
             },
           },
         },
-        orderBy: { name: "asc" },
-      }),
-      db.user.findUnique({
-        where: { id: user.id },
-        select: {
-          stripeCustomerId: true,
-          stripeSubscriptionId: true,
-        },
-      }),
-    ]);
-
-    const hasAnySubscription = !!parent?.stripeSubscriptionId;
+      },
+      orderBy: { name: "asc" },
+    });
 
     return (
       <div className="px-4 py-8">
@@ -66,11 +53,7 @@ export default async function DashboardPage() {
           <NotificationBanner />
           <ParentDashboard
             parentName={user.name || "there"}
-            students={students.map(s => ({
-              ...s,
-              subscriptionEndDate: s.subscriptionEndDate?.toISOString() || null,
-            }))}
-            hasAnySubscription={hasAnySubscription}
+            students={students}
           />
         </div>
       </div>

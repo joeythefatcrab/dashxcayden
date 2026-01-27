@@ -26,29 +26,45 @@ type Props = {
   onComplete: () => void;
 };
 
+type TimeEntry = {
+  hours: string;
+  minutes: string;
+};
+
 export function DailyTimeLogModal({ curricula, date, onComplete }: Props) {
   const router = useRouter();
-  const [timeEntries, setTimeEntries] = useState<Record<string, string>>({});
+  const [timeEntries, setTimeEntries] = useState<Record<string, TimeEntry>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   // Initialize with empty strings
   useEffect(() => {
-    const initial: Record<string, string> = {};
+    const initial: Record<string, TimeEntry> = {};
     curricula.forEach((c) => {
-      initial[c.id] = "";
+      initial[c.id] = { hours: "", minutes: "" };
     });
     setTimeEntries(initial);
   }, [curricula]);
 
-  const handleTimeChange = (curriculumId: string, value: string) => {
-    setTimeEntries((prev) => ({ ...prev, [curriculumId]: value }));
+  const handleHoursChange = (curriculumId: string, value: string) => {
+    setTimeEntries((prev) => ({
+      ...prev,
+      [curriculumId]: { ...prev[curriculumId], hours: value },
+    }));
+  };
+
+  const handleMinutesChange = (curriculumId: string, value: string) => {
+    setTimeEntries((prev) => ({
+      ...prev,
+      [curriculumId]: { ...prev[curriculumId], minutes: value },
+    }));
   };
 
   const getTotalMinutes = () => {
-    return Object.values(timeEntries).reduce((sum, val) => {
-      const num = parseInt(val) || 0;
-      return sum + num;
+    return Object.values(timeEntries).reduce((sum, entry) => {
+      const hours = parseInt(entry.hours) || 0;
+      const minutes = parseInt(entry.minutes) || 0;
+      return sum + hours * 60 + minutes;
     }, 0);
   };
 
@@ -56,13 +72,15 @@ export function DailyTimeLogModal({ curricula, date, onComplete }: Props) {
     setIsSubmitting(true);
     setError("");
 
-    // Filter out empty entries
+    // Filter out empty entries and calculate minutes
     const logs = Object.entries(timeEntries)
-      .filter(([_, minutes]) => minutes && parseInt(minutes) > 0)
-      .map(([curriculumId, minutes]) => ({
-        curriculumId,
-        minutesSpent: parseInt(minutes),
-      }));
+      .map(([curriculumId, entry]) => {
+        const hours = parseInt(entry.hours) || 0;
+        const minutes = parseInt(entry.minutes) || 0;
+        const totalMinutes = hours * 60 + minutes;
+        return { curriculumId, minutesSpent: totalMinutes };
+      })
+      .filter((log) => log.minutesSpent > 0);
 
     if (logs.length === 0) {
       setError("Please enter time for at least one course");
@@ -101,6 +119,14 @@ export function DailyTimeLogModal({ curricula, date, onComplete }: Props) {
     });
   };
 
+  const formatTotalTime = (totalMinutes: number) => {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours === 0) return `${minutes}m`;
+    if (minutes === 0) return `${hours}h`;
+    return `${hours}h ${minutes}m`;
+  };
+
   return (
     <Dialog open={true} onOpenChange={() => {}}>
       <DialogContent className="max-w-2xl" onInteractOutside={(e) => e.preventDefault()}>
@@ -119,7 +145,7 @@ export function DailyTimeLogModal({ curricula, date, onComplete }: Props) {
           {curricula.map((curriculum) => (
             <div key={curriculum.id} className="flex items-center gap-4">
               <div className="flex-1">
-                <Label htmlFor={curriculum.id} className="font-medium">
+                <Label htmlFor={`${curriculum.id}-hours`} className="font-medium">
                   {curriculum.name}
                   {curriculum.subject && (
                     <span className="ml-2 text-sm text-muted-foreground">
@@ -130,20 +156,29 @@ export function DailyTimeLogModal({ curricula, date, onComplete }: Props) {
               </div>
               <div className="flex items-center gap-2">
                 <Input
-                  id={curriculum.id}
+                  id={`${curriculum.id}-hours`}
                   type="number"
                   min="0"
-                  max="1440"
-                  step="15"
-                  value={timeEntries[curriculum.id] || ""}
-                  onChange={(e) => handleTimeChange(curriculum.id, e.target.value)}
+                  max="24"
+                  value={timeEntries[curriculum.id]?.hours || ""}
+                  onChange={(e) => handleHoursChange(curriculum.id, e.target.value)}
                   placeholder="0"
-                  className="w-24 text-center"
+                  className="w-20 text-center"
                   disabled={isSubmitting}
                 />
-                <span className="text-sm text-muted-foreground min-w-[60px]">
-                  minutes
-                </span>
+                <span className="text-sm text-muted-foreground">h</span>
+                <Input
+                  id={`${curriculum.id}-minutes`}
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={timeEntries[curriculum.id]?.minutes || ""}
+                  onChange={(e) => handleMinutesChange(curriculum.id, e.target.value)}
+                  placeholder="0"
+                  className="w-20 text-center"
+                  disabled={isSubmitting}
+                />
+                <span className="text-sm text-muted-foreground">m</span>
               </div>
             </div>
           ))}
@@ -152,12 +187,7 @@ export function DailyTimeLogModal({ curricula, date, onComplete }: Props) {
             <div className="flex items-center justify-between">
               <span className="font-semibold">Total Time</span>
               <span className="text-lg font-bold">
-                {getTotalMinutes()} minutes
-                {getTotalMinutes() >= 60 && (
-                  <span className="ml-2 text-sm text-muted-foreground">
-                    ({Math.floor(getTotalMinutes() / 60)}h {getTotalMinutes() % 60}m)
-                  </span>
-                )}
+                {formatTotalTime(getTotalMinutes())}
               </span>
             </div>
           </div>

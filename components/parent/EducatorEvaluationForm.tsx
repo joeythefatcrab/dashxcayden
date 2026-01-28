@@ -14,17 +14,20 @@ type Props = {
 };
 
 export function EducatorEvaluationForm({ reportId, initialAnswers, onSave }: Props) {
-  const [answers, setAnswers] = useState(
-    initialAnswers || {
-      parentSuccesses: "",
-      studentSuccesses: "",
-      progressRating: "",
-      progressExplanation: "",
-      mostSuccessful: "",
-      programCompletions: "",
-      needsHelp: "",
-    }
-  );
+  const defaultAnswers = {
+    parentSuccesses: "",
+    studentSuccesses: "",
+    progressRating: "",
+    progressExplanation: "",
+    mostSuccessful: "",
+    programCompletions: "",
+    needsHelp: "",
+  };
+
+  const [answers, setAnswers] = useState({
+    ...defaultAnswers,
+    ...(initialAnswers || {}),
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
@@ -68,7 +71,7 @@ export function EducatorEvaluationForm({ reportId, initialAnswers, onSave }: Pro
           </Label>
           <Textarea
             id="parentSuccesses"
-            value={answers.parentSuccesses}
+            value={answers.parentSuccesses || ""}
             onChange={(e) =>
               setAnswers({ ...answers, parentSuccesses: e.target.value })
             }
@@ -83,7 +86,7 @@ export function EducatorEvaluationForm({ reportId, initialAnswers, onSave }: Pro
           </Label>
           <Textarea
             id="studentSuccesses"
-            value={answers.studentSuccesses}
+            value={answers.studentSuccesses || ""}
             onChange={(e) =>
               setAnswers({ ...answers, studentSuccesses: e.target.value })
             }
@@ -102,7 +105,7 @@ export function EducatorEvaluationForm({ reportId, initialAnswers, onSave }: Pro
             type="number"
             min="1"
             max="10"
-            value={answers.progressRating}
+            value={answers.progressRating || ""}
             onChange={(e) =>
               setAnswers({ ...answers, progressRating: e.target.value })
             }
@@ -114,7 +117,7 @@ export function EducatorEvaluationForm({ reportId, initialAnswers, onSave }: Pro
           </Label>
           <Textarea
             id="progressExplanation"
-            value={answers.progressExplanation}
+            value={answers.progressExplanation || ""}
             onChange={(e) =>
               setAnswers({ ...answers, progressExplanation: e.target.value })
             }
@@ -129,7 +132,7 @@ export function EducatorEvaluationForm({ reportId, initialAnswers, onSave }: Pro
           </Label>
           <Textarea
             id="mostSuccessful"
-            value={answers.mostSuccessful}
+            value={answers.mostSuccessful || ""}
             onChange={(e) =>
               setAnswers({ ...answers, mostSuccessful: e.target.value })
             }
@@ -144,7 +147,7 @@ export function EducatorEvaluationForm({ reportId, initialAnswers, onSave }: Pro
           </Label>
           <Textarea
             id="programCompletions"
-            value={answers.programCompletions}
+            value={answers.programCompletions || ""}
             onChange={(e) =>
               setAnswers({ ...answers, programCompletions: e.target.value })
             }
@@ -159,7 +162,7 @@ export function EducatorEvaluationForm({ reportId, initialAnswers, onSave }: Pro
           </Label>
           <Textarea
             id="needsHelp"
-            value={answers.needsHelp}
+            value={answers.needsHelp || ""}
             onChange={(e) => setAnswers({ ...answers, needsHelp: e.target.value })}
             placeholder="Any needs, questions, or communications..."
             rows={3}

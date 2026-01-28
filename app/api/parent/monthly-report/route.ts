@@ -222,21 +222,25 @@ export async function GET(req: Request) {
       (totalAppHours + totalExternalHours).toFixed(1)
     );
 
+    // Ensure educatorEvaluation is never undefined
+    const reportWithDefaults = {
+      ...report,
+      educatorEvaluation: report.educatorEvaluation ?? null,
+      externalActivities: report.externalActivities || [],
+    };
+
     return NextResponse.json({
-      report: {
-        ...report,
-        educatorEvaluation: report.educatorEvaluation ?? null,
-      },
+      report: reportWithDefaults,
       student,
       month,
       year,
-      courseStats,
+      courseStats: courseStats || [],
       summary: {
         totalAppHours,
         totalExternalHours,
         totalSchoolHours,
         totalLessonsCompleted: attempts.length,
-        totalCourses: courseStats.length,
+        totalCourses: (courseStats || []).length,
       },
     });
   } catch (error) {

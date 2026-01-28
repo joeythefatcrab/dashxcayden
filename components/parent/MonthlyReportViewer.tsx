@@ -223,7 +223,7 @@ export function MonthlyReportViewer({ students }: Props) {
               <CardTitle>Course Activity Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              {reportData.courseStats.length === 0 ? (
+              {!reportData.courseStats || reportData.courseStats.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No course activity recorded for this period.
                 </p>
@@ -342,14 +342,14 @@ export function MonthlyReportViewer({ students }: Props) {
                 </div>
               )}
 
-              {reportData.report.externalActivities.length === 0 ? (
+              {!reportData.report.externalActivities || reportData.report.externalActivities.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No external activities recorded. Add field trips, reading time,
                   projects, or other educational activities done outside the app.
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {reportData.report.externalActivities.map((activity: any) => (
+                  {(reportData.report.externalActivities || []).map((activity: any) => (
                     <div
                       key={activity.id}
                       className="flex items-start justify-between rounded-lg border p-4"

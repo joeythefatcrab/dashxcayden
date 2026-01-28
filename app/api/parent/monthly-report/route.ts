@@ -223,7 +223,10 @@ export async function GET(req: Request) {
     );
 
     return NextResponse.json({
-      report,
+      report: {
+        ...report,
+        educatorEvaluation: report.educatorEvaluation ?? null,
+      },
       student,
       month,
       year,

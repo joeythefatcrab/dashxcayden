@@ -24,9 +24,13 @@ export function EducatorEvaluationForm({ reportId, initialAnswers, onSave }: Pro
     needsHelp: "",
   };
 
-  const [answers, setAnswers] = useState({
-    ...defaultAnswers,
-    ...(initialAnswers || {}),
+  const [answers, setAnswers] = useState(() => {
+    // Ensure we never have undefined values
+    const initial = initialAnswers && typeof initialAnswers === 'object' ? initialAnswers : {};
+    return {
+      ...defaultAnswers,
+      ...initial,
+    };
   });
   const [isSaving, setIsSaving] = useState(false);
 

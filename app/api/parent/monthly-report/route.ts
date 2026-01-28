@@ -83,7 +83,11 @@ export async function GET(req: Request) {
           educatorEvaluation: null,
         },
         include: {
-          externalActivities: true,
+          externalActivities: {
+            orderBy: {
+              date: "desc",
+            },
+          },
         },
       });
     }

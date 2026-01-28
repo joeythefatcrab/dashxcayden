@@ -15,6 +15,7 @@ import { Loader2, FileText, Plus, Trash2, Sparkles, Download, Pencil } from "luc
 import { ExternalActivityForm } from "./ExternalActivityForm";
 import { AttendanceTracker } from "./AttendanceTracker";
 import { ParentNotesEditor } from "./ParentNotesEditor";
+import { EducatorEvaluationForm } from "./EducatorEvaluationForm";
 import { format } from "date-fns";
 
 type Student = {
@@ -293,6 +294,13 @@ export function MonthlyReportViewer({ students }: Props) {
           <ParentNotesEditor
             reportId={reportData.report.id}
             initialNotes={reportData.report.parentNotes || ""}
+            onSave={loadReportData}
+          />
+
+          {/* Educator Evaluation */}
+          <EducatorEvaluationForm
+            reportId={reportData.report.id}
+            initialAnswers={reportData.report.educatorEvaluation}
             onSave={loadReportData}
           />
 

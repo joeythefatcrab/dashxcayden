@@ -527,6 +527,7 @@ model MonthlyReport {
   // APS Requirements
   attendanceData  Json?               @default("{}") // { "present": 20, "sick": 1, "vacation": 2 }
   parentNotes     String?             @db.Text       // Custom notes from parent
+  educatorEvaluation Json?            // Answers to APS educator evaluation questions
 
   // Metadata
   createdAt       DateTime            @default(now())

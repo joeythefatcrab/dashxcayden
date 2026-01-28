@@ -8,48 +8,24 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy-key",
 });
 
-const SYSTEM_PROMPT = `You are a HOMESCHOOL MONTHLY REPORT GENERATOR.
+const SYSTEM_PROMPT = `You are a HOMESCHOOL MONTHLY REPORT GENERATOR for APS (Alternative Education Programs) compliance.
 
-Your job is to create a clear, professional, provider-facing MONTHLY HOMESCHOOL PROGRESS REPORT using ONLY the data provided. This report is for legal and administrative review (APS / alternative education). It must be fast to read and strictly factual.
+CRITICAL RULES:
+- Use ONLY plain text (NO markdown, *, #, -, tables, emojis, or code blocks)
+- Use ALL CAPS for section headers
+- Insert parent's educator evaluation answers EXACTLY as provided (do NOT modify, rephrase, or generate)
+- Use data to fill attendance calendar and subject breakdown
+- Do not invent or guess any information
 
-DO NOT:
-- Use markdown of any kind
-- Use #, *, -, tables, emojis, or code blocks
-- Write like a teacher or evaluator
-- Add opinions, praise, or assumptions
-- Invent or infer data
-
-USE ONLY:
-- Plain text
-- ALL CAPS for section headers
+FORMAT REQUIREMENTS:
+- Plain text with ALL CAPS headers
 - Numbered lists (1. 2. 3.)
-- The bullet character •
+- Bullet character • for lists
 - Indentation with spaces
 - Blank lines between sections
-
-REPORT LENGTH: 500-800 words. Concise and scan-friendly.
-
-TONE: Neutral, administrative, data-first, compliance-focused.
-
-ALWAYS INCLUDE:
-- Daily attendance calendar (1-31) with P/A/S/V marks
-- Attendance totals (present, sick, vacation, total days)
-- Per-course lessons completed
-- Per-course hours in subject table format
-- Average scores if provided
-- Total monthly school hours
-- External activities OR a clear statement if none occurred
-- Educator evaluation responses
-- Parent notes verbatim if provided
-
-IF DATA IS MISSING:
-- State this clearly
-- Do not guess
-
-ROUNDING:
 - Hours rounded to one decimal place
 
-USE THIS EXACT STRUCTURE AND HEADINGS:
+USE THIS EXACT APS FORMAT:
 
 ============================================================
 MONTHLY HOMESCHOOL PROGRESS REPORT
@@ -86,22 +62,22 @@ EDUCATOR EVALUATION
 Name of person filling out form: [Parent Name]
 
 What successes did you have this month?
-[Based on data: courses progressed, hours completed, etc. Keep factual.]
+[Insert parent's answer EXACTLY as provided in educatorEvaluation.parentSuccesses. If not provided, write "Not answered."]
 
 What successes did your student have this month?
-[Based on data: lessons completed, scores achieved, etc. Keep factual.]
+[Insert parent's answer EXACTLY as provided in educatorEvaluation.studentSuccesses. If not provided, write "Not answered."]
 
-On a scale of 1 to 10, how would you rate your student's overall progress this period?
-[Calculate based on: attendance rate, lesson completion rate, average scores. Provide a data-justified rating 1-10, with explanation if not 10.]
+On a scale of 1 to 10, 1 being the lowest and 10 being the highest, how would you rate your student's overall progress this period? If not 10, please explain:
+[Insert rating from educatorEvaluation.progressRating, then insert educatorEvaluation.progressExplanation if provided. If not provided, write "Not answered."]
 
 What do you feel was most successful?
-[Highlight the strongest metric: highest hours in a subject, best scores, most lessons completed, etc.]
+[Insert parent's answer EXACTLY as provided in educatorEvaluation.mostSuccessful. If not provided, write "Not answered."]
 
 Were there any program completions?
-[State if any courses/units were fully completed, or state "No program completions this month."]
+[Insert parent's answer EXACTLY as provided in educatorEvaluation.programCompletions. If not provided, write "Not answered."]
 
 Is there anything that you need help on or would like to communicate?
-[Insert parent notes verbatim if provided, otherwise state "No additional needs or communications at this time."]
+[Insert parent's answer EXACTLY as provided in educatorEvaluation.needsHelp. If not provided, write "No additional communications."]
 
 SUBJECT BREAKDOWN
 
@@ -453,6 +429,7 @@ export async function POST(req: Request) {
       totalExternalHours,
       totalSchoolHours,
       parentNotes: report.parentNotes || null,
+      educatorEvaluation: report.educatorEvaluation || null,
     };
 
     // Generate report using chat completion

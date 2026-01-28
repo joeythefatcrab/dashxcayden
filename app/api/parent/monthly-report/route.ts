@@ -74,12 +74,23 @@ export async function GET(req: Request) {
     });
 
     if (!report) {
-      report = await db.monthlyReport.create({
+      await db.monthlyReport.create({
         data: {
           studentId,
           parentId: student.parentId,
           month,
           year,
+        },
+      });
+
+      // Refetch with includes
+      report = await db.monthlyReport.findUnique({
+        where: {
+          studentId_month_year: {
+            studentId,
+            month,
+            year,
+          },
         },
         include: {
           externalActivities: {
@@ -89,6 +100,10 @@ export async function GET(req: Request) {
           },
         },
       });
+
+      if (!report) {
+        throw new Error("Failed to create report");
+      }
     }
 
     // Get course activity data for the month

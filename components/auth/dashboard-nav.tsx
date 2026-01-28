@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, RotateCcw, MessageSquare, UserCog, Clock, Shield, ChevronDown } from "lucide-react";
+import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, RotateCcw, MessageSquare, UserCog, Clock, Shield, ChevronDown, ClipboardList } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -57,6 +57,7 @@ export function DashboardNav() {
   const studentNav = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
     { name: "My Courses", href: "/my-courses", icon: BookOpen },
+    { name: "My Submissions", href: "/my-submissions", icon: ClipboardList },
     { name: "My Time", href: "/my-time", icon: Clock },
     { name: "Browse Courses", href: "/browse-courses", icon: Search },
     { name: "Settings", href: "/settings", icon: Settings },

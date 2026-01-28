@@ -80,6 +80,7 @@ export async function GET(req: Request) {
           parentId: student.parentId,
           month,
           year,
+          educatorEvaluation: null,
         },
         include: {
           externalActivities: true,

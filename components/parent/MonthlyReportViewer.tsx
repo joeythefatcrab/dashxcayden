@@ -298,11 +298,13 @@ export function MonthlyReportViewer({ students }: Props) {
           />
 
           {/* Educator Evaluation */}
-          <EducatorEvaluationForm
-            reportId={reportData.report.id}
-            initialAnswers={reportData.report.educatorEvaluation}
-            onSave={loadReportData}
-          />
+          {reportData?.report?.id && (
+            <EducatorEvaluationForm
+              reportId={reportData.report.id}
+              initialAnswers={reportData.report.educatorEvaluation || null}
+              onSave={loadReportData}
+            />
+          )}
 
           {/* External Activities */}
           <Card>

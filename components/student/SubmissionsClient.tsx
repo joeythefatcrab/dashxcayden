@@ -18,6 +18,7 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "next/navigation";
@@ -82,6 +83,13 @@ export function SubmissionsClient({
     originalAnswer?: string;
     itemPrompt?: string;
   } | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    router.refresh();
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
   const getStatusBadge = (
     status:
@@ -201,7 +209,18 @@ export function SubmissionsClient({
     <>
       <Card>
         <CardHeader>
-          <CardTitle>All Submissions</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>All Submissions</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {allSubmissions.length === 0 ? (

@@ -414,7 +414,8 @@ model Activity {
 model UserActivity {
   id          String   @id @default(cuid())
   userId      String
-  type        String   // LOGIN, LOGOUT, CREATE, UPDATE, DELETE, VIEW
+  userRole    String   // STUDENT, PARENT, ADMIN, SUPERADMIN for filtering
+  type        String   // ESSAY_SUBMIT, LESSON_COMPLETE, GRADE_SUBMIT, REVISION_REQUEST, etc.
   description String   @db.Text
   metadata    Json?    // Additional context
   createdAt   DateTime @default(now())
@@ -423,6 +424,8 @@ model UserActivity {
 
   @@index([userId, createdAt])
   @@index([type])
+  @@index([userRole])
+  @@index([createdAt])
 }
 
 // Digest History (track what was sent)

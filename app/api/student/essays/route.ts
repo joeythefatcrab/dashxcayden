@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { logActivity } from "@/lib/activity-logger";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy-key",
@@ -261,6 +262,22 @@ export async function POST(req: Request) {
         ...aiGradeData,
       },
     });
+
+    // Log activity for essay submission
+    if (status === "SUBMITTED" && (!existing || existing.status === "DRAFT")) {
+      await logActivity({
+        userId: session.user.id,
+        userRole: "STUDENT",
+        type: "ESSAY_SUBMIT",
+        description: `Submitted essay for lesson ${lessonId}`,
+        metadata: {
+          studentId,
+          lessonId,
+          itemId,
+          submissionId: submission.id,
+        },
+      });
+    }
 
     return NextResponse.json(submission);
   } catch (error) {

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function POST(req: Request) {
   try {
@@ -154,6 +155,23 @@ export async function POST(req: Request) {
         data: { progress },
       });
     }
+
+    // Log grading activity
+    await logActivity({
+      userId: session.user.id,
+      userRole: session.user.role as "PARENT" | "ADMIN" | "SUPERADMIN",
+      type: "SHORT_ANSWER_GRADE",
+      description: `Graded short answer questions for ${attempt.student.name} - ${attempt.lesson.title}`,
+      metadata: {
+        attemptId,
+        studentId: attempt.studentId,
+        lessonId: attempt.lessonId,
+        score,
+        earnedPoints,
+        totalPoints,
+        passed: score >= attempt.lesson.threshold,
+      },
+    });
 
     return NextResponse.json({
       success: true,

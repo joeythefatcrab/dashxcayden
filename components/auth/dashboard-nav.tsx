@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, RotateCcw, MessageSquare, UserCog, Clock, Shield, ChevronDown, ClipboardList } from "lucide-react";
+import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, RotateCcw, MessageSquare, UserCog, Clock, Shield, ChevronDown, ClipboardList, Activity } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -123,6 +123,11 @@ export function DashboardNav() {
       <Link href="/monthly-reports" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap">
         <FileText className="h-4 w-4" />
         Reports
+      </Link>
+
+      <Link href="/activities" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap">
+        <Activity className="h-4 w-4" />
+        Activities
       </Link>
 
       <Link href="/settings" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap">

@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { markAttendance } from "@/lib/attendance";
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function POST(
   req: Request,
@@ -192,6 +193,39 @@ export async function POST(
 
     // Auto-mark attendance for today
     await markAttendance(studentId);
+
+    // Log lesson completion activity
+    await logActivity({
+      userId: session.user.id,
+      userRole: "STUDENT",
+      type: "LESSON_COMPLETE",
+      description: `Completed lesson: ${lesson.title}`,
+      metadata: {
+        studentId,
+        lessonId,
+        curriculumId,
+        score,
+        earned: earnedPoints,
+        maxScore: totalPoints,
+        passed: score >= lesson.threshold,
+        needsManualGrading,
+      },
+    });
+
+    // Log short answer submissions if any
+    if (needsManualGrading) {
+      await logActivity({
+        userId: session.user.id,
+        userRole: "STUDENT",
+        type: "SHORT_ANSWER_SUBMIT",
+        description: `Submitted short answer questions for ${lesson.title}`,
+        metadata: {
+          studentId,
+          lessonId,
+          attemptId: attempt.id,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,

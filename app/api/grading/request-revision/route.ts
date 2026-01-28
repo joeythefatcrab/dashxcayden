@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity-logger";
 
 export async function POST(req: Request) {
   try {
@@ -73,6 +74,19 @@ export async function POST(req: Request) {
       data: {
         detail,
         // Don't change the score - keep it as pending
+      },
+    });
+
+    // Log revision request activity
+    await logActivity({
+      userId: session.user.id,
+      userRole: session.user.role as "PARENT" | "ADMIN" | "SUPERADMIN",
+      type: "SHORT_ANSWER_REVISION_REQUEST",
+      description: `Requested revision for short answer submission (Attempt ID: ${attemptId})`,
+      metadata: {
+        attemptId,
+        studentId: attempt.studentId,
+        revisionNote: revisionNote.trim(),
       },
     });
 

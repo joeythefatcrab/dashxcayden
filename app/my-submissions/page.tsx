@@ -21,28 +21,34 @@ export default async function MySubmissionsPage() {
     where: {
       studentId,
     },
-    include: {
-      lesson: {
+    orderBy: {
+      submittedAt: "desc",
+    },
+  });
+
+  // Fetch lesson data for essays
+  const essayLessonIds = [...new Set(essaySubmissions.map(sub => sub.lessonId))];
+  const essayLessons = await db.lesson.findMany({
+    where: {
+      id: { in: essayLessonIds },
+    },
+    select: {
+      id: true,
+      title: true,
+      unit: {
         select: {
-          id: true,
           title: true,
-          unit: {
+          curriculum: {
             select: {
-              title: true,
-              curriculum: {
-                select: {
-                  name: true,
-                },
-              },
+              name: true,
             },
           },
         },
       },
     },
-    orderBy: {
-      submittedAt: "desc",
-    },
   });
+
+  const essayLessonMap = new Map(essayLessons.map(lesson => [lesson.id, lesson]));
 
   // Fetch all attempts with short answer items
   const attempts = await db.attempt.findMany({
@@ -90,22 +96,25 @@ export default async function MySubmissionsPage() {
       </div>
 
       <SubmissionsClient
-        essaySubmissions={essaySubmissions.map((sub) => ({
-          id: sub.id,
-          type: "essay" as const,
-          itemId: sub.itemId,
-          lessonId: sub.lessonId,
-          lessonTitle: sub.lesson.title,
-          unitTitle: sub.lesson.unit.title,
-          curriculumName: sub.lesson.unit.curriculum.name,
-          status: sub.status,
-          submittedAt: sub.submittedAt?.toISOString() || null,
-          grade: sub.grade,
-          feedback: sub.feedback,
-          gradedAt: sub.gradedAt?.toISOString() || null,
-          revisionNote: sub.revisionNote,
-          revisionRequestedAt: sub.revisionRequestedAt?.toISOString() || null,
-        }))}
+        essaySubmissions={essaySubmissions.map((sub) => {
+          const lesson = essayLessonMap.get(sub.lessonId);
+          return {
+            id: sub.id,
+            type: "essay" as const,
+            itemId: sub.itemId,
+            lessonId: sub.lessonId,
+            lessonTitle: lesson?.title || "Unknown Lesson",
+            unitTitle: lesson?.unit.title || "Unknown Unit",
+            curriculumName: lesson?.unit.curriculum.name || "Unknown Course",
+            status: sub.status,
+            submittedAt: sub.submittedAt?.toISOString() || null,
+            grade: sub.grade,
+            feedback: sub.feedback,
+            gradedAt: sub.gradedAt?.toISOString() || null,
+            revisionNote: sub.revisionNote,
+            revisionRequestedAt: sub.revisionRequestedAt?.toISOString() || null,
+          };
+        })}
         shortAnswerAttempts={relevantAttempts.map((attempt) => {
           const detail = attempt.detail as any;
           const items = Object.entries(detail)

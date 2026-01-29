@@ -42,6 +42,7 @@ type Activity = {
 export function ActivitiesViewer() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
   const [total, setTotal] = useState(0);
@@ -50,6 +51,7 @@ export function ActivitiesViewer() {
 
   const loadActivities = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams({
         limit: limit.toString(),
@@ -68,9 +70,13 @@ export function ActivitiesViewer() {
         const data = await response.json();
         setActivities(data.activities);
         setTotal(data.total);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || "Failed to load activities");
       }
     } catch (error) {
       console.error("Error loading activities:", error);
+      setError("Failed to load activities. Check console for details.");
     } finally {
       setIsLoading(false);
     }
@@ -166,7 +172,15 @@ export function ActivitiesViewer() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {error ? (
+            <div className="text-center py-8">
+              <p className="text-red-600 font-medium mb-2">Error loading activities</p>
+              <p className="text-sm text-muted-foreground">{error}</p>
+              <p className="text-xs text-muted-foreground mt-4">
+                Make sure you've run the SQL migration to add the userRole column to UserActivity table.
+              </p>
+            </div>
+          ) : isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>

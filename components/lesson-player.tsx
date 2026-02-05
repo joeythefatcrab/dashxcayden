@@ -211,7 +211,7 @@ export function LessonPlayer({
             {!hasPendingItems && result.score >= lesson.threshold && (
               <div className="rounded-lg bg-green-50 p-4">
                 <p className="text-sm text-green-800">
-                  You met the threshold! The next lesson is now unlocked.
+                  Great job! You met the threshold for this lesson.
                 </p>
               </div>
             )}

@@ -69,22 +69,12 @@ export default async function LessonPage({
     notFound();
   }
 
-  // Check if lesson is unlocked
+  // Get progress for display purposes
   const progress = enrollment.progress as any;
   const lessonProgress = progress[lessonId];
 
-  // Check previous lesson requirement
-  const allLessons = lesson.unit.lessons;
-  const currentIndex = allLessons.findIndex((l) => l.id === lessonId);
-  const previousLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
-
-  let isLocked = false;
-  if (previousLesson && !lessonProgress?.unlocked) {
-    const prevProgress = progress[previousLesson.id];
-    if (!prevProgress || prevProgress.bestScore < previousLesson.threshold) {
-      isLocked = true;
-    }
-  }
+  // All lessons are unlocked - students self-regulate
+  const isLocked = false;
 
   // Get previous attempts
   const attempts = await db.attempt.findMany({

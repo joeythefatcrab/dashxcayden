@@ -101,29 +101,18 @@ export default async function CurriculumPage({
                   const isCompleted = lessonProgress?.completed || false;
                   const bestScore = lessonProgress?.bestScore;
 
-                  // Check if locked
-                  let isLocked = false;
-                  if (lessonIdx > 0 && !lessonProgress?.unlocked) {
-                    const prevLesson = unit.lessons[lessonIdx - 1];
-                    const prevProgress = progress[prevLesson.id];
-                    if (!prevProgress || prevProgress.bestScore < prevLesson.threshold) {
-                      isLocked = true;
-                    }
-                  }
+                  // All lessons are unlocked - students self-regulate
+                  const isLocked = false;
 
                   return (
                     <div
                       key={lesson.id}
-                      className={`flex items-center justify-between rounded-lg border p-4 ${
-                        isLocked ? "opacity-60" : "hover:bg-accent"
-                      }`}
+                      className="flex items-center justify-between rounded-lg border p-4 hover:bg-accent"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
                           {isCompleted ? (
                             <CheckCircle2 className="h-5 w-5 text-green-600" />
-                          ) : isLocked ? (
-                            <Lock className="h-5 w-5 text-muted-foreground" />
                           ) : (
                             <PlayCircle className="h-5 w-5 text-primary" />
                           )}
@@ -148,17 +137,11 @@ export default async function CurriculumPage({
                       </div>
 
                       <div className="flex gap-2">
-                        {!isLocked ? (
-                          <Link href={`/my-courses/${curriculumId}/lessons/${lesson.id}`}>
-                            <Button size="sm">
-                              {isCompleted ? "Review" : "Start"}
-                            </Button>
-                          </Link>
-                        ) : (
-                          <Button size="sm" disabled>
-                            Locked
+                        <Link href={`/my-courses/${curriculumId}/lessons/${lesson.id}`}>
+                          <Button size="sm">
+                            {isCompleted ? "Review" : "Start"}
                           </Button>
-                        )}
+                        </Link>
                       </div>
                     </div>
                   );

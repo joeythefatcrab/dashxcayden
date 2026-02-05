@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, FileText } from "lucide-react";
+import { ArrowLeft, BookOpen, FileText, Pencil } from "lucide-react";
 import Link from "next/link";
 
 // Helper function to get item type badge
@@ -79,7 +79,7 @@ export default async function CurriculumDetailPage({
           {curriculum.description && (
             <p className="text-muted-foreground">{curriculum.description}</p>
           )}
-          <div className="mt-4 flex gap-4 text-sm text-muted-foreground">
+          <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
             <div>
               <span className="font-medium">{curriculum.units.length}</span>{" "}
               units
@@ -90,6 +90,14 @@ export default async function CurriculumDetailPage({
             <div>
               <span className="font-medium">{totalItems}</span> assessment items
             </div>
+            {["ADMIN", "SUPERADMIN"].includes(session.user.role) && (
+              <Link href={`/curricula/${id}/edit`} className="ml-auto">
+                <Button variant="outline" size="sm">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Course
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 

@@ -51,9 +51,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // Parse the date
-    const logDate = new Date(date);
-    logDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
+    // Parse the date as UTC to avoid timezone drift
+    const [yr, mo, dy] = date.split("-").map(Number);
+    const logDate = new Date(Date.UTC(yr, mo - 1, dy));
 
     // Create or update time log
     const timeLog = await db.dailyTimeLog.upsert({

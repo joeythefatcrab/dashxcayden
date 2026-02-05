@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { getMonthlyAttendance } from "@/lib/attendance";
 
 export async function GET(req: Request) {
   try {
@@ -74,12 +75,16 @@ export async function GET(req: Request) {
     });
 
     if (!report) {
+      // Seed attendance count from auto-tracked DailyAttendance records
+      const presentCount = await getMonthlyAttendance(studentId, month, year);
+
       await db.monthlyReport.create({
         data: {
           studentId,
           parentId: student.parentId,
           month,
           year,
+          attendanceData: { present: presentCount, sick: 0, vacation: 0 },
         },
       });
 

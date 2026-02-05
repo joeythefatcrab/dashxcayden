@@ -81,7 +81,7 @@ export default async function LessonPage({
   let isLocked = false;
   if (previousLesson && !lessonProgress?.unlocked) {
     const prevProgress = progress[previousLesson.id];
-    if (!prevProgress || prevProgress.score < previousLesson.threshold) {
+    if (!prevProgress || prevProgress.bestScore < previousLesson.threshold) {
       isLocked = true;
     }
   }

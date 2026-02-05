@@ -8,8 +8,8 @@ import { db } from "@/lib/db";
  */
 export async function markAttendance(studentId: string, date?: Date) {
   const attendanceDate = date || new Date();
-  // Set to noon to avoid timezone issues
-  attendanceDate.setHours(12, 0, 0, 0);
+  // Normalize to UTC midnight so all attendance records land on the correct UTC date
+  attendanceDate.setUTCHours(0, 0, 0, 0);
 
   try {
     // Upsert attendance record (create if doesn't exist, do nothing if exists)

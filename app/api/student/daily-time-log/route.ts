@@ -92,11 +92,9 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Student profile not found" }, { status: 404 });
     }
 
-    // Check if time log is needed for yesterday
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setUTCHours(0, 0, 0, 0);
-
+    // Check if time log is needed for yesterday (pure UTC to avoid timezone drift)
+    const now = new Date();
+    const yesterday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1));
     const yesterdayStr = yesterday.toISOString().split("T")[0];
 
     // Get enrolled curricula

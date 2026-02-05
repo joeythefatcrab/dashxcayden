@@ -46,14 +46,16 @@ export function StudentProgressDashboard({ student }: StudentProgressDashboardPr
   // Calculate progress per curriculum
   const curriculaProgress = student.enrollments.map((enrollment: any) => {
     const curriculum = enrollment.curriculum;
-    const totalLessons = curriculum.units.reduce(
-      (sum: number, unit: any) => sum + unit.lessons.length,
-      0
+    const currentLessonIds = new Set(
+      curriculum.units.flatMap((unit: any) =>
+        unit.lessons.map((l: any) => l.id)
+      )
     );
+    const totalLessons = currentLessonIds.size;
 
     const progress = enrollment.progress as any || {};
-    const completedLessons = Object.values(progress).filter(
-      (p: any) => p.completed
+    const completedLessons = Object.entries(progress).filter(
+      ([id, p]: [string, any]) => currentLessonIds.has(id) && p.completed
     ).length;
 
     const lessonsAttempts = student.attempts.filter((attempt: any) =>

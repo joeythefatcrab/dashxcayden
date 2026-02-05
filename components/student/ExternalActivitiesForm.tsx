@@ -36,6 +36,12 @@ const ACTIVITY_CATEGORIES = [
   "Other",
 ];
 
+// Format date using UTC to avoid timezone shifts
+function formatDateUTC(date: Date | string): string {
+  const d = new Date(date);
+  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}/${d.getUTCFullYear()}`;
+}
+
 export function ExternalActivitiesForm({ studentId, initialActivities }: Props) {
   const router = useRouter();
   const [activities, setActivities] = useState(initialActivities);
@@ -249,7 +255,7 @@ export function ExternalActivitiesForm({ studentId, initialActivities }: Props) 
                     <div className="flex-1">
                       <h4 className="font-semibold mb-1">{activity.title}</h4>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span>{new Date(activity.date).toLocaleDateString()}</span>
+                        <span>{formatDateUTC(activity.date)}</span>
                         {activity.category && <span>• {activity.category}</span>}
                         {activity.hoursSpent && <span>• {activity.hoursSpent} hours</span>}
                       </div>

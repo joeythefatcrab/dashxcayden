@@ -58,14 +58,18 @@ export function RecentTimeLogsNotification() {
               Recent Time Logs
             </h4>
             <div className="space-y-1">
-              {recentLogs.map((log, index) => (
-                <p key={index} className="text-sm text-blue-700">
-                  <Calendar className="inline h-3 w-3 mr-1" />
-                  <strong>{log.studentName}</strong> logged{" "}
-                  {log.type === "time" ? "study time" : "an activity"} on{" "}
-                  {new Date(log.date).toLocaleDateString()}
-                </p>
-              ))}
+              {recentLogs.map((log, index) => {
+                const d = new Date(log.date);
+                const dateStr = `${d.getUTCMonth() + 1}/${d.getUTCDate()}/${d.getUTCFullYear()}`;
+                return (
+                  <p key={index} className="text-sm text-blue-700">
+                    <Calendar className="inline h-3 w-3 mr-1" />
+                    <strong>{log.studentName}</strong> logged{" "}
+                    {log.type === "time" ? "study time" : "an activity"} on{" "}
+                    {dateStr}
+                  </p>
+                );
+              })}
             </div>
           </div>
         </div>

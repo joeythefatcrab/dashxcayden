@@ -112,7 +112,7 @@ export function NotificationBanner() {
                   {request.revisionNote}
                 </p>
                 <div className="flex items-center gap-2">
-                  <Link href={`/my-courses/${request.lessonId.split('/')[0]}/lessons/${request.lessonId}`}>
+                  <Link href={`/my-courses/${request.lessonId}`}>
                     <Button size="sm" variant="default" className="h-8">
                       Revise Essay
                     </Button>

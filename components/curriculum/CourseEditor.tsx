@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { UploadButton } from "@/lib/uploadthing";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ import {
   FileText,
   ClipboardList,
   X,
+  Paperclip,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -43,6 +45,7 @@ interface LessonData {
   threshold: number;
   order: number;
   objectives: string[];
+  attachmentUrl?: string | null;
   items: ItemData[];
 }
 
@@ -525,6 +528,7 @@ export function CourseEditor({ curriculum }: { curriculum: CurriculumData }) {
         contentMd: lesson.contentMd,
         threshold: lesson.threshold,
         objectives: lesson.objectives,
+        attachmentUrl: lesson.attachmentUrl ?? null,
       }),
     });
   };
@@ -751,6 +755,57 @@ export function CourseEditor({ curriculum }: { curriculum: CurriculumData }) {
                               placeholder="Write lesson content in markdown…"
                               className="w-full border rounded px-2 py-1.5 text-sm resize-y mt-1 bg-background text-foreground"
                             />
+                          </div>
+
+                          {/* PDF attachment */}
+                          <div className="flex items-center gap-2">
+                            <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                            {lesson.attachmentUrl ? (
+                              <>
+                                <a
+                                  href={lesson.attachmentUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-primary underline"
+                                >
+                                  Attached PDF
+                                </a>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-5 px-1.5 text-xs text-muted-foreground hover:text-red-500"
+                                  onClick={async () => {
+                                    await fetch(`/api/admin/lessons/${lesson.id}`, {
+                                      method: "PUT",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ attachmentUrl: null }),
+                                    });
+                                    updateLesson(unit.id, lesson.id, { attachmentUrl: null });
+                                  }}
+                                >
+                                  Remove
+                                </Button>
+                              </>
+                            ) : (
+                              <UploadButton
+                                endpoint="lessonAttachment"
+                                onClientUploadComplete={(res: any) => {
+                                  if (res?.[0]?.url) {
+                                    const url = res[0].url;
+                                    fetch(`/api/admin/lessons/${lesson.id}`, {
+                                      method: "PUT",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ attachmentUrl: url }),
+                                    });
+                                    updateLesson(unit.id, lesson.id, { attachmentUrl: url });
+                                  }
+                                }}
+                                onUploadError={(error: Error) => {
+                                  console.error("Upload failed:", error);
+                                }}
+                                className="ut-button:h-7 ut-button:px-2.5 ut-button:text-xs ut-button:bg-muted ut-button:text-foreground ut-button:hover:bg-muted/80 ut-allowed-types:text-xs ut-allowed-types:text-muted-foreground"
+                              />
+                            )}
                           </div>
 
                           {/* Save lesson */}

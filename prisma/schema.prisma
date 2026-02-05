@@ -216,6 +216,8 @@ model Lesson {
   // Learning objectives/standards
   objectives  String[] // Array of learning objective codes
 
+  attachmentUrl String? // Optional uploaded PDF (checksheet, etc.)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

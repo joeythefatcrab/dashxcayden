@@ -13,7 +13,7 @@ export async function PUT(
     }
 
     const { lessonId } = await params;
-    const { title, description, contentMd, threshold, objectives } =
+    const { title, description, contentMd, threshold, objectives, attachmentUrl } =
       await req.json();
 
     const lesson = await db.lesson.update({
@@ -24,6 +24,7 @@ export async function PUT(
         ...(contentMd !== undefined && { contentMd }),
         ...(threshold !== undefined && { threshold }),
         ...(objectives !== undefined && { objectives }),
+        ...(attachmentUrl !== undefined && { attachmentUrl }),
       },
     });
 

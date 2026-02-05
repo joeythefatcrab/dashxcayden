@@ -90,9 +90,11 @@ export default async function MySubmissionsPage() {
 
   // Filter attempts that have items needing grading or revision requested
   const relevantAttempts = attempts.filter((attempt) => {
+    if (!attempt.lesson) return false; // Skip if lesson was deleted
     const detail = attempt.detail as any;
+    if (!detail || typeof detail !== 'object') return false;
     return Object.values(detail).some(
-      (item: any) => item.needsGrading || item.revisionRequested
+      (item: any) => item?.needsGrading || item?.revisionRequested
     );
   });
 
@@ -127,30 +129,30 @@ export default async function MySubmissionsPage() {
         })}
         shortAnswerAttempts={relevantAttempts.map((attempt) => {
           const detail = attempt.detail as any;
-          const items = Object.entries(detail)
+          const items = Object.entries(detail || {})
             .filter(
               ([_, item]: [string, any]) =>
-                item.needsGrading || item.revisionRequested
+                item?.needsGrading || item?.revisionRequested
             )
             .map(([itemId, item]: [string, any]) => ({
               itemId,
-              itemPrompt: item.itemPrompt || "Short Answer Question",
-              answer: item.answer,
-              needsGrading: item.needsGrading || false,
-              revisionRequested: item.revisionRequested || false,
-              revisionNote: item.revisionNote || null,
-              revisionRequestedAt: item.revisionRequestedAt || null,
-              points: item.points,
-              maxPoints: item.maxPoints,
-              feedback: item.feedback || null,
+              itemPrompt: item?.itemPrompt || "Short Answer Question",
+              answer: item?.answer || "",
+              needsGrading: item?.needsGrading || false,
+              revisionRequested: item?.revisionRequested || false,
+              revisionNote: item?.revisionNote || null,
+              revisionRequestedAt: item?.revisionRequestedAt || null,
+              points: item?.points || 0,
+              maxPoints: item?.maxPoints || 0,
+              feedback: item?.feedback || null,
             }));
 
           return {
             attemptId: attempt.id,
             lessonId: attempt.lessonId,
-            lessonTitle: attempt.lesson.title,
-            unitTitle: attempt.lesson.unit.title,
-            curriculumName: attempt.lesson.unit.curriculum.name,
+            lessonTitle: attempt.lesson?.title || "Unknown Lesson",
+            unitTitle: attempt.lesson?.unit?.title || "Unknown Unit",
+            curriculumName: attempt.lesson?.unit?.curriculum?.name || "Unknown Course",
             submittedAt: attempt.createdAt.toISOString(),
             items,
           };

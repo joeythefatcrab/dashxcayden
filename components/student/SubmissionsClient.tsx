@@ -174,7 +174,7 @@ export function SubmissionsClient({
       sortDate: sub.submittedAt || new Date(0).toISOString(),
     })),
     ...shortAnswerAttempts.flatMap((attempt) =>
-      attempt.items.map((item) => ({
+      (attempt.items || []).map((item) => ({
         id: `${attempt.attemptId}-${item.itemId}`,
         type: "shortAnswer" as const,
         displayType: "Short Answer" as const,
@@ -191,7 +191,7 @@ export function SubmissionsClient({
           : ("GRADED" as const),
         submittedAt: attempt.submittedAt,
         sortDate: attempt.submittedAt,
-        grade: item.points && item.maxPoints ? (item.points / item.maxPoints) * 100 : null,
+        grade: item.maxPoints > 0 ? (item.points / item.maxPoints) * 100 : null,
         feedback: item.feedback,
         revisionNote: item.revisionNote,
         revisionRequestedAt: item.revisionRequestedAt,

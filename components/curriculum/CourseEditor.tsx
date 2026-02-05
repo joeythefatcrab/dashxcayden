@@ -14,6 +14,8 @@ import {
   Save,
   BookOpen,
   FileText,
+  ClipboardList,
+  X,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -77,6 +79,79 @@ function reorder<T extends { id: string }>(
   const result = [...list];
   [result[index], result[target]] = [result[target], result[index]];
   return result;
+}
+
+// ─── Answer-sheet parser ─────────────────────────────────────────────────────
+// Splits pasted text into structured items.  Recognised formats:
+//   1. Question text       or   Q1) Question text
+//   A) Choice              or   A. Choice   or   (A) Choice
+//   Answer: B              or   Correct: A
+// If choices are found → MCQ; otherwise → SHORT_ANSWER.
+
+function parseAnswerSheet(text: string) {
+  const lines = text.split("\n");
+  const blocks: string[][] = [];
+  let current: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (/^(?:Q?\d+)\s*[.)]\s/i.test(trimmed)) {
+      if (current.length > 0) blocks.push(current);
+      current = [trimmed];
+    } else if (trimmed) {
+      current.push(trimmed);
+    }
+  }
+  if (current.length > 0) blocks.push(current);
+
+  return blocks
+    .map((block) => {
+      const prompt = block[0].replace(/^(?:Q?\d+)\s*[.)]\s*/i, "").trim();
+      if (!prompt) return null;
+
+      const choices: string[] = [];
+      let answerIdx = -1;
+
+      for (let i = 1; i < block.length; i++) {
+        const line = block[i];
+        const choiceMatch = line.match(/^\(?([A-Da-d])\)?\s*[.):]?\s*(.*)/);
+        if (choiceMatch && choiceMatch[2]) {
+          choices.push(choiceMatch[2].trim());
+          continue;
+        }
+        const answerMatch = line.match(
+          /^(?:answer|correct\s*answer|ans)\s*:?\s*\(?([A-Da-d])\)?/i
+        );
+        if (answerMatch) {
+          answerIdx =
+            answerMatch[1].toUpperCase().charCodeAt(0) - "A".charCodeAt(0);
+        }
+      }
+
+      if (choices.length >= 2) {
+        return {
+          type: "MCQ" as const,
+          prompt,
+          choices,
+          answerKey: answerIdx >= 0 ? { correct: [answerIdx] } : { correct: [] },
+          points: 1,
+        };
+      }
+      return {
+        type: "SHORT_ANSWER" as const,
+        prompt,
+        choices: null,
+        answerKey: { patterns: [] },
+        points: 1,
+      };
+    })
+    .filter(Boolean) as Array<{
+      type: string;
+      prompt: string;
+      choices: string[] | null;
+      answerKey: any;
+      points: number;
+    }>;
 }
 
 // ─── Item Editor ─────────────────────────────────────────────────────────────
@@ -342,6 +417,9 @@ export function CourseEditor({ curriculum }: { curriculum: CurriculumData }) {
   const [expandedLessons, setExpandedLessons] = useState<Set<string>>(
     () => new Set(curriculum.units.flatMap((u) => u.lessons.map((l) => l.id)))
   );
+  const [pasteTarget, setPasteTarget] = useState<string | null>(null); // lessonId
+  const [pasteText, setPasteText] = useState("");
+  const [importing, setImporting] = useState(false);
 
   // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -521,6 +599,32 @@ export function CourseEditor({ curriculum }: { curriculum: CurriculumData }) {
     );
   };
 
+  // ── Paste answer sheet ─────────────────────────────────────────────────
+
+  const importFromText = async (unitId: string, lessonId: string) => {
+    setImporting(true);
+    const parsed = parseAnswerSheet(pasteText);
+    const newItems: ItemData[] = [];
+    for (const p of parsed) {
+      const res = await fetch("/api/admin/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lessonId, ...p }),
+      });
+      if (res.ok) newItems.push(await res.json());
+    }
+    if (newItems.length > 0) {
+      const lesson = units
+        .find((u) => u.id === unitId)
+        ?.lessons.find((l) => l.id === lessonId);
+      if (lesson)
+        updateLesson(unitId, lessonId, { items: [...lesson.items, ...newItems] });
+    }
+    setPasteText("");
+    setPasteTarget(null);
+    setImporting(false);
+  };
+
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
@@ -671,15 +775,87 @@ export function CourseEditor({ curriculum }: { curriculum: CurriculumData }) {
                             ))}
                           </div>
 
-                          {/* Add item */}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full h-8 text-xs border-dashed"
-                            onClick={() => addItem(unit.id, lesson.id)}
-                          >
-                            <Plus className="h-3 w-3 mr-1" /> Add Item
-                          </Button>
+                          {/* Add item / paste answer sheet */}
+                          {pasteTarget === lesson.id ? (
+                            <div className="border rounded-lg p-3 bg-background space-y-2">
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs font-medium text-muted-foreground">
+                                  Paste answer sheet — questions are auto-detected
+                                </p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => {
+                                    setPasteTarget(null);
+                                    setPasteText("");
+                                  }}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              <textarea
+                                value={pasteText}
+                                onChange={(e) => setPasteText(e.target.value)}
+                                autoFocus
+                                placeholder={[
+                                  "1. What is photosynthesis?",
+                                  "A) Process of converting light…",
+                                  "B) Breakdown of glucose…",
+                                  "Answer: A",
+                                  "",
+                                  "2. Next question…",
+                                ].join("\n")}
+                                rows={8}
+                                className="w-full border rounded px-2 py-1.5 text-sm resize-y bg-background text-foreground"
+                              />
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() =>
+                                    importFromText(unit.id, lesson.id)
+                                  }
+                                  disabled={
+                                    importing || !pasteText.trim()
+                                  }
+                                >
+                                  {importing
+                                    ? "Importing…"
+                                    : `Import ${parseAnswerSheet(pasteText).length} item${parseAnswerSheet(pasteText).length !== 1 ? "s" : ""}`}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setPasteTarget(null);
+                                    setPasteText("");
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 h-8 text-xs border-dashed"
+                                onClick={() => addItem(unit.id, lesson.id)}
+                              >
+                                <Plus className="h-3 w-3 mr-1" /> Add Item
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs border-dashed"
+                                onClick={() => setPasteTarget(lesson.id)}
+                              >
+                                <ClipboardList className="h-3 w-3 mr-1" /> Paste
+                                Sheet
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

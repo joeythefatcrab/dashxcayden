@@ -29,7 +29,6 @@ type AIChatbotProps = {
 
 export function AIChatbot({ lessonId, context }: AIChatbotProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -59,16 +58,15 @@ export function AIChatbot({ lessonId, context }: AIChatbotProps) {
     setIsLoading(true);
 
     try {
-      // Always use context-aware assistant endpoint
-      const response = await fetch("/api/student/essay-assistant", {
+      // Build conversation history for the API (exclude the initial greeting)
+      const conversationForApi = [...messages.slice(1), userMessage];
+
+      const response = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: input.trim(),
-          essayContent: "",
-          prompt: "",
-          threadId,
-          lessonId: lessonId || undefined,
+          messages: conversationForApi,
+          context: context || undefined,
         }),
       });
 
@@ -78,13 +76,9 @@ export function AIChatbot({ lessonId, context }: AIChatbotProps) {
         throw new Error(data.error || "Failed to get response");
       }
 
-      if (data.threadId) {
-        setThreadId(data.threadId);
-      }
-
       const assistantMessage: Message = {
         role: "assistant",
-        content: data.response,
+        content: data.message,
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {

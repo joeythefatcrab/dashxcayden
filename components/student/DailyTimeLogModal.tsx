@@ -68,26 +68,9 @@ export function DailyTimeLogModal({ curricula, date, onComplete }: Props) {
     }, 0);
   };
 
-  const handleSubmit = async () => {
+  const postTimeLogs = async (logs: { curriculumId: string; minutesSpent: number }[]) => {
     setIsSubmitting(true);
     setError("");
-
-    // Filter out empty entries and calculate minutes
-    const logs = Object.entries(timeEntries)
-      .map(([curriculumId, entry]) => {
-        const hours = parseInt(entry.hours) || 0;
-        const minutes = parseInt(entry.minutes) || 0;
-        const totalMinutes = hours * 60 + minutes;
-        return { curriculumId, minutesSpent: totalMinutes };
-      })
-      .filter((log) => log.minutesSpent > 0);
-
-    if (logs.length === 0) {
-      setError("Please enter time for at least one course");
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
       const response = await fetch("/api/student/daily-time-log", {
         method: "POST",
@@ -107,6 +90,21 @@ export function DailyTimeLogModal({ curricula, date, onComplete }: Props) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmit = async () => {
+    const logs = Object.entries(timeEntries).map(([curriculumId, entry]) => {
+      const hours = parseInt(entry.hours) || 0;
+      const minutes = parseInt(entry.minutes) || 0;
+      return { curriculumId, minutesSpent: hours * 60 + minutes };
+    });
+    await postTimeLogs(logs);
+  };
+
+  const handleSkip = async () => {
+    // Record 0 minutes for all courses so the modal won't reappear
+    const logs = curricula.map((c) => ({ curriculumId: c.id, minutesSpent: 0 }));
+    await postTimeLogs(logs);
   };
 
   const formatDate = (dateStr: string) => {
@@ -198,10 +196,18 @@ export function DailyTimeLogModal({ curricula, date, onComplete }: Props) {
             </div>
           )}
 
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="flex justify-between pt-4">
+            <Button
+              onClick={handleSkip}
+              disabled={isSubmitting}
+              variant="ghost"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              I didn&apos;t study yesterday
+            </Button>
             <Button
               onClick={handleSubmit}
-              disabled={isSubmitting || getTotalMinutes() === 0}
+              disabled={isSubmitting}
               className="min-w-[120px]"
             >
               {isSubmitting ? (
@@ -214,10 +220,6 @@ export function DailyTimeLogModal({ curricula, date, onComplete }: Props) {
               )}
             </Button>
           </div>
-
-          <p className="text-xs text-center text-muted-foreground mt-2">
-            You can enter 0 for courses you didn't work on
-          </p>
         </div>
       </DialogContent>
     </Dialog>

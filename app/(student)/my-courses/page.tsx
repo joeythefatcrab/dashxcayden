@@ -104,14 +104,16 @@ export default async function MyCoursesPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           {enrollments.map((enrollment) => {
-            const totalLessons = enrollment.curriculum.units.reduce(
-              (acc, unit) => acc + unit.lessons.length,
-              0
+            const currentLessonIds = new Set(
+              enrollment.curriculum.units.flatMap((unit) =>
+                unit.lessons.map((l) => l.id)
+              )
             );
+            const totalLessons = currentLessonIds.size;
 
             const progress = enrollment.progress as any;
-            const completedLessons = Object.values(progress).filter(
-              (p: any) => p.completed
+            const completedLessons = Object.entries(progress).filter(
+              ([id, p]: [string, any]) => currentLessonIds.has(id) && p.completed
             ).length;
 
             const progressPercentage = totalLessons > 0

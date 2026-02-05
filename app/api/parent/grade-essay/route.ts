@@ -76,6 +76,113 @@ export async function POST(req: Request) {
       },
     });
 
+    // Propagate essay grade back into the lesson attempt and enrollment progress
+    try {
+      const item = await db.item.findUnique({
+        where: { id: submission.itemId },
+        select: { points: true },
+      });
+
+      if (item) {
+        const essayEarnedPoints = Math.round((gradeNum / 100) * item.points);
+
+        // Find the most recent attempt for this student + lesson
+        const latestAttempt = await db.attempt.findFirst({
+          where: {
+            studentId: submission.studentId,
+            lessonId: submission.lessonId,
+          },
+          orderBy: { createdAt: "desc" },
+        });
+
+        if (latestAttempt) {
+          const detail = latestAttempt.detail as Record<string, any>;
+
+          // Credit the essay item in the attempt detail
+          detail[submission.itemId] = {
+            ...detail[submission.itemId],
+            correct: gradeNum >= 60,
+            points: essayEarnedPoints,
+            needsGrading: false,
+            graded: true,
+          };
+
+          const newEarned = latestAttempt.earned + essayEarnedPoints;
+          const newScore =
+            latestAttempt.maxScore > 0
+              ? Math.round((newEarned / latestAttempt.maxScore) * 100)
+              : 0;
+
+          await db.attempt.update({
+            where: { id: latestAttempt.id },
+            data: {
+              score: newScore,
+              earned: newEarned,
+              detail,
+            },
+          });
+
+          // Update enrollment progress if threshold is now met
+          const lesson = await db.lesson.findUnique({
+            where: { id: submission.lessonId },
+            include: {
+              unit: {
+                include: {
+                  lessons: { orderBy: { order: "asc" } },
+                },
+              },
+            },
+          });
+
+          if (lesson) {
+            const enrollment = await db.enrollment.findUnique({
+              where: {
+                studentId_curriculumId: {
+                  studentId: submission.studentId,
+                  curriculumId: lesson.unit.curriculumId,
+                },
+              },
+            });
+
+            if (enrollment) {
+              const progress = (enrollment.progress as any) || {};
+
+              progress[submission.lessonId] = {
+                ...progress[submission.lessonId],
+                bestScore: Math.max(
+                  progress[submission.lessonId]?.bestScore || 0,
+                  newScore
+                ),
+                completed: newScore >= lesson.threshold,
+              };
+
+              // Unlock next lesson if threshold met
+              if (newScore >= lesson.threshold) {
+                const currentIndex = lesson.unit.lessons.findIndex(
+                  (l) => l.id === submission.lessonId
+                );
+                const nextLesson = lesson.unit.lessons[currentIndex + 1];
+                if (nextLesson) {
+                  progress[nextLesson.id] = {
+                    ...(progress[nextLesson.id] || {}),
+                    unlocked: true,
+                  };
+                }
+              }
+
+              await db.enrollment.update({
+                where: { id: enrollment.id },
+                data: { progress },
+              });
+            }
+          }
+        }
+      }
+    } catch (propagationError) {
+      // Don't fail the grading response if progress update fails
+      console.error("Failed to propagate essay grade to lesson progress:", propagationError);
+    }
+
     return NextResponse.json(graded);
   } catch (error) {
     console.error("Error grading essay:", error);

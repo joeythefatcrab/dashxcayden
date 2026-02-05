@@ -202,13 +202,13 @@ function ItemEditor({
   };
 
   return (
-    <div className="border rounded-lg p-3 bg-white space-y-3">
+    <div className="border rounded-lg p-3 bg-background space-y-3">
       {/* Header row: type selector + reorder + delete */}
       <div className="flex items-center gap-2">
         <select
           value={item.type}
           onChange={(e) => handleTypeChange(e.target.value)}
-          className="border rounded px-2 py-1 text-sm bg-white"
+          className="border rounded px-2 py-1 text-sm bg-background text-foreground"
         >
           {ITEM_TYPES.map((t) => (
             <option key={t} value={t}>{TYPE_LABELS[t]}</option>
@@ -236,7 +236,7 @@ function ItemEditor({
         onChange={(e) => onChange({ ...item, prompt: e.target.value })}
         placeholder="Question or prompt…"
         rows={2}
-        className="w-full border rounded px-2 py-1.5 text-sm resize-none"
+        className="w-full border rounded px-2 py-1.5 text-sm resize-none bg-background text-foreground"
       />
 
       {/* Points */}
@@ -247,7 +247,7 @@ function ItemEditor({
           min={0}
           value={item.points}
           onChange={(e) => onChange({ ...item, points: parseInt(e.target.value) || 0 })}
-          className="border rounded px-2 py-1 text-sm w-16"
+          className="border rounded px-2 py-1 text-sm w-16 bg-background text-foreground"
         />
         {item.type === "CHECKBOX" && (
           <label className="flex items-center gap-1.5 ml-4 text-xs text-muted-foreground">
@@ -277,7 +277,7 @@ function ItemEditor({
                 value={choice}
                 onChange={(e) => updateChoice(idx, e.target.value)}
                 disabled={item.type === "TRUE_FALSE"}
-                className="border rounded px-2 py-0.5 text-sm flex-1 disabled:bg-gray-50 disabled:text-gray-600"
+                className="border rounded px-2 py-0.5 text-sm flex-1 bg-background text-foreground disabled:bg-muted disabled:text-muted-foreground"
               />
               {item.type === "MCQ" && item.choices!.length > 2 && (
                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-red-500" onClick={() => removeChoice(idx)}>
@@ -305,7 +305,7 @@ function ItemEditor({
                 value={pattern}
                 onChange={(e) => updatePattern(idx, e.target.value)}
                 placeholder="e.g. photosynthesis or /photo.*/i"
-                className="border rounded px-2 py-0.5 text-sm flex-1"
+                className="border rounded px-2 py-0.5 text-sm flex-1 bg-background text-foreground"
               />
               {(item.answerKey?.patterns || []).length > 1 && (
                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-red-500" onClick={() => removePattern(idx)}>
@@ -622,7 +622,7 @@ export function CourseEditor({ curriculum }: { curriculum: CurriculumData }) {
                                 max={100}
                                 value={lesson.threshold}
                                 onChange={(e) => updateLesson(unit.id, lesson.id, { threshold: parseInt(e.target.value) || 0 })}
-                                className="border rounded px-2 py-0.5 text-sm w-16"
+                                className="border rounded px-2 py-0.5 text-sm w-16 bg-background text-foreground"
                               />
                               <span className="text-xs text-muted-foreground">%</span>
                             </div>
@@ -645,7 +645,7 @@ export function CourseEditor({ curriculum }: { curriculum: CurriculumData }) {
                               onChange={(e) => updateLesson(unit.id, lesson.id, { contentMd: e.target.value })}
                               rows={4}
                               placeholder="Write lesson content in markdown…"
-                              className="w-full border rounded px-2 py-1.5 text-sm resize-y mt-1"
+                              className="w-full border rounded px-2 py-1.5 text-sm resize-y mt-1 bg-background text-foreground"
                             />
                           </div>
 

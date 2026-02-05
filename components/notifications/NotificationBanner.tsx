@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Bell } from "lucide-react";
+import { X, Bell, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import Link from "next/link";
 
 type Message = {
   id: string;
@@ -18,12 +19,23 @@ type Message = {
   };
 };
 
+type RevisionRequest = {
+  id: string;
+  itemId: string;
+  lessonId: string;
+  revisionNote: string;
+  revisionRequestedAt: string;
+  lessonTitle?: string;
+};
+
 export function NotificationBanner() {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [revisionRequests, setRevisionRequests] = useState<RevisionRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchMessages();
+    fetchRevisionRequests();
   }, []);
 
   const fetchMessages = async () => {
@@ -39,6 +51,19 @@ export function NotificationBanner() {
       console.error("Error fetching messages:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchRevisionRequests = async () => {
+    try {
+      const response = await fetch("/api/student/revision-requests");
+      if (!response.ok) {
+        return; // Silently fail for non-students
+      }
+      const data = await response.json();
+      setRevisionRequests(data);
+    } catch (error) {
+      // Ignore errors (user might not be a student)
     }
   };
 
@@ -59,12 +84,50 @@ export function NotificationBanner() {
     }
   };
 
-  if (isLoading || messages.length === 0) {
+  if (isLoading || (messages.length === 0 && revisionRequests.length === 0)) {
     return null;
   }
 
   return (
     <div className="space-y-3 mb-6">
+      {/* Revision Requests */}
+      {revisionRequests.map((request) => (
+        <Card
+          key={request.id}
+          className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/20"
+        >
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <RefreshCw className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-1">
+                  Essay Revision Requested
+                </h3>
+                <p className="text-sm text-orange-800 dark:text-orange-200 mb-2">
+                  {request.lessonTitle ? `Lesson: ${request.lessonTitle}` : "One of your essays needs revision"}
+                </p>
+                <p className="text-sm text-orange-700 dark:text-orange-300 whitespace-pre-wrap mb-2">
+                  {request.revisionNote}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Link href={`/my-courses/${request.lessonId.split('/')[0]}/lessons/${request.lessonId}`}>
+                    <Button size="sm" variant="default" className="h-8">
+                      Revise Essay
+                    </Button>
+                  </Link>
+                  <span className="text-xs text-orange-600 dark:text-orange-400">
+                    Requested {formatDistanceToNow(new Date(request.revisionRequestedAt), { addSuffix: true })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+
+      {/* Admin Messages */}
       {messages.map((message) => (
         <Card
           key={message.id}

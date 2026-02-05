@@ -181,8 +181,8 @@ export async function POST(req: Request) {
       },
     });
 
-    // Don't allow editing after submission
-    if (existing && existing.status !== "DRAFT") {
+    // Don't allow editing after submission (except for revisions)
+    if (existing && existing.status !== "DRAFT" && existing.status !== "REVISION_REQUESTED") {
       return NextResponse.json(
         { error: "Cannot edit submitted essay" },
         { status: 400 }
@@ -191,7 +191,8 @@ export async function POST(req: Request) {
 
     // If submitting (not just saving draft), trigger AI grading
     let aiGradeData = {};
-    if (status === "SUBMITTED" && !existing) {
+    const isResubmission = existing && existing.status === "REVISION_REQUESTED";
+    if (status === "SUBMITTED" && (!existing || isResubmission)) {
       try {
         // Get essay prompt - first try from Item table, fallback to passed prompt
         let essayPrompt = prompt || "Write an essay about this topic";
@@ -264,7 +265,7 @@ export async function POST(req: Request) {
     });
 
     // Log activity for essay submission
-    if (status === "SUBMITTED" && (!existing || existing.status === "DRAFT")) {
+    if (status === "SUBMITTED" && (!existing || existing.status === "DRAFT" || existing.status === "REVISION_REQUESTED")) {
       await logActivity({
         userId: session.user.id,
         userRole: "STUDENT",
@@ -277,6 +278,116 @@ export async function POST(req: Request) {
           submissionId: submission.id,
         },
       });
+
+      // Propagate AI grade to lesson attempt so student can progress while waiting for parent review
+      if (aiGradeData && (aiGradeData as any).aiGrade !== undefined) {
+        try {
+          const item = await db.item.findUnique({
+            where: { id: itemId },
+            select: { points: true },
+          });
+
+          if (item) {
+            const aiGrade = (aiGradeData as any).aiGrade;
+            const essayEarnedPoints = Math.round((aiGrade / 100) * item.points);
+
+            // Find or create attempt for this lesson
+            let latestAttempt = await db.attempt.findFirst({
+              where: {
+                studentId: studentId,
+                lessonId: lessonId,
+              },
+              orderBy: { createdAt: "desc" },
+            });
+
+            if (latestAttempt) {
+              const detail = latestAttempt.detail as Record<string, any>;
+
+              // Credit the essay item
+              detail[itemId] = {
+                ...detail[itemId],
+                correct: aiGrade >= 60,
+                points: essayEarnedPoints,
+                needsGrading: false,
+                aiGraded: true,
+              };
+
+              const newEarned = latestAttempt.earned + essayEarnedPoints;
+              const newScore =
+                latestAttempt.maxScore > 0
+                  ? Math.round((newEarned / latestAttempt.maxScore) * 100)
+                  : 0;
+
+              await db.attempt.update({
+                where: { id: latestAttempt.id },
+                data: {
+                  score: newScore,
+                  earned: newEarned,
+                  detail,
+                },
+              });
+
+              // Update enrollment progress
+              const lesson = await db.lesson.findUnique({
+                where: { id: lessonId },
+                include: {
+                  unit: {
+                    include: {
+                      curriculum: { select: { id: true } },
+                      lessons: { orderBy: { order: "asc" } },
+                    },
+                  },
+                },
+              });
+
+              if (lesson) {
+                const enrollment = await db.enrollment.findUnique({
+                  where: {
+                    studentId_curriculumId: {
+                      studentId: studentId,
+                      curriculumId: lesson.unit.curriculum.id,
+                    },
+                  },
+                });
+
+                if (enrollment) {
+                  const progress = (enrollment.progress as any) || {};
+
+                  progress[lessonId] = {
+                    ...progress[lessonId],
+                    bestScore: Math.max(
+                      progress[lessonId]?.bestScore || 0,
+                      newScore
+                    ),
+                    completed: newScore >= lesson.threshold,
+                  };
+
+                  // Unlock next lesson if threshold met
+                  if (newScore >= lesson.threshold) {
+                    const currentIndex = lesson.unit.lessons.findIndex(
+                      (l) => l.id === lessonId
+                    );
+                    const nextLesson = lesson.unit.lessons[currentIndex + 1];
+                    if (nextLesson) {
+                      progress[nextLesson.id] = {
+                        ...(progress[nextLesson.id] || {}),
+                        unlocked: true,
+                      };
+                    }
+                  }
+
+                  await db.enrollment.update({
+                    where: { id: enrollment.id },
+                    data: { progress },
+                  });
+                }
+              }
+            }
+          }
+        } catch (propagationError) {
+          console.error("Failed to propagate AI grade to lesson progress:", propagationError);
+        }
+      }
     }
 
     return NextResponse.json(submission);

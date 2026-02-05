@@ -98,6 +98,9 @@ export async function POST(req: Request) {
         if (latestAttempt) {
           const detail = latestAttempt.detail as Record<string, any>;
 
+          // Get previous points for this item (if AI already graded)
+          const previousPoints = detail[submission.itemId]?.points || 0;
+
           // Credit the essay item in the attempt detail
           detail[submission.itemId] = {
             ...detail[submission.itemId],
@@ -105,9 +108,11 @@ export async function POST(req: Request) {
             points: essayEarnedPoints,
             needsGrading: false,
             graded: true,
+            aiGraded: false, // Clear AI grade flag since parent graded
           };
 
-          const newEarned = latestAttempt.earned + essayEarnedPoints;
+          // Replace, not add, the points (in case AI already scored this)
+          const newEarned = latestAttempt.earned - previousPoints + essayEarnedPoints;
           const newScore =
             latestAttempt.maxScore > 0
               ? Math.round((newEarned / latestAttempt.maxScore) * 100)

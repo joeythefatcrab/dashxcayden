@@ -14,7 +14,17 @@ export default async function MySubmissionsPage() {
     redirect("/dashboard");
   }
 
-  const studentId = session.user.id;
+  // Get student record from user ID
+  const student = await db.student.findFirst({
+    where: { userId: session.user.id },
+    select: { id: true },
+  });
+
+  if (!student) {
+    redirect("/dashboard");
+  }
+
+  const studentId = student.id;
 
   // Fetch all essay submissions
   const essaySubmissions = await db.essaySubmission.findMany({

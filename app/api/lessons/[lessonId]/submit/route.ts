@@ -3,6 +3,66 @@ import { db } from "@/lib/db";
 import { markAttendance } from "@/lib/attendance";
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity-logger";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || "dummy-key",
+});
+
+// AI Grading Function for Short Answers using GPT-4
+async function gradeShortAnswerWithAI(question: string, answer: string, maxPoints: number, gradeLevel: number) {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are a helpful teacher grading short answer questions for a grade ${gradeLevel} student.
+
+Grade the student's answer based on:
+- Accuracy and correctness
+- Completeness
+- Understanding of the concept
+
+Respond with a JSON object with these fields:
+{
+  "points": number (0 to ${maxPoints}),
+  "feedback": "brief constructive feedback"
+}
+
+Be fair but lenient - if the student shows understanding, give credit even if the answer isn't perfect.`,
+        },
+        {
+          role: "user",
+          content: `Question: ${question}
+
+Student's Answer: ${answer}
+
+Please grade this answer out of ${maxPoints} points.`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const content = completion.choices[0]?.message?.content;
+    if (!content) {
+      console.error("No content in AI response");
+      return null;
+    }
+
+    const result = JSON.parse(content);
+
+    // Ensure points is within valid range
+    if (result.points !== undefined) {
+      result.points = Math.max(0, Math.min(maxPoints, result.points));
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Error grading short answer with AI:", error);
+    return null;
+  }
+}
 
 export async function POST(
   req: Request,
@@ -63,6 +123,13 @@ export async function POST(
       return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
     }
 
+    // Get student grade level for AI grading
+    const studentRecord = await db.student.findUnique({
+      where: { id: studentId },
+      select: { grade: true },
+    });
+    const gradeLevel = studentRecord?.grade || 8;
+
     // Grade each item
     const detail: Record<string, any> = {};
     let totalPoints = 0;
@@ -84,8 +151,56 @@ export async function POST(
           correct = true;
           points = item.points;
         }
-      } else if (item.type === "ESSAY" || item.type === "SHORT_ANSWER") {
-        // These require manual grading - mark as pending
+      } else if (item.type === "SHORT_ANSWER") {
+        // Auto-grade with AI so students can progress immediately
+        try {
+          console.log(`AI grading short answer for item ${item.id}...`);
+          const aiResult = await gradeShortAnswerWithAI(
+            item.prompt,
+            studentAnswer,
+            item.points,
+            gradeLevel
+          );
+
+          if (aiResult && aiResult.points !== undefined) {
+            points = aiResult.points;
+            correct = points > 0;
+            earnedPoints += points;
+            console.log(`AI graded short answer: ${points}/${item.points}`);
+
+            detail[item.id] = {
+              answer: studentAnswer,
+              correct,
+              points,
+              itemType: item.type,
+              itemPrompt: item.prompt,
+              maxPoints: item.points,
+              aiGraded: true,
+              feedback: aiResult.feedback || null,
+              needsGrading: false, // AI graded, but parent can still review
+            };
+            continue;
+          } else {
+            console.log("AI grading failed, falling back to pending");
+          }
+        } catch (error) {
+          console.error("Error in AI grading short answer:", error);
+        }
+
+        // Fallback: if AI grading fails, mark for manual grading
+        needsManualGrading = true;
+        detail[item.id] = {
+          answer: studentAnswer,
+          correct: false,
+          points: 0,
+          needsGrading: true,
+          itemType: item.type,
+          itemPrompt: item.prompt,
+          maxPoints: item.points,
+        };
+        continue;
+      } else if (item.type === "ESSAY") {
+        // Essays still require manual grading (handled separately in essay route)
         needsManualGrading = true;
         detail[item.id] = {
           answer: studentAnswer,

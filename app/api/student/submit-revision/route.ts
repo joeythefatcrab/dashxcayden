@@ -24,6 +24,19 @@ export async function POST(req: Request) {
       );
     }
 
+    // Get student record from user ID
+    const student = await db.student.findFirst({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+
+    if (!student) {
+      return NextResponse.json(
+        { error: "Student record not found" },
+        { status: 404 }
+      );
+    }
+
     // Get attempt and verify student owns it
     const attempt = await db.attempt.findUnique({
       where: { id: attemptId },
@@ -36,7 +49,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (attempt.studentId !== session.user.id) {
+    if (attempt.studentId !== student.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

@@ -21,6 +21,7 @@ type RevisionModalProps = {
   revision: {
     type: "essay" | "shortAnswer";
     lessonId: string;
+    lessonPath: string;
     itemId: string;
     attemptId?: string;
     revisionNote: string;
@@ -69,7 +70,7 @@ export function RevisionModal({ isOpen, onClose, revision }: RevisionModalProps)
               </Button>
               <Button
                 onClick={() => {
-                  router.push(`/lesson/${revision.lessonId}`);
+                  router.push(revision.lessonPath);
                   onClose();
                 }}
               >

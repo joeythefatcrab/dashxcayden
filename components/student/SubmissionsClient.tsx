@@ -29,6 +29,7 @@ type EssaySubmission = {
   type: "essay";
   itemId: string;
   lessonId: string;
+  lessonPath: string;
   lessonTitle: string;
   unitTitle: string;
   curriculumName: string;
@@ -57,6 +58,7 @@ type ShortAnswerItem = {
 type ShortAnswerAttempt = {
   attemptId: string;
   lessonId: string;
+  lessonPath: string;
   lessonTitle: string;
   unitTitle: string;
   curriculumName: string;
@@ -77,6 +79,7 @@ export function SubmissionsClient({
   const [selectedRevision, setSelectedRevision] = useState<{
     type: "essay" | "shortAnswer";
     lessonId: string;
+    lessonPath: string;
     itemId: string;
     attemptId?: string;
     revisionNote: string;
@@ -137,12 +140,13 @@ export function SubmissionsClient({
       setSelectedRevision({
         type: "essay",
         lessonId: submission.lessonId,
+        lessonPath: submission.lessonPath,
         itemId: submission.itemId,
         revisionNote: submission.revisionNote || "",
       });
     } else {
       // Navigate to lesson to view essay
-      router.push(`/lesson/${submission.lessonId}`);
+      router.push(submission.lessonPath);
     }
   };
 
@@ -154,6 +158,7 @@ export function SubmissionsClient({
       setSelectedRevision({
         type: "shortAnswer",
         lessonId: attempt.lessonId,
+        lessonPath: attempt.lessonPath,
         itemId: item.itemId,
         attemptId: attempt.attemptId,
         revisionNote: item.revisionNote || "",
@@ -162,7 +167,7 @@ export function SubmissionsClient({
       });
     } else {
       // Just navigate to lesson
-      router.push(`/lesson/${attempt.lessonId}`);
+      router.push(attempt.lessonPath);
     }
   };
 
@@ -317,7 +322,11 @@ export function SubmissionsClient({
                             size="sm"
                             variant="outline"
                             onClick={() => {
-                              router.push(`/lesson/${submission.lessonId}`);
+                              if (submission.type === "essay") {
+                                router.push((submission as any).lessonPath);
+                              } else if (submission.attempt) {
+                                router.push(submission.attempt.lessonPath);
+                              }
                             }}
                           >
                             View
@@ -327,7 +336,11 @@ export function SubmissionsClient({
                             size="sm"
                             variant="ghost"
                             onClick={() => {
-                              router.push(`/lesson/${submission.lessonId}`);
+                              if (submission.type === "essay") {
+                                router.push((submission as any).lessonPath);
+                              } else if (submission.attempt) {
+                                router.push(submission.attempt.lessonPath);
+                              }
                             }}
                           >
                             View

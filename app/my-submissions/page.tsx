@@ -48,6 +48,7 @@ export default async function MySubmissionsPage() {
       unit: {
         select: {
           title: true,
+          curriculumId: true,
           curriculum: {
             select: {
               name: true,
@@ -73,6 +74,7 @@ export default async function MySubmissionsPage() {
           unit: {
             select: {
               title: true,
+              curriculumId: true,
               curriculum: {
                 select: {
                   name: true,
@@ -110,11 +112,13 @@ export default async function MySubmissionsPage() {
       <SubmissionsClient
         essaySubmissions={essaySubmissions.map((sub) => {
           const lesson = essayLessonMap.get(sub.lessonId);
+          const curriculumId = lesson?.unit.curriculumId;
           return {
             id: sub.id,
             type: "essay" as const,
             itemId: sub.itemId,
             lessonId: sub.lessonId,
+            lessonPath: curriculumId ? `/my-courses/${curriculumId}/lessons/${sub.lessonId}` : `/my-courses/unknown/lessons/${sub.lessonId}`,
             lessonTitle: lesson?.title || "Unknown Lesson",
             unitTitle: lesson?.unit.title || "Unknown Unit",
             curriculumName: lesson?.unit.curriculum.name || "Unknown Course",
@@ -147,9 +151,11 @@ export default async function MySubmissionsPage() {
               feedback: item?.feedback || null,
             }));
 
+          const curriculumId = attempt.lesson?.unit?.curriculumId;
           return {
             attemptId: attempt.id,
             lessonId: attempt.lessonId,
+            lessonPath: curriculumId ? `/my-courses/${curriculumId}/lessons/${attempt.lessonId}` : `/my-courses/unknown/lessons/${attempt.lessonId}`,
             lessonTitle: attempt.lesson?.title || "Unknown Lesson",
             unitTitle: attempt.lesson?.unit?.title || "Unknown Unit",
             curriculumName: attempt.lesson?.unit?.curriculum?.name || "Unknown Course",

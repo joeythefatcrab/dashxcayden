@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, FileText, Plus, Trash2, Sparkles, Printer, Pencil } from "lucide-react";
 import { ExternalActivityForm } from "./ExternalActivityForm";
-import { AttendanceTracker } from "./AttendanceTracker";
+import { DayAttendancePicker } from "./DayAttendancePicker";
 import { ParentNotesEditor } from "./ParentNotesEditor";
 import { EducatorEvaluationForm } from "./EducatorEvaluationForm";
 import { MonthlyReportRenderer } from "./MonthlyReportRenderer";
@@ -288,9 +288,12 @@ export function MonthlyReportViewer({ students }: Props) {
           </Card>
 
           {/* Attendance Tracking */}
-          <AttendanceTracker
+          <DayAttendancePicker
             reportId={reportData.report.id}
-            initialAttendance={reportData.report.attendanceData as any}
+            month={reportData.month}
+            year={reportData.year}
+            initialAttendanceData={reportData.report.attendanceData as any}
+            autoDetectedDays={reportData.dailyAttendance ?? []}
             onSave={loadReportData}
           />
 

@@ -40,10 +40,16 @@ type EducatorEvaluation = {
   needsHelp?: string;
 };
 
+type DayEntry = {
+  status: "P" | "A" | "S" | "V" | "NS";
+  hours?: number;
+  note?: string;
+};
+
 export type ReportRendererData = {
   report: {
     id: string;
-    attendanceData: { present: number; sick: number; vacation: number } | null;
+    attendanceData: { present: number; sick: number; vacation: number; days?: Record<string, DayEntry> } | null;
     parentNotes: string | null;
     educatorEvaluation: EducatorEvaluation | null;
     reportContent: string | null;
@@ -95,6 +101,7 @@ function mapExternalCategoryToAps(category: string | null): string {
   if (!category) return "Other";
   const c = category.toLowerCase();
   if (c.includes("field trip")) return "Field Trips";
+  if (c.includes("volunteer") || c.includes("community service")) return "Other";
   if (c.includes("pe") || c.includes("sport") || c.includes("physical") || c.includes("exercise") || c.includes("fitness")) return "PE";
   if (c.includes("music") || c.includes("art") || c.includes("perform") || c.includes("theater")) return "Performing Arts";
   if (c.includes("read")) return "Reading";
@@ -107,25 +114,39 @@ function mapExternalCategoryToAps(category: string | null): string {
 function dayMarkColor(mark: string): string {
   if (mark === "P") return "#dcfce7";
   if (mark === "A") return "#fee2e2";
+  if (mark === "S") return "#fef9c3";
+  if (mark === "V") return "#dbeafe";
+  if (mark === "NS") return "#f3f4f6";
   return "#f9fafb";
 }
 
 export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
   const { report, student, month, year, courseStats, summary, dailyAttendance } = data;
-  const attendance = (report.attendanceData as { present: number; sick: number; vacation: number }) ?? { present: 0, sick: 0, vacation: 0 };
+  const attendanceRaw = report.attendanceData as { present: number; sick: number; vacation: number; days?: Record<string, DayEntry> } | null;
+  const attendance = attendanceRaw ?? { present: 0, sick: 0, vacation: 0 };
   const totalAttendanceDays = attendance.present + attendance.sick + attendance.vacation;
   const monthName = MONTH_NAMES[month - 1];
   const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   const parentName = student.parent.name || student.parent.email;
   const eval_ = report.educatorEvaluation as EducatorEvaluation | null;
 
-  // Build day → mark map from dailyAttendance
+  // Build day → mark map:
+  //   1. Seed from auto-detected DailyAttendance records (P/A only)
+  //   2. Override with parent-saved days from attendanceData.days (full P/A/S/V + hours + note)
   const daysInMonth = new Date(year, month, 0).getDate();
-  const dailyMarks: Record<number, string> = {};
+  const dailyMarks: Record<number, { status: string; hours?: number; note?: string }> = {};
   (dailyAttendance ?? []).forEach((r) => {
     const day = new Date(r.date).getUTCDate();
-    dailyMarks[day] = r.present ? "P" : "A";
+    dailyMarks[day] = { status: r.present ? "P" : "A" };
   });
+  if (attendanceRaw?.days) {
+    for (const [key, entry] of Object.entries(attendanceRaw.days)) {
+      const day = parseInt(key.split("-")[2], 10);
+      if (day >= 1 && day <= daysInMonth) {
+        dailyMarks[day] = { status: entry.status, hours: entry.hours, note: entry.note };
+      }
+    }
+  }
 
   // Aggregate course hours into APS subject buckets
   const subjectMap: Record<string, { hours: number; items: string[] }> = {};
@@ -195,23 +216,33 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
             }}
           >
             {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
-              const mark = dailyMarks[day] ?? "";
+              const entry = dailyMarks[day];
+              const status = entry?.status ?? "";
               return (
                 <div
                   key={day}
                   style={{
                     border: "1px solid #d1d5db",
                     borderRadius: "3px",
-                    padding: "5px 3px",
+                    padding: "4px 2px",
                     textAlign: "center",
-                    backgroundColor: dayMarkColor(mark),
+                    backgroundColor: dayMarkColor(status),
                     minWidth: 0,
                   }}
                 >
-                  <div style={{ fontSize: "10px", color: "#6b7280", marginBottom: "1px" }}>{day}</div>
-                  <div style={{ fontSize: "13px", fontWeight: "bold", color: mark === "P" ? "#16a34a" : mark === "A" ? "#dc2626" : "#374151" }}>
-                    {mark || "—"}
+                  <div style={{ fontSize: "9px", color: "#6b7280" }}>{day}</div>
+                  <div style={{
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    color: status === "P" ? "#16a34a" : status === "S" ? "#ca8a04" : status === "V" ? "#1d4ed8" : status === "A" ? "#dc2626" : "#9ca3af",
+                  }}>
+                    {status || "—"}
                   </div>
+                  {entry?.hours && (
+                    <div style={{ fontSize: "8px", color: "#6b7280", lineHeight: 1 }}>
+                      {entry.hours}h
+                    </div>
+                  )}
                 </div>
               );
             })}

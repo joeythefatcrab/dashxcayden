@@ -63,6 +63,7 @@ export function ExternalActivityForm({ reportId, onSuccess, onCancel, activity }
     "Music Practice",
     "Physical Education",
     "Community Service",
+    "Volunteer Hours",
     "Educational Game/Activity",
     "Other",
   ];

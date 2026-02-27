@@ -42,6 +42,7 @@ const ACTIVITY_CATEGORIES = [
   "Field Trip",
   "Reading",
   "Project",
+  "Volunteer Hours",
   "Volunteer Work",
   "Sports/Physical Activity",
   "Music/Arts",

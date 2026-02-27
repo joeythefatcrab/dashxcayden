@@ -2,6 +2,7 @@
 
 > Last updated: 2026-02-27
 > Primary goal this sprint: **Monthly report format overhaul**
+> Next major feature: **Yearly curriculum program with full nested course structure**
 
 ---
 
@@ -35,25 +36,189 @@ The AI-generated monthly report already exists and generates valid APS-compliant
 
 ---
 
-## 🟠 P2 — Full Curriculum Import (Jace / Taliya's Student)
+## 🟠 P2 — Yearly Curriculum Program (Full Student Curriculum on the Platform)
 
-The platform needs Jace's full remaining curriculum added, including **non-computer-based activities** (paper-based, offline). Taliya will email the list.
+The goal is to load a student's **entire yearly curriculum** as a single program on the platform, with every individual course (subject) nested under it. The student works through each course sequentially or in parallel. This is a comprehensive multi-phase feature.
 
-### 2.1 — Import Jace's Remaining Curriculum
-- [ ] **Waiting on Taliya** to email the spreadsheet/list of remaining courses & tasks
-- [ ] Once received, use the admin `CourseEditor` to add all remaining units and lessons per course
-- [ ] Mark non-computer lessons appropriately (e.g., a flag like `isOffline: true` or use an existing type like `external`)
+**Current state:** The platform has individual `Curriculum` (course) objects. Students enroll per-course. There is no grouping concept above a single course.
 
-### 2.2 — Non-Computer Activity Support in Curriculum
-- [ ] Audit the `Lesson` model item types — confirm there's a way to represent paper-based / offline tasks
-- [ ] If not, add an `isOffline` boolean or `activityType` enum to the `Lesson` model in `prisma/schema.prisma`
-- [ ] In the student lesson player, show offline lessons with a "Mark as Complete" checkbox rather than a video/quiz interface
-- [ ] Ensure offline lesson completions still record `Attempt` records for progress tracking and reporting
+**Target state:** A `Program` (yearly plan) contains many courses. The student enrolls in the program and gets access to all courses at once. The program shows overall completion progress, each course shows per-course progress, and every course has units/lessons the student works through — including offline/paper-based tasks.
 
-### 2.3 — Curriculum Check Sheet / Progress View
-- [ ] Verify `CurriculumChecksheetGenerator.tsx` and `PDFChecklistGenerator.tsx` are fully functional
-- [ ] Add the ability to export a check sheet PDF for Jace's full curriculum (mirrors the paper check sheet currently used)
-- [ ] Make check sheet show completion status per lesson across all enrolled curricula
+---
+
+### 2.1 — Data Model: Add Program Layer
+> **Database schema changes — requires Prisma migration**
+
+- [ ] Add `Program` model to `prisma/schema.prisma`:
+  ```
+  Program
+  ├── id, name, description
+  ├── academicYear (e.g. "2025-2026")
+  ├── createdById (admin/parent who set it up)
+  ├── isActive
+  ├── createdAt, updatedAt
+  ├── programCourses: ProgramCourse[]   ← ordered list of courses
+  └── enrollments: ProgramEnrollment[]  ← students in this program
+  ```
+- [ ] Add `ProgramCourse` join model (Program ↔ Curriculum with ordering):
+  ```
+  ProgramCourse
+  ├── id
+  ├── programId → Program
+  ├── curriculumId → Curriculum
+  ├── order (display order within the program)
+  └── isRequired (vs optional/elective)
+  ```
+- [ ] Add `ProgramEnrollment` model (Student enrolled in a Program):
+  ```
+  ProgramEnrollment
+  ├── id
+  ├── programId → Program
+  ├── studentId → Student
+  ├── enrolledAt
+  └── completedAt (null until done)
+  ```
+- [ ] Run `prisma migrate dev` to apply schema changes
+- [ ] Update Prisma client types throughout the codebase
+
+---
+
+### 2.2 — Admin: Program Builder UI
+> **Where:** New page under `/app/(admin)/programs/` and new components under `components/curriculum/`
+
+- [ ] **Program list page** (`/programs`) — list all programs, show course count and enrolled student count per program
+- [ ] **New program form** — name, academic year, description
+- [ ] **Program editor page** (`/programs/[id]/edit`) — the main builder:
+  - [ ] Left panel: course list (all available curricula), searchable
+  - [ ] Right panel: courses added to this program, drag-to-reorder
+  - [ ] "Add course to program" button — picks from existing curricula or creates a new one inline
+  - [ ] Toggle `isRequired` per course
+  - [ ] Show total estimated hours (sum of all courses' time estimates)
+- [ ] **Assign program to student** — button/dialog on the program page or on the student profile page; creates a `ProgramEnrollment` and also creates individual `Enrollment` records for every course in the program
+- [ ] **Remove course from program** — with warning if any students are enrolled
+
+---
+
+### 2.3 — Admin: Course Content Entry (Per Course)
+> **Where:** Existing `CourseEditor` at `/curricula/[id]/edit` — extend it
+
+- [ ] **Waiting on Taliya** to email the spreadsheet/list of remaining courses & tasks for Jace
+- [ ] Once received, enter each subject as a `Curriculum` with its full `Unit → Lesson` structure:
+  - Every unit = a chapter/section of the subject
+  - Every lesson = an individual task, assignment, or assessment within that unit
+- [ ] For each course, set the `subject` field to the matching APS category (for reporting)
+- [ ] For offline/paper-based courses (spelling, handwriting, etc.) — see section 2.4
+
+**Courses to enter (pending Taliya's list):**
+- [ ] Mathematics (all remaining units/lessons)
+- [ ] Reading / Literature
+- [ ] Vocabulary
+- [ ] Handwriting *(offline — see 2.4)*
+- [ ] Creative Writing / Essays
+- [ ] Grammar
+- [ ] Spelling *(offline — may be excluded per meeting notes)*
+- [ ] Geography
+- [ ] American/World History
+- [ ] Science
+- [ ] Government/Civics
+- [ ] PE / Physical Education *(offline)*
+- [ ] Any remaining electives from Taliya's list
+
+---
+
+### 2.4 — Offline / Paper-Based Lesson Support
+> **Database + lesson player changes**
+
+- [ ] Add `isOffline boolean @default(false)` field to the `Lesson` model in `prisma/schema.prisma`
+- [ ] Add `lessonType` enum or string to distinguish: `ONLINE` | `OFFLINE_CHECKBOX` | `OFFLINE_PARENT_SIGNOFF`
+  - `ONLINE` — normal interactive lesson with quizzes/video (current behavior)
+  - `OFFLINE_CHECKBOX` — student clicks "Mark as Done" (no quiz, just a completion record)
+  - `OFFLINE_PARENT_SIGNOFF` — requires parent to mark it complete (for things like oral reading, PE activities)
+- [ ] In `components/lesson-player.tsx`:
+  - Detect `isOffline` / `lessonType` and render appropriately
+  - `OFFLINE_CHECKBOX`: show the lesson description/instructions + a single "Mark Complete" button
+  - `OFFLINE_PARENT_SIGNOFF`: show "Awaiting parent sign-off" state for student; show sign-off button for parent in their dashboard
+- [ ] Ensure offline completions still create an `Attempt` record (score = 100, timeSpent = 0) so they count in progress tracking and monthly reports
+- [ ] In the `CourseEditor`, add a "Lesson Type" selector when creating/editing a lesson
+
+---
+
+### 2.5 — Student UI: Program Dashboard
+> **Where:** New page `/app/(student)/my-program/` + new components
+
+- [ ] **Program overview page** — when a student is enrolled in a program, this becomes their primary home view:
+  - Show program name and academic year
+  - Overall completion progress bar (% of all lessons across all courses done)
+  - Grid/list of all courses with per-course progress bars
+  - Color-coded status per course: Not Started / In Progress / Complete
+- [ ] **Course detail view** — clicking a course goes to the existing `/my-courses/[curriculumId]` page (already built) — no change needed here
+- [ ] **"Next lesson" quick-start button** — shows the student the next incomplete lesson across their entire program (not just one course), so they always know where to pick up
+- [ ] Update the student navigation sidebar to show "My Program" link if enrolled in one
+- [ ] Graceful fallback: if a student has no program enrollment, show the current `My Courses` view (individual course list)
+
+---
+
+### 2.6 — Parent UI: Program Progress Overview
+> **Where:** Extend `StudentProgressDashboard.tsx` + parent student profile page
+
+- [ ] In the parent's student profile page (`/students/[id]`), add a "Program Progress" section showing:
+  - Program name and overall completion %
+  - Per-course breakdown: lessons complete / total lessons, hours logged, last activity date
+  - Visual progress bars per course
+- [ ] Add a "Program" tab or section to the parent dashboard so they can see all their students' program progress at a glance
+- [ ] Ensure the monthly report's subject breakdown pulls course data from the program structure (already done via courseStats, but verify all enrolled courses appear)
+
+---
+
+### 2.7 — Bulk Import from Spreadsheet
+> **Where:** New API route + admin UI component**
+
+The realistic path for loading Taliya's curriculum: Cayden and Dash enter it manually using the CourseEditor. BUT for future families, a bulk import flow saves huge amounts of time.
+
+- [ ] Define a CSV template format for bulk curriculum import:
+  ```
+  Program Name | Academic Year | Course Name | Subject | Unit Title | Unit Order | Lesson Title | Lesson Order | Lesson Type | Description
+  ```
+- [ ] Build a `ProgramImporter` component in the admin area:
+  - Upload CSV → preview parsed structure → confirm → create all Program/Curriculum/Unit/Lesson records in one transaction
+- [ ] Add API route `POST /api/admin/programs/import` that accepts the CSV and creates the full structure
+- [ ] Handle duplicates: if a curriculum with the same name already exists, offer to link to it vs. create new
+
+---
+
+### 2.8 — Progress Tracking & Completion Logic
+> **Affects:** Enrollment, Attempt, and ProgramEnrollment logic
+
+- [ ] Calculate program-level completion %:
+  - `completedLessons / totalLessons` across all courses in the program
+  - Expose via `GET /api/student/program-progress` (returns per-course and overall stats)
+- [ ] Mark a course complete when all required lessons have a passing `Attempt`
+- [ ] Mark the program complete when all required courses are complete → set `ProgramEnrollment.completedAt`
+- [ ] Emit a "program complete" notification to the parent when the student finishes
+- [ ] Handle the edge case where new lessons are added to a course mid-year (recalculate totals without resetting progress)
+
+---
+
+### 2.9 — Check Sheet (Master Completion View)
+> **Replaces the paper check sheet Taliya currently uses**
+
+- [ ] Build a `ProgramChecksheet` component that renders the full curriculum as a nested checklist:
+  ```
+  ✅ Mathematics
+     ✅ Unit 1: Fractions
+        ✅ Lesson 1: Adding Fractions
+        ✅ Lesson 2: Subtracting Fractions
+        ⬜ Lesson 3: Mixed Numbers
+     ⬜ Unit 2: Decimals
+        ⬜ Lesson 1: Tenths and Hundredths
+  ⬜ Reading
+     ...
+  ```
+- [ ] Show completion date next to each completed lesson
+- [ ] Color-code by status (complete = green, in progress = yellow, not started = gray)
+- [ ] Add a "Print Check Sheet" / "Export PDF" button — produces a clean printout matching the format of Taliya's current paper sheets
+- [ ] Accessible from both student view and parent view
+- [ ] Add API route `GET /api/student/program-checksheet?studentId=&programId=` that returns the full nested structure with completion status per lesson
 
 ---
 

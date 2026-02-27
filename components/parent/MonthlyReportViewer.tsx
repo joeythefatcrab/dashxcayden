@@ -11,11 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, FileText, Plus, Trash2, Sparkles, Download, Pencil } from "lucide-react";
+import { Loader2, FileText, Plus, Trash2, Sparkles, Printer, Pencil } from "lucide-react";
 import { ExternalActivityForm } from "./ExternalActivityForm";
 import { AttendanceTracker } from "./AttendanceTracker";
 import { ParentNotesEditor } from "./ParentNotesEditor";
 import { EducatorEvaluationForm } from "./EducatorEvaluationForm";
+import { MonthlyReportRenderer } from "./MonthlyReportRenderer";
+import type { ReportRendererData } from "./MonthlyReportRenderer";
 import { format } from "date-fns";
 
 type Student = {
@@ -147,7 +149,7 @@ export function MonthlyReportViewer({ students }: Props) {
   return (
     <div className="space-y-6">
       {/* Selection Controls */}
-      <Card>
+      <Card className="print:hidden">
         <CardHeader>
           <CardTitle>Select Report Period</CardTitle>
         </CardHeader>
@@ -217,6 +219,8 @@ export function MonthlyReportViewer({ students }: Props) {
         </div>
       ) : reportData ? (
         <>
+          {/* ── Data Entry Section (hidden when printing) ── */}
+          <div className="print:hidden space-y-6">
           {/* Course Statistics */}
           <Card>
             <CardHeader>
@@ -400,23 +404,22 @@ export function MonthlyReportViewer({ students }: Props) {
               )}
             </CardContent>
           </Card>
+          </div>{/* end print:hidden data-entry section */}
 
-          {/* Generated Report */}
+          {/* Report Preview */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>AI-Generated Report</CardTitle>
+                <CardTitle>Report Preview</CardTitle>
                 <div className="flex gap-2">
-                  {reportData.report.reportContent && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handlePrint}
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Print/Save
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrint}
+                  >
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print / Save PDF
+                  </Button>
                   <Button
                     size="sm"
                     onClick={generateReport}
@@ -430,31 +433,28 @@ export function MonthlyReportViewer({ students }: Props) {
                     ) : (
                       <>
                         <Sparkles className="mr-2 h-4 w-4" />
-                        {reportData.report.reportContent ? "Regenerate" : "Generate"} Report
+                        {reportData.report.reportContent ? "Regenerate" : "Generate"} Summary
                       </>
                     )}
                   </Button>
                 </div>
               </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Fill in the sections above, then click "Generate Summary" to add an AI-written narrative. Use "Print / Save PDF" to export.
+              </p>
             </CardHeader>
-            <CardContent>
-              {reportData.report.reportContent ? (
-                <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-lg bg-muted/30 p-6">
-                  {reportData.report.reportContent}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">
-                    Click "Generate Report" to create an AI-powered summary of this
-                    month's progress.
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    The report will include course activity, time spent, and external
-                    activities in a professional format.
-                  </p>
-                </div>
-              )}
+            <CardContent className="p-0 sm:p-2">
+              <MonthlyReportRenderer
+                data={{
+                  report: reportData.report,
+                  student: reportData.student,
+                  month: reportData.month,
+                  year: reportData.year,
+                  courseStats: reportData.courseStats,
+                  summary: reportData.summary,
+                  dailyAttendance: reportData.dailyAttendance ?? [],
+                } as ReportRendererData}
+              />
             </CardContent>
           </Card>
         </>

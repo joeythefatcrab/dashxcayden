@@ -227,6 +227,24 @@ export async function GET(req: Request) {
       (totalAppHours + totalExternalHours).toFixed(1)
     );
 
+    // Fetch daily attendance records for the calendar view
+    const dailyAttendance = await db.dailyAttendance.findMany({
+      where: {
+        studentId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        date: true,
+        present: true,
+      },
+      orderBy: {
+        date: "asc",
+      },
+    });
+
     // Ensure educatorEvaluation is never undefined
     const reportWithDefaults = {
       ...report,
@@ -247,6 +265,7 @@ export async function GET(req: Request) {
         totalLessonsCompleted: attempts.length,
         totalCourses: (courseStats || []).length,
       },
+      dailyAttendance,
     });
   } catch (error) {
     console.error("Error fetching monthly report:", error);

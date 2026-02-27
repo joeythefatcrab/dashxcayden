@@ -57,3 +57,35 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  /* Hide all nav, sidebar, and page chrome */
+  header,
+  nav,
+  aside,
+  footer,
+  [data-sidebar],
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Let the report fill the page cleanly */
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+
+  #monthly-report-print {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  @page {
+    margin: 0.75in;
+    size: letter;
+  }
+}

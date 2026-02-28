@@ -172,7 +172,7 @@ function dayMarkColor(mark: string): string {
 
 export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
   const { report, student, month, year, courseStats, summary, dailyAttendance } = data;
-  const attendanceRaw = report.attendanceData as { present: number; sick: number; vacation: number; days?: Record<string, DayEntry> } | null;
+  const attendanceRaw = report.attendanceData as { present: number; sick: number; vacation: number; days?: Record<string, DayEntry>; cleared?: string[] } | null;
   const storedAttendance = attendanceRaw ?? { present: 0, sick: 0, vacation: 0 };
   const monthName = MONTH_NAMES[month - 1];
   const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });

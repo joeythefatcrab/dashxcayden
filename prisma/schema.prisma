@@ -169,6 +169,7 @@ model Curriculum {
   provider    String?
   grade       Int?
   subject     String?
+  apsSubject  String?  // APS subject category for monthly reports (e.g. "Mathematics")
   isPublic    Boolean  @default(true)
 
   createdById String

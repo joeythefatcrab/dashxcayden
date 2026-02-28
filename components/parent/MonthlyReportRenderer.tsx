@@ -46,6 +46,7 @@ type CourseStats = {
   curriculumId: string;
   name: string;
   subject: string | null;
+  apsSubject?: string | null;
   lessonsCompleted: number;
   averageScore: number;
   timeSpentHours: number;
@@ -212,7 +213,10 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
   const subjectMap: Record<string, { hours: number; items: string[] }> = {};
   (courseStats ?? []).forEach((c) => {
     if (c.timeSpentHours <= 0) return;
-    const aps = mapToApsSubject(c.name, c.subject);
+    // Use admin-assigned apsSubject if set; otherwise keyword-match from name/subject
+    const aps = (c.apsSubject && (APS_SUBJECTS as readonly string[]).includes(c.apsSubject))
+      ? (c.apsSubject as ApsSubject)
+      : mapToApsSubject(c.name, c.subject);
     if (!subjectMap[aps]) subjectMap[aps] = { hours: 0, items: [] };
     subjectMap[aps].hours += c.timeSpentHours;
     subjectMap[aps].items.push(c.name);

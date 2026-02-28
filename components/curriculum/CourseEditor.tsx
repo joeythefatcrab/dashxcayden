@@ -5,6 +5,14 @@ import { UploadButton } from "@/lib/uploadthing";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   ArrowUp,
   ArrowDown,
@@ -18,7 +26,34 @@ import {
   ClipboardList,
   X,
   Paperclip,
+  Check,
 } from "lucide-react";
+
+// APS subject categories (must match MonthlyReportRenderer)
+const APS_SUBJECTS = [
+  "Study Skills/Study Technology",
+  "Reading",
+  "Vocabulary",
+  "Handwriting",
+  "Creative Writing",
+  "Grammar",
+  "Spelling",
+  "Mathematics",
+  "Geography",
+  "American/World History",
+  "Economics/Money",
+  "Government/Civics",
+  "Science",
+  "Research",
+  "Performing Arts",
+  "Foreign Language",
+  "PE",
+  "Educational Films",
+  "Seminars",
+  "Field Trips",
+  "Electives",
+  "Other",
+] as const;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -26,6 +61,7 @@ interface CurriculumData {
   id: string;
   name: string;
   description?: string | null;
+  apsSubject?: string | null;
   units: UnitData[];
 }
 
@@ -424,6 +460,27 @@ export function CourseEditor({ curriculum }: { curriculum: CurriculumData }) {
   const [pasteText, setPasteText] = useState("");
   const [importing, setImporting] = useState(false);
 
+  // APS subject settings
+  const [apsSubject, setApsSubject] = useState<string>(curriculum.apsSubject ?? "");
+  const [apsSaving, setApsSaving] = useState(false);
+  const [apsSaved, setApsSaved] = useState(false);
+
+  const saveApsSubject = async (value: string) => {
+    setApsSaving(true);
+    setApsSaved(false);
+    try {
+      await fetch("/api/admin/curricula", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: curriculum.id, apsSubject: value || null }),
+      });
+      setApsSaved(true);
+      setTimeout(() => setApsSaved(false), 2000);
+    } finally {
+      setApsSaving(false);
+    }
+  };
+
   // ── Helpers ─────────────────────────────────────────────────────────────
 
   const toggleExpand = (set: Set<string>, id: string) => {
@@ -633,6 +690,51 @@ export function CourseEditor({ curriculum }: { curriculum: CurriculumData }) {
 
   return (
     <div className="space-y-4">
+      {/* APS Subject Settings */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">APS Monthly Report Subject</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end gap-3">
+            <div className="flex-1 space-y-1.5">
+              <Label className="text-sm">
+                APS Subject Category
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Set which APS subject row this curriculum's hours appear under in the monthly report. Overrides keyword matching.
+              </p>
+              <Select
+                value={apsSubject || "__none__"}
+                onValueChange={(val) => {
+                  const v = val === "__none__" ? "" : val;
+                  setApsSubject(v);
+                  saveApsSubject(v);
+                }}
+              >
+                <SelectTrigger className="w-full max-w-xs">
+                  <SelectValue placeholder="Auto-detect from name" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Auto-detect from name</SelectItem>
+                  {APS_SUBJECTS.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="text-sm text-muted-foreground pb-1">
+              {apsSaving && <span>Saving…</span>}
+              {apsSaved && !apsSaving && (
+                <span className="flex items-center gap-1 text-green-600">
+                  <Check className="h-3.5 w-3.5" /> Saved
+                </span>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {units.map((unit, unitIdx) => {
         const isUnitExpanded = expandedUnits.has(unit.id);
         return (

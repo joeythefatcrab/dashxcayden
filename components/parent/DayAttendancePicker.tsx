@@ -126,6 +126,35 @@ export function DayAttendancePicker({
     setSaveError("");
   };
 
+  const clearDay = async () => {
+    if (selectedDay === null) return;
+    const key = toKey(year, month, selectedDay);
+    const newDays = { ...days };
+    delete newDays[key];
+    const totals = recalcTotals(newDays);
+    const attendanceData: AttendanceData = { ...totals, days: newDays };
+    setIsSaving(true);
+    setSaveError("");
+    try {
+      const res = await fetch("/api/parent/monthly-report/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reportId, attendanceData }),
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      setDays(newDays);
+      setEditStatus(null);
+      setEditHours("");
+      setEditNote("");
+      closeDay();
+      onSave();
+    } catch {
+      setSaveError("Failed to clear day. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const saveDay = async () => {
     if (selectedDay === null) return;
     const key = toKey(year, month, selectedDay);
@@ -330,7 +359,8 @@ export function DayAttendancePicker({
                 variant="ghost"
                 size="sm"
                 className="text-xs text-muted-foreground h-7"
-                onClick={() => { setEditStatus(null); setEditHours(""); setEditNote(""); }}
+                onClick={clearDay}
+                disabled={isSaving}
               >
                 Clear day
               </Button>

@@ -39,14 +39,30 @@ type Props = {
 };
 
 const ACTIVITY_CATEGORIES = [
-  "Field Trip",
+  // Academic subjects
+  "Mathematics",
   "Reading",
-  "Project",
+  "Grammar / Language Arts",
+  "Spelling",
+  "Vocabulary",
+  "Handwriting",
+  "Writing / Creative Writing",
+  "Science",
+  "History",
+  "Geography",
+  "Economics / Money",
+  "Government / Civics",
+  "Foreign Language",
+  "Study Skills",
+  // Enrichment & activities
+  "Field Trip",
+  "Science Project",
+  "Art & Crafts",
+  "Music Practice",
+  "Physical Education",
+  "Community Service",
   "Volunteer Hours",
-  "Volunteer Work",
-  "Sports/Physical Activity",
-  "Music/Arts",
-  "Science Experiment",
+  "Educational Game / Activity",
   "Other",
 ];
 

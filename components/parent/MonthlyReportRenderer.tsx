@@ -100,14 +100,25 @@ function mapToApsSubject(name: string, subject: string | null): string {
 function mapExternalCategoryToAps(category: string | null): string {
   if (!category) return "Other";
   const c = category.toLowerCase();
-  if (c.includes("field trip")) return "Field Trips";
-  if (c.includes("volunteer") || c.includes("community service")) return "Other";
-  if (c.includes("pe") || c.includes("sport") || c.includes("physical") || c.includes("exercise") || c.includes("fitness")) return "PE";
-  if (c.includes("music") || c.includes("art") || c.includes("perform") || c.includes("theater")) return "Performing Arts";
-  if (c.includes("read")) return "Reading";
   if (c.includes("math")) return "Mathematics";
+  if (c.includes("reading")) return "Reading";
+  if (c.includes("grammar") || c.includes("language art")) return "Grammar";
+  if (c.includes("spelling")) return "Spelling";
+  if (c.includes("vocab")) return "Vocabulary";
+  if (c.includes("handwrit")) return "Handwriting";
+  if (c.includes("writing") || c.includes("creative writ") || c.includes("essay") || c.includes("composition")) return "Creative Writing";
   if (c.includes("science")) return "Science";
+  if (c.includes("history")) return "American/World History";
+  if (c.includes("geography")) return "Geography";
+  if (c.includes("econ") || c.includes("money")) return "Economics/Money";
+  if (c.includes("government") || c.includes("civic")) return "Government/Civics";
+  if (c.includes("foreign language") || c.includes("spanish") || c.includes("french") || c.includes("latin")) return "Foreign Language";
+  if (c.includes("study skill")) return "Study Skills";
+  if (c.includes("field trip")) return "Field Trips";
+  if (c.includes("pe") || c.includes("sport") || c.includes("physical") || c.includes("exercise") || c.includes("fitness")) return "PE";
+  if (c.includes("music") || c.includes("art") || c.includes("perform") || c.includes("theater") || c.includes("drama")) return "Performing Arts";
   if (c.includes("seminar")) return "Seminars";
+  if (c.includes("volunteer") || c.includes("community service")) return "Other";
   return "Other";
 }
 
@@ -123,8 +134,7 @@ function dayMarkColor(mark: string): string {
 export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
   const { report, student, month, year, courseStats, summary, dailyAttendance } = data;
   const attendanceRaw = report.attendanceData as { present: number; sick: number; vacation: number; days?: Record<string, DayEntry> } | null;
-  const attendance = attendanceRaw ?? { present: 0, sick: 0, vacation: 0 };
-  const totalAttendanceDays = attendance.present + attendance.sick + attendance.vacation;
+  const storedAttendance = attendanceRaw ?? { present: 0, sick: 0, vacation: 0 };
   const monthName = MONTH_NAMES[month - 1];
   const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   const parentName = student.parent.name || student.parent.email;
@@ -147,6 +157,21 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
       }
     }
   }
+
+  // Derive attendance totals from the combined dailyMarks so the summary row always
+  // reflects what the calendar actually shows (fixes "complete calendar but zero totals" bug).
+  let presentCount = 0, sickCount = 0, vacationCount = 0;
+  for (const entry of Object.values(dailyMarks)) {
+    if (entry.status === "P") presentCount++;
+    else if (entry.status === "S") sickCount++;
+    else if (entry.status === "V") vacationCount++;
+  }
+  // Fall back to stored aggregates only when no daily-level data exists at all
+  const hasDailyData = Object.keys(dailyMarks).length > 0;
+  const displayPresent  = hasDailyData ? presentCount  : storedAttendance.present;
+  const displaySick     = hasDailyData ? sickCount     : storedAttendance.sick;
+  const displayVacation = hasDailyData ? vacationCount : storedAttendance.vacation;
+  const totalAttendanceDays = displayPresent + displaySick + displayVacation;
 
   // Aggregate course hours into APS subject buckets
   const subjectMap: Record<string, { hours: number; items: string[] }> = {};
@@ -264,9 +289,9 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
             fontWeight: "500",
           }}
         >
-          <span>Present: <strong>{attendance.present}</strong></span>
-          <span>Sick: <strong>{attendance.sick}</strong></span>
-          <span>Vacation: <strong>{attendance.vacation}</strong></span>
+          <span>Present: <strong>{displayPresent}</strong></span>
+          <span>Sick: <strong>{displaySick}</strong></span>
+          <span>Vacation: <strong>{displayVacation}</strong></span>
           <span style={{ marginLeft: "auto" }}>Total School Days: <strong>{totalAttendanceDays}</strong></span>
         </div>
       </Section>

@@ -55,16 +55,30 @@ export function ExternalActivityForm({ reportId, onSuccess, onCancel, activity }
   }, [activity]);
 
   const categories = [
-    "Field Trip",
+    // Academic subjects
+    "Mathematics",
     "Reading",
-    "Writing Project",
+    "Grammar / Language Arts",
+    "Spelling",
+    "Vocabulary",
+    "Handwriting",
+    "Writing / Creative Writing",
+    "Science",
+    "History",
+    "Geography",
+    "Economics / Money",
+    "Government / Civics",
+    "Foreign Language",
+    "Study Skills",
+    // Enrichment & activities
+    "Field Trip",
     "Science Project",
     "Art & Crafts",
     "Music Practice",
     "Physical Education",
     "Community Service",
     "Volunteer Hours",
-    "Educational Game/Activity",
+    "Educational Game / Activity",
     "Other",
   ];
 

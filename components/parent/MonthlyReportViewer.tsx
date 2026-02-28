@@ -100,9 +100,15 @@ export function MonthlyReportViewer({ students }: Props) {
       }
 
       const data = await response.json();
+      // Merge only the regenerated fields — keep externalActivities and other
+      // relations that the generate-report API doesn't re-fetch.
       setReportData((prev: any) => ({
         ...prev,
-        report: data.report,
+        report: {
+          ...prev.report,
+          reportContent: data.report.reportContent,
+          generatedAt: data.report.generatedAt,
+        },
       }));
 
       alert("Report generated successfully!");

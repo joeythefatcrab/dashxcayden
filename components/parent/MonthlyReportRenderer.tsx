@@ -376,13 +376,13 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
 
       {/* ── EXTERNAL ACTIVITIES ── */}
       <Section title="External Activities">
-        {report.externalActivities.length === 0 ? (
+        {(report.externalActivities ?? []).length === 0 ? (
           <p style={{ color: "#9ca3af", fontStyle: "italic" }}>
             No external enrichment activities were recorded for this period.
           </p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {report.externalActivities.map((activity) => {
+            {(report.externalActivities ?? []).map((activity) => {
               const [yr, mo, dy] = activity.date.substring(0, 10).split("-");
               const dateStr = `${MONTH_NAMES[parseInt(mo) - 1]} ${parseInt(dy)}, ${yr}`;
               return (

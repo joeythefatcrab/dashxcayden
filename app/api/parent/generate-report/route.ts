@@ -15,8 +15,10 @@ Your job is to write the SUMMARY SECTION ONLY — 2 to 3 short paragraphs.
 RULES:
 - Plain text only (NO markdown, NO bullet points, NO headers, NO asterisks)
 - Be factual, warm, and professional in tone
-- Reference specific courses, total hours, and lesson counts from the provided data
-- Mention attendance briefly (present days, any sick/vacation days)
+- Reference the student's online courses AND their external activities (both count as schoolwork)
+- Group external activities by subject area when there are several — for example, math practice, reading, writing, and money/economics work
+- Mention total hours and lesson counts from the provided data
+- Use the accurate attendance figures from the data (present days, any sick/vacation days)
 - Keep it concise: 150 to 250 words total
 - Do NOT invent information not present in the data
 - Do NOT include the attendance calendar, subject table, or evaluation answers (those are rendered separately)
@@ -254,8 +256,31 @@ export async function POST(req: Request) {
       "December",
     ];
 
-    // Parse attendance data
-    const attendance = (report.attendanceData as any) || { present: 0, sick: 0, vacation: 0 };
+    // Fetch DailyAttendance records to compute accurate present-day count
+    const dailyAttendanceRecords = await db.dailyAttendance.findMany({
+      where: { studentId, date: { gte: startDate, lte: endDate } },
+      select: { present: true },
+    });
+
+    // Derive attendance totals the same way the renderer does:
+    // prefer attendanceData.days if available, otherwise count from DailyAttendance records.
+    const storedAtt = (report.attendanceData as any) || {};
+    let presentCount = 0, sickCount = 0, vacationCount = 0;
+    if (storedAtt.days && Object.keys(storedAtt.days).length > 0) {
+      for (const entry of Object.values(storedAtt.days) as any[]) {
+        if (entry.status === "P") presentCount++;
+        else if (entry.status === "S") sickCount++;
+        else if (entry.status === "V") vacationCount++;
+      }
+    } else if (dailyAttendanceRecords.length > 0) {
+      presentCount = dailyAttendanceRecords.filter((r) => r.present).length;
+      sickCount = storedAtt.sick || 0;
+      vacationCount = storedAtt.vacation || 0;
+    } else {
+      presentCount = storedAtt.present || 0;
+      sickCount = storedAtt.sick || 0;
+      vacationCount = storedAtt.vacation || 0;
+    }
 
     // Build a compact summary payload for the AI (only what it needs)
     const summaryData = {
@@ -263,11 +288,12 @@ export async function POST(req: Request) {
       parent: { name: student.parent.name },
       period: { month: monthNames[month - 1], year },
       attendance: {
-        present: attendance.present || 0,
-        sick: attendance.sick || 0,
-        vacation: attendance.vacation || 0,
-        total: (attendance.present || 0) + (attendance.sick || 0) + (attendance.vacation || 0),
+        present: presentCount,
+        sick: sickCount,
+        vacation: vacationCount,
+        total: presentCount + sickCount + vacationCount,
       },
+      // Online curriculum courses (time logged in the app)
       courses: courseStats.map((c: any) => ({
         name: c.name,
         subject: c.subject,
@@ -275,9 +301,14 @@ export async function POST(req: Request) {
         hoursSpent: c.hoursSpent,
       })),
       totalAppHours,
+      // External activities logged by student/parent outside the app
+      externalActivities: report.externalActivities.map((a: any) => ({
+        title: a.title,
+        category: a.category || "Other",
+        hoursSpent: a.hoursSpent || 0,
+      })),
       totalExternalHours,
       totalSchoolHours,
-      externalActivityCount: report.externalActivities.length,
     };
 
     // Generate narrative summary using chat completion

@@ -60,6 +60,7 @@ const ACTIVITY_CATEGORIES = [
   "Educational Films",
   "Seminars",
   "Field Trips",
+  "Online Coursework",
   "Electives",
   "Other",
 ];

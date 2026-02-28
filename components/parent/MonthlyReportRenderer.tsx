@@ -29,6 +29,7 @@ const APS_SUBJECTS = [
   "Educational Films",
   "Seminars",
   "Field Trips",
+  "Online Coursework",
   "Electives",
   "Other",
 ] as const;
@@ -80,7 +81,7 @@ type DayEntry = {
 export type ReportRendererData = {
   report: {
     id: string;
-    attendanceData: { present: number; sick: number; vacation: number; days?: Record<string, DayEntry> } | null;
+    attendanceData: { present: number; sick: number; vacation: number; days?: Record<string, DayEntry>; cleared?: string[] } | null;
     parentNotes: string | null;
     educatorEvaluation: EducatorEvaluation | null;
     reportContent: string | null;
@@ -127,7 +128,7 @@ function mapToApsSubject(name: string, subject: string | null): ApsSubject {
   if (s.includes(" pe ") || s.includes("physical") || s.includes("sport") || s.includes("gym") || s.includes("exercise") || s.includes("fitness")) return "PE";
   if (s.includes("film") || s.includes("documentary") || s.includes("video lesson")) return "Educational Films";
   if (s.includes("seminar")) return "Seminars";
-  return "Electives";
+  return "Online Coursework";
 }
 
 function mapExternalCategoryToAps(category: string | null): ApsSubject {
@@ -180,11 +181,15 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
 
   // Build day → mark map (1-based day number):
   //   1. Seed from auto-detected DailyAttendance records (P/A)
-  //   2. Override with parent-saved attendanceData.days entries
+  //   2. Remove days explicitly cleared by the parent
+  //   3. Override with parent-saved attendanceData.days entries
   const daysInMonth = new Date(year, month, 0).getDate();
+  const clearedSet = new Set<string>(attendanceRaw?.cleared ?? []);
   const dailyMarks: Record<number, { status: string; hours?: number }> = {};
   (dailyAttendance ?? []).forEach((r) => {
-    const day = new Date(r.date).getUTCDate();
+    const key = typeof r.date === "string" ? r.date.substring(0, 10) : (r.date as Date).toISOString().substring(0, 10);
+    if (clearedSet.has(key)) return; // parent explicitly cleared this day
+    const day = parseInt(key.split("-")[2], 10);
     dailyMarks[day] = { status: r.present ? "P" : "A" };
   });
   if (attendanceRaw?.days) {

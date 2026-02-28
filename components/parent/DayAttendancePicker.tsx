@@ -24,6 +24,7 @@ type AttendanceData = {
   sick: number;
   vacation: number;
   days?: Record<string, DayEntry>; // key: "YYYY-MM-DD"
+  cleared?: string[]; // dates explicitly cleared by parent (suppress auto-seeding)
 };
 
 type AutoDay = {
@@ -76,13 +77,19 @@ function recalcTotals(days: Record<string, DayEntry>): { present: number; sick: 
 export function DayAttendancePicker({
   reportId, month, year, initialAttendanceData, autoDetectedDays, onSave,
 }: Props) {
+  // Track keys that the parent explicitly cleared so auto-seeding doesn't bring them back
+  const [clearedKeys, setClearedKeys] = useState<Set<string>>(
+    () => new Set(initialAttendanceData?.cleared ?? [])
+  );
+
   // Seed days map: start with auto-detected P/A, then overlay any parent-saved days
   const buildInitialDays = useCallback((): Record<string, DayEntry> => {
     const map: Record<string, DayEntry> = {};
-    // Seed auto-detected present days as P
+    const clearedSet = new Set(initialAttendanceData?.cleared ?? []);
+    // Seed auto-detected present days as P (unless the parent explicitly cleared them)
     for (const r of autoDetectedDays) {
       const key = r.date.substring(0, 10);
-      if (r.present) map[key] = { status: "P" };
+      if (r.present && !clearedSet.has(key)) map[key] = { status: "P" };
     }
     // Overlay with any parent-saved entries (these take full priority)
     if (initialAttendanceData?.days) {
@@ -131,8 +138,11 @@ export function DayAttendancePicker({
     const key = toKey(year, month, selectedDay);
     const newDays = { ...days };
     delete newDays[key];
+    // Add to cleared set so auto-seeding won't bring this day back on next render
+    const newCleared = new Set(clearedKeys);
+    newCleared.add(key);
     const totals = recalcTotals(newDays);
-    const attendanceData: AttendanceData = { ...totals, days: newDays };
+    const attendanceData: AttendanceData = { ...totals, days: newDays, cleared: [...newCleared] };
     setIsSaving(true);
     setSaveError("");
     try {
@@ -143,6 +153,7 @@ export function DayAttendancePicker({
       });
       if (!res.ok) throw new Error("Failed to save");
       setDays(newDays);
+      setClearedKeys(newCleared);
       setEditStatus(null);
       setEditHours("");
       setEditNote("");
@@ -160,19 +171,22 @@ export function DayAttendancePicker({
     const key = toKey(year, month, selectedDay);
 
     const newDays = { ...days };
+    // When explicitly setting a status, remove from cleared list so auto-seeding can work again if needed
+    const newCleared = new Set(clearedKeys);
     if (!editStatus) {
-      // Clear the day
       delete newDays[key];
+      newCleared.add(key);
     } else {
       newDays[key] = {
         status: editStatus,
         ...(editHours && parseFloat(editHours) > 0 ? { hours: parseFloat(editHours) } : {}),
         ...(editNote.trim() ? { note: editNote.trim() } : {}),
       };
+      newCleared.delete(key); // explicit status overrides any cleared marker
     }
 
     const totals = recalcTotals(newDays);
-    const attendanceData: AttendanceData = { ...totals, days: newDays };
+    const attendanceData: AttendanceData = { ...totals, days: newDays, cleared: [...newCleared] };
 
     setIsSaving(true);
     setSaveError("");
@@ -184,6 +198,7 @@ export function DayAttendancePicker({
       });
       if (!res.ok) throw new Error("Failed to save");
       setDays(newDays);
+      setClearedKeys(newCleared);
       setSavedDay(key);
       setTimeout(() => setSavedDay(null), 1800);
       closeDay();

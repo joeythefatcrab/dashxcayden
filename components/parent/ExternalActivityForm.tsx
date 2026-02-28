@@ -76,6 +76,7 @@ export function ExternalActivityForm({ reportId, onSuccess, onCancel, activity }
     "Educational Films",
     "Seminars",
     "Field Trips",
+    "Online Coursework",
     "Electives",
     "Other",
   ];

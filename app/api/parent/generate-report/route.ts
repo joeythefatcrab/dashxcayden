@@ -266,10 +266,11 @@ export async function POST(req: Request) {
     // calendar shows: seed a date-keyed map from DailyAttendance records, then
     // override with any parent-saved attendanceData.days entries.
     const storedAtt = (report.attendanceData as any) || {};
+    const clearedSet = new Set<string>(storedAtt.cleared ?? []);
     const dayStatusMap: Record<string, string> = {};
     for (const r of dailyAttendanceRecords) {
       const key = (r.date as Date).toISOString().substring(0, 10);
-      dayStatusMap[key] = r.present ? "P" : "A";
+      if (!clearedSet.has(key)) dayStatusMap[key] = r.present ? "P" : "A";
     }
     if (storedAtt.days) {
       for (const [key, entry] of Object.entries(storedAtt.days) as [string, any][]) {

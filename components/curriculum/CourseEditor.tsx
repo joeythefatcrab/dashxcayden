@@ -51,6 +51,7 @@ const APS_SUBJECTS = [
   "Educational Films",
   "Seminars",
   "Field Trips",
+  "Online Coursework",
   "Electives",
   "Other",
 ] as const;

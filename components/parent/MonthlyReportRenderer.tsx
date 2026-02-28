@@ -175,16 +175,21 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
 
   // Aggregate course hours into APS subject buckets
   const subjectMap: Record<string, { hours: number; items: string[] }> = {};
-  courseStats.forEach((c) => {
+  (courseStats ?? []).forEach((c) => {
     if (c.timeSpentHours <= 0) return;
     const aps = mapToApsSubject(c.name, c.subject);
     if (!subjectMap[aps]) subjectMap[aps] = { hours: 0, items: [] };
     subjectMap[aps].hours += c.timeSpentHours;
     subjectMap[aps].items.push(c.name);
   });
-  report.externalActivities.forEach((a) => {
+  (report.externalActivities ?? []).forEach((a) => {
     if (!a.hoursSpent) return;
-    const aps = mapExternalCategoryToAps(a.category);
+    // Map by category first; when the category is generic/absent, fall back to the title
+    let aps = mapExternalCategoryToAps(a.category);
+    if (aps === "Other") {
+      const titleAps = mapToApsSubject(a.title, null);
+      if (titleAps !== "Electives") aps = titleAps;
+    }
     if (!subjectMap[aps]) subjectMap[aps] = { hours: 0, items: [] };
     subjectMap[aps].hours += a.hoursSpent;
     if (!subjectMap[aps].items.includes(a.title)) subjectMap[aps].items.push(a.title);

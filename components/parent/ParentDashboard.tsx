@@ -123,7 +123,7 @@ export function ParentDashboard({ parentName, students }: Props) {
                             variant="outline"
                             className="text-xs"
                           >
-                            {enrollment.curriculum.subject || enrollment.curriculum.name}
+                            {enrollment.curriculum.name}
                           </Badge>
                         ))}
                         {student.enrollments.length > 3 && (

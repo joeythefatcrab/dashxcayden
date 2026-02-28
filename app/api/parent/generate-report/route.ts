@@ -256,30 +256,31 @@ export async function POST(req: Request) {
       "December",
     ];
 
-    // Fetch DailyAttendance records to compute accurate present-day count
+    // Fetch DailyAttendance records (include date so we can key by day, de-duplicating)
     const dailyAttendanceRecords = await db.dailyAttendance.findMany({
       where: { studentId, date: { gte: startDate, lte: endDate } },
-      select: { present: true },
+      select: { date: true, present: true },
     });
 
-    // Derive attendance totals the same way the renderer does:
-    // prefer attendanceData.days if available, otherwise count from DailyAttendance records.
+    // Mirror the renderer's exact logic so the AI always sees the same count the
+    // calendar shows: seed a date-keyed map from DailyAttendance records, then
+    // override with any parent-saved attendanceData.days entries.
     const storedAtt = (report.attendanceData as any) || {};
-    let presentCount = 0, sickCount = 0, vacationCount = 0;
-    if (storedAtt.days && Object.keys(storedAtt.days).length > 0) {
-      for (const entry of Object.values(storedAtt.days) as any[]) {
-        if (entry.status === "P") presentCount++;
-        else if (entry.status === "S") sickCount++;
-        else if (entry.status === "V") vacationCount++;
+    const dayStatusMap: Record<string, string> = {};
+    for (const r of dailyAttendanceRecords) {
+      const key = (r.date as Date).toISOString().substring(0, 10);
+      dayStatusMap[key] = r.present ? "P" : "A";
+    }
+    if (storedAtt.days) {
+      for (const [key, entry] of Object.entries(storedAtt.days) as [string, any][]) {
+        dayStatusMap[key] = entry.status;
       }
-    } else if (dailyAttendanceRecords.length > 0) {
-      presentCount = dailyAttendanceRecords.filter((r) => r.present).length;
-      sickCount = storedAtt.sick || 0;
-      vacationCount = storedAtt.vacation || 0;
-    } else {
-      presentCount = storedAtt.present || 0;
-      sickCount = storedAtt.sick || 0;
-      vacationCount = storedAtt.vacation || 0;
+    }
+    let presentCount = 0, sickCount = 0, vacationCount = 0;
+    for (const status of Object.values(dayStatusMap)) {
+      if (status === "P") presentCount++;
+      else if (status === "S") sickCount++;
+      else if (status === "V") vacationCount++;
     }
 
     // Build a compact summary payload for the AI (only what it needs)

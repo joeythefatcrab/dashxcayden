@@ -18,7 +18,6 @@ import { ParentNotesEditor } from "./ParentNotesEditor";
 import { EducatorEvaluationForm } from "./EducatorEvaluationForm";
 import { MonthlyReportRenderer } from "./MonthlyReportRenderer";
 import type { ReportRendererData } from "./MonthlyReportRenderer";
-import { format } from "date-fns";
 
 type Student = {
   id: string;
@@ -80,48 +79,6 @@ export function MonthlyReportViewer({ students }: Props) {
     }
   };
 
-  const generateReport = async () => {
-    setIsGenerating(true);
-    try {
-      const response = await fetch("/api/parent/generate-report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId: selectedStudent,
-          month: selectedMonth,
-          year: selectedYear,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || "Failed to generate report");
-      }
-
-      const data = await response.json();
-      // Merge only the regenerated fields — keep externalActivities and other
-      // relations that the generate-report API doesn't re-fetch.
-      setReportData((prev: any) => ({
-        ...prev,
-        report: {
-          ...prev.report,
-          reportContent: data.report.reportContent,
-          generatedAt: data.report.generatedAt,
-        },
-      }));
-
-      alert("Report generated successfully!");
-    } catch (error) {
-      console.error("Error generating report:", error);
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Failed to generate report. Please try again."
-      );
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const handleDeleteActivity = async (activityId: string) => {
     if (!confirm("Are you sure you want to delete this activity?")) {

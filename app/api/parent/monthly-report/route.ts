@@ -124,11 +124,25 @@ export async function GET(req: Request) {
             id: true,
             name: true,
             subject: true,
-            apsSubject: true,
           },
         },
       },
     });
+
+    // Separately fetch apsSubject with a graceful fallback in case the DB
+    // column hasn't been added yet (i.e. the migration is still pending).
+    const apsSubjectMap: Record<string, string | null> = {};
+    try {
+      const curriculaAps = await db.curriculum.findMany({
+        where: { id: { in: enrollments.map((e) => e.curriculum.id) } },
+        select: { id: true, apsSubject: true },
+      });
+      for (const c of curriculaAps) {
+        apsSubjectMap[c.id] = c.apsSubject ?? null;
+      }
+    } catch {
+      // Column doesn't exist yet — skip; all courses will use keyword mapping
+    }
 
     // Get attempts for this month
     const attempts = await db.attempt.findMany({
@@ -198,7 +212,7 @@ export async function GET(req: Request) {
         curriculumId: enrollment.curriculum.id,
         name: enrollment.curriculum.name,
         subject: enrollment.curriculum.subject,
-        apsSubject: enrollment.curriculum.apsSubject ?? null,
+        apsSubject: apsSubjectMap[enrollment.curriculum.id] ?? null,
         lessonsCompleted: uniqueLessons.size,
         averageScore: Math.round(avgScore),
         timeSpentSeconds: totalTimeSeconds,

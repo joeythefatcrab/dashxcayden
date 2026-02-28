@@ -38,31 +38,29 @@ type Props = {
   initialTimeLogs: TimeLog[];
 };
 
+// Mirror exact APS subject names so they map 1:1 to the monthly report
 const ACTIVITY_CATEGORIES = [
-  // Academic subjects
-  "Mathematics",
+  "Study Skills/Study Technology",
   "Reading",
-  "Grammar / Language Arts",
-  "Spelling",
   "Vocabulary",
   "Handwriting",
-  "Writing / Creative Writing",
-  "Science",
-  "History",
+  "Creative Writing",
+  "Grammar",
+  "Spelling",
+  "Mathematics",
   "Geography",
-  "Economics / Money",
-  "Government / Civics",
+  "American/World History",
+  "Economics/Money",
+  "Government/Civics",
+  "Science",
+  "Research",
+  "Performing Arts",
   "Foreign Language",
-  "Study Skills",
-  // Enrichment & activities
-  "Field Trip",
-  "Science Project",
-  "Art & Crafts",
-  "Music Practice",
-  "Physical Education",
-  "Community Service",
-  "Volunteer Hours",
-  "Educational Game / Activity",
+  "PE",
+  "Educational Films",
+  "Seminars",
+  "Field Trips",
+  "Electives",
   "Other",
 ];
 

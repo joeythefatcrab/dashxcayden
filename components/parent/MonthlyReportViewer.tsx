@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, FileText, Plus, Trash2, Sparkles, Printer, Pencil } from "lucide-react";
+import { Loader2, Plus, Trash2, Printer, Pencil } from "lucide-react";
 import { ExternalActivityForm } from "./ExternalActivityForm";
 import { DayAttendancePicker } from "./DayAttendancePicker";
 import { ParentNotesEditor } from "./ParentNotesEditor";
@@ -42,7 +42,6 @@ export function MonthlyReportViewer({ students }: Props) {
   );
   const [reportData, setReportData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [editingActivity, setEditingActivity] = useState<any>(null);
 
@@ -420,36 +419,17 @@ export function MonthlyReportViewer({ students }: Props) {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Report Preview</CardTitle>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handlePrint}
-                  >
-                    <Printer className="mr-2 h-4 w-4" />
-                    Print / Save PDF
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={generateReport}
-                    disabled={isGenerating}
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        {reportData.report.reportContent ? "Regenerate" : "Generate"} Summary
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrint}
+                >
+                  <Printer className="mr-2 h-4 w-4" />
+                  Print / Save PDF
+                </Button>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Fill in the sections above, then click "Generate Summary" to add an AI-written narrative. Use "Print / Save PDF" to export.
+                Fill in the sections above, then use "Print / Save PDF" to export.
               </p>
             </CardHeader>
             <CardContent className="p-0 sm:p-2">

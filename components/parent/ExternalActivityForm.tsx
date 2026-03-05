@@ -54,16 +54,30 @@ export function ExternalActivityForm({ reportId, onSuccess, onCancel, activity }
     }
   }, [activity]);
 
+  // Mirror exact APS subject names so they map 1:1 to the monthly report
   const categories = [
-    "Field Trip",
+    "Study Skills/Study Technology",
     "Reading",
-    "Writing Project",
-    "Science Project",
-    "Art & Crafts",
-    "Music Practice",
-    "Physical Education",
-    "Community Service",
-    "Educational Game/Activity",
+    "Vocabulary",
+    "Handwriting",
+    "Creative Writing",
+    "Grammar",
+    "Spelling",
+    "Mathematics",
+    "Geography",
+    "American/World History",
+    "Economics/Money",
+    "Government/Civics",
+    "Science",
+    "Research",
+    "Performing Arts",
+    "Foreign Language",
+    "PE",
+    "Educational Films",
+    "Seminars",
+    "Field Trips",
+    "Online Coursework",
+    "Electives",
     "Other",
   ];
 

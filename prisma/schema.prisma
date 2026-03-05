@@ -143,6 +143,7 @@ model Student {
   // Subscription status
   subscriptionActive  Boolean   @default(false)
   subscriptionEndDate DateTime?
+  paywallExempt       Boolean   @default(false) // Skip paywall for pilots/testers
 
   user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   parent       User         @relation("StudentParent", fields: [parentId], references: [id], onDelete: Cascade)
@@ -169,6 +170,7 @@ model Curriculum {
   provider    String?
   grade       Int?
   subject     String?
+  apsSubject  String?  // APS subject category for monthly reports (e.g. "Mathematics")
   isPublic    Boolean  @default(true)
 
   createdById String

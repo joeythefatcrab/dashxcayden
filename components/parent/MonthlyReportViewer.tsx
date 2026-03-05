@@ -11,12 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, FileText, Plus, Trash2, Sparkles, Download, Pencil } from "lucide-react";
+import { Loader2, Plus, Trash2, Printer, Pencil } from "lucide-react";
 import { ExternalActivityForm } from "./ExternalActivityForm";
-import { AttendanceTracker } from "./AttendanceTracker";
+import { DayAttendancePicker } from "./DayAttendancePicker";
 import { ParentNotesEditor } from "./ParentNotesEditor";
 import { EducatorEvaluationForm } from "./EducatorEvaluationForm";
-import { format } from "date-fns";
+import { MonthlyReportRenderer } from "./MonthlyReportRenderer";
+import type { ReportRendererData } from "./MonthlyReportRenderer";
 
 type Student = {
   id: string;
@@ -40,7 +41,6 @@ export function MonthlyReportViewer({ students }: Props) {
   );
   const [reportData, setReportData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [editingActivity, setEditingActivity] = useState<any>(null);
 
@@ -79,42 +79,6 @@ export function MonthlyReportViewer({ students }: Props) {
     }
   };
 
-  const generateReport = async () => {
-    setIsGenerating(true);
-    try {
-      const response = await fetch("/api/parent/generate-report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId: selectedStudent,
-          month: selectedMonth,
-          year: selectedYear,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || "Failed to generate report");
-      }
-
-      const data = await response.json();
-      setReportData((prev: any) => ({
-        ...prev,
-        report: data.report,
-      }));
-
-      alert("Report generated successfully!");
-    } catch (error) {
-      console.error("Error generating report:", error);
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Failed to generate report. Please try again."
-      );
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const handleDeleteActivity = async (activityId: string) => {
     if (!confirm("Are you sure you want to delete this activity?")) {
@@ -147,7 +111,7 @@ export function MonthlyReportViewer({ students }: Props) {
   return (
     <div className="space-y-6">
       {/* Selection Controls */}
-      <Card>
+      <Card className="print:hidden">
         <CardHeader>
           <CardTitle>Select Report Period</CardTitle>
         </CardHeader>
@@ -217,6 +181,8 @@ export function MonthlyReportViewer({ students }: Props) {
         </div>
       ) : reportData ? (
         <>
+          {/* ── Data Entry Section (hidden when printing) ── */}
+          <div className="print:hidden space-y-6">
           {/* Course Statistics */}
           <Card>
             <CardHeader>
@@ -284,9 +250,12 @@ export function MonthlyReportViewer({ students }: Props) {
           </Card>
 
           {/* Attendance Tracking */}
-          <AttendanceTracker
+          <DayAttendancePicker
             reportId={reportData.report.id}
-            initialAttendance={reportData.report.attendanceData as any}
+            month={reportData.month}
+            year={reportData.year}
+            initialAttendanceData={reportData.report.attendanceData as any}
+            autoDetectedDays={reportData.dailyAttendance ?? []}
             onSave={loadReportData}
           />
 
@@ -400,61 +369,38 @@ export function MonthlyReportViewer({ students }: Props) {
               )}
             </CardContent>
           </Card>
+          </div>{/* end print:hidden data-entry section */}
 
-          {/* Generated Report */}
+          {/* Report Preview */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>AI-Generated Report</CardTitle>
-                <div className="flex gap-2">
-                  {reportData.report.reportContent && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handlePrint}
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Print/Save
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    onClick={generateReport}
-                    disabled={isGenerating}
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        {reportData.report.reportContent ? "Regenerate" : "Generate"} Report
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <CardTitle>Report Preview</CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrint}
+                >
+                  <Printer className="mr-2 h-4 w-4" />
+                  Print / Save PDF
+                </Button>
               </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Fill in the sections above, then use "Print / Save PDF" to export.
+              </p>
             </CardHeader>
-            <CardContent>
-              {reportData.report.reportContent ? (
-                <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap rounded-lg bg-muted/30 p-6">
-                  {reportData.report.reportContent}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">
-                    Click "Generate Report" to create an AI-powered summary of this
-                    month's progress.
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    The report will include course activity, time spent, and external
-                    activities in a professional format.
-                  </p>
-                </div>
-              )}
+            <CardContent className="p-0 sm:p-2">
+              <MonthlyReportRenderer
+                data={{
+                  report: reportData.report,
+                  student: reportData.student,
+                  month: reportData.month,
+                  year: reportData.year,
+                  courseStats: reportData.courseStats,
+                  summary: reportData.summary,
+                  dailyAttendance: reportData.dailyAttendance ?? [],
+                } as ReportRendererData}
+              />
             </CardContent>
           </Card>
         </>

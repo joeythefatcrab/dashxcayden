@@ -38,14 +38,30 @@ type Props = {
   initialTimeLogs: TimeLog[];
 };
 
+// Mirror exact APS subject names so they map 1:1 to the monthly report
 const ACTIVITY_CATEGORIES = [
-  "Field Trip",
+  "Study Skills/Study Technology",
   "Reading",
-  "Project",
-  "Volunteer Work",
-  "Sports/Physical Activity",
-  "Music/Arts",
-  "Science Experiment",
+  "Vocabulary",
+  "Handwriting",
+  "Creative Writing",
+  "Grammar",
+  "Spelling",
+  "Mathematics",
+  "Geography",
+  "American/World History",
+  "Economics/Money",
+  "Government/Civics",
+  "Science",
+  "Research",
+  "Performing Arts",
+  "Foreign Language",
+  "PE",
+  "Educational Films",
+  "Seminars",
+  "Field Trips",
+  "Online Coursework",
+  "Electives",
   "Other",
 ];
 
@@ -291,7 +307,7 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
                       <SelectContent>
                         {curricula.map((curriculum) => (
                           <SelectItem key={curriculum.id} value={curriculum.id}>
-                            {curriculum.subject || curriculum.name}
+                            {curriculum.name}{curriculum.subject && curriculum.subject !== "General" ? ` — ${curriculum.subject}` : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -494,7 +510,7 @@ export function TimeTrackingInterface({ student, curricula, initialTimeLogs }: P
                             <Clock className="h-4 w-4 text-muted-foreground" />
                             <div className="flex-1">
                               <p className="font-medium">
-                                {log.curriculum.subject || log.curriculum.name}
+                                {log.curriculum.name}
                               </p>
                               <p className="text-sm text-muted-foreground">
                                 {formatTime(log.minutesSpent)}

@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { LessonPlayer } from "@/components/lesson-player";
+import { SubscriptionGate } from "@/components/subscription/SubscriptionGate";
 
 export default async function LessonPage({
   params,
@@ -32,6 +33,14 @@ export default async function LessonPage({
   if (!student) {
     redirect("/dashboard");
   }
+
+  // Check paywall: enabled globally AND student has no active sub AND not exempt
+  const paywallSetting = await db.systemSetting.findUnique({
+    where: { key: "paywall_enabled" },
+  });
+  const paywallEnabled = paywallSetting?.value !== "false"; // default on
+  const showGate =
+    paywallEnabled && !student.subscriptionActive && !student.paywallExempt;
 
   // Get enrollment with progress
   const enrollment = await db.enrollment.findUnique({
@@ -93,15 +102,18 @@ export default async function LessonPage({
     : null;
 
   return (
-    <LessonPlayer
-      lesson={lesson}
-      studentId={student.id}
-      curriculumId={curriculumId}
-      isLocked={isLocked}
-      previousLesson={null}
-      attempts={attempts}
-      bestScore={bestAttempt?.score}
-      bestAttempt={bestAttempt}
-    />
+    <>
+      {showGate && <SubscriptionGate studentName={student.name} />}
+      <LessonPlayer
+        lesson={lesson}
+        studentId={student.id}
+        curriculumId={curriculumId}
+        isLocked={isLocked}
+        previousLesson={null}
+        attempts={attempts}
+        bestScore={bestAttempt?.score}
+        bestAttempt={bestAttempt}
+      />
+    </>
   );
 }

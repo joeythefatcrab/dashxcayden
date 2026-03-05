@@ -8,129 +8,23 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy-key",
 });
 
-const SYSTEM_PROMPT = `You are a HOMESCHOOL MONTHLY REPORT GENERATOR for APS (Alternative Education Programs) compliance.
+const SYSTEM_PROMPT = `You are a HOMESCHOOL PROGRESS SUMMARY WRITER for APS (Alternative Education Programs) compliance.
 
-CRITICAL RULES:
-- Use ONLY plain text (NO markdown, *, #, -, tables, emojis, or code blocks)
-- Use ALL CAPS for section headers
-- Insert parent's educator evaluation answers EXACTLY as provided (do NOT modify, rephrase, or generate)
-- Use data to fill attendance calendar and subject breakdown
-- Do not invent or guess any information
+Your job is to write the SUMMARY SECTION ONLY — 2 to 3 short paragraphs.
 
-FORMAT REQUIREMENTS:
-- Plain text with ALL CAPS headers
-- Numbered lists (1. 2. 3.)
-- Bullet character • for lists
-- Indentation with spaces
-- Blank lines between sections
-- Hours rounded to one decimal place
+RULES:
+- Plain text only (NO markdown, NO bullet points, NO headers, NO asterisks)
+- Be factual, warm, and professional in tone
+- Reference the student's online courses AND their external activities (both count as schoolwork)
+- Group external activities by subject area when there are several — for example, math practice, reading, writing, and money/economics work
+- Mention total hours and lesson counts from the provided data
+- Use the accurate attendance figures from the data (present days, any sick/vacation days)
+- Keep it concise: 150 to 250 words total
+- Do NOT invent information not present in the data
+- Do NOT include the attendance calendar, subject table, or evaluation answers (those are rendered separately)
 
-USE THIS EXACT APS FORMAT:
-
-============================================================
-MONTHLY HOMESCHOOL PROGRESS REPORT
-[Month] [Year]
-
-Student: [Student Name]
-Grade: [Grade Level]
-Parent/Educator: [Parent Name]
-Report Generated: [Current Date]
-
-MONTHLY ATTENDANCE AND PROGRESS
-Mark:    Present=P    Absent=A    Sick=S    Vacation=V
-
-  1 [X]     11 [X]     21 [X]
-  2 [X]     12 [X]     22 [X]
-  3 [X]     13 [X]     23 [X]
-  4 [X]     14 [X]     24 [X]
-  5 [X]     15 [X]     25 [X]
-  6 [X]     16 [X]     26 [X]
-  7 [X]     17 [X]     27 [X]
-  8 [X]     18 [X]     28 [X]
-  9 [X]     19 [X]     29 [X]
- 10 [X]     20 [X]     30 [X]
-                       31 [X]
-
-Total Days: [X] Present, [Y] Sick, [Z] Vacation, [Total] Total School Days
-
-SUMMARY
-
-Write 2-3 short paragraphs summarizing attendance, course participation, lesson completion, and total hours. Keep this factual and brief.
-
-EDUCATOR EVALUATION
-
-Name of person filling out form: [Parent Name]
-
-What successes did you have this month?
-[Insert parent's answer EXACTLY as provided in educatorEvaluation.parentSuccesses. If not provided, write "Not answered."]
-
-What successes did your student have this month?
-[Insert parent's answer EXACTLY as provided in educatorEvaluation.studentSuccesses. If not provided, write "Not answered."]
-
-On a scale of 1 to 10, 1 being the lowest and 10 being the highest, how would you rate your student's overall progress this period? If not 10, please explain:
-[Insert rating from educatorEvaluation.progressRating, then insert educatorEvaluation.progressExplanation if provided. If not provided, write "Not answered."]
-
-What do you feel was most successful?
-[Insert parent's answer EXACTLY as provided in educatorEvaluation.mostSuccessful. If not provided, write "Not answered."]
-
-Were there any program completions?
-[Insert parent's answer EXACTLY as provided in educatorEvaluation.programCompletions. If not provided, write "Not answered."]
-
-Is there anything that you need help on or would like to communicate?
-[Insert parent's answer EXACTLY as provided in educatorEvaluation.needsHelp. If not provided, write "No additional communications."]
-
-SUBJECT BREAKDOWN
-
-Subject                    | Description                          | Time
----------------------------|--------------------------------------|----------
-Study Skills               | [Topics if applicable]               | [X.X] hours
-Reading                    | [Topics if applicable]               | [X.X] hours
-Vocabulary                 | [Topics if applicable]               | [X.X] hours
-Handwriting                | [Topics if applicable]               | [X.X] hours
-Creative Writing           | [Topics if applicable]               | [X.X] hours
-Grammar                    | [Topics if applicable]               | [X.X] hours
-Spelling                   | [Topics if applicable]               | [X.X] hours
-Mathematics                | [Topics if applicable]               | [X.X] hours
-Geography                  | [Topics if applicable]               | [X.X] hours
-American/World History     | [Topics if applicable]               | [X.X] hours
-Economics/Money            | [Topics if applicable]               | [X.X] hours
-Government/Civics          | [Topics if applicable]               | [X.X] hours
-Science                    | [Topics if applicable]               | [X.X] hours
-Research                   | [Topics if applicable]               | [X.X] hours
-Performing Arts            | [Topics if applicable]               | [X.X] hours
-Foreign Language           | [Topics if applicable]               | [X.X] hours
-PE                         | [Topics if applicable]               | [X.X] hours
-Educational Films          | [Topics if applicable]               | [X.X] hours
-Seminars                   | [Topics if applicable]               | [X.X] hours
-Field Trips                | [Topics if applicable]               | [X.X] hours
-Electives                  | [Topics if applicable]               | [X.X] hours
-Other                      | [Topics if applicable]               | [X.X] hours
-
-TOTAL SCHOOLING TIME: [X.X] HOURS
-
-EXTERNAL ACTIVITIES
-
-If any exist, list each:
-
-[Activity Name] - [Date]
-Description: [Brief description]
-Time Spent: [X.X] hours
-
-If none exist, write exactly:
-No external enrichment activities were recorded for this period.
-
-ADDITIONAL COMMENTS
-
-[If parent notes provided, insert verbatim. Otherwise write:]
-No additional comments for this period.
-
-============================================================
-END OF REPORT
-
-OUTPUT ONLY THE REPORT.
-DO NOT EXPLAIN.
-DO NOT COMMENT.
-DO NOT DEVIATE FROM THIS FORMAT.`;
+OUTPUT ONLY THE PARAGRAPHS.
+NO LABELS. NO HEADERS. NO EXPLANATION.`;
 
 
 export async function POST(req: Request) {
@@ -362,77 +256,64 @@ export async function POST(req: Request) {
       "December",
     ];
 
-    // Parse attendance data
-    const attendance = (report.attendanceData as any) || { present: 0, sick: 0, vacation: 0 };
-
-    // Get daily attendance records for calendar
-    const dailyAttendance = await db.dailyAttendance.findMany({
-      where: {
-        studentId,
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      select: {
-        date: true,
-        present: true,
-      },
-      orderBy: {
-        date: 'asc',
-      },
+    // Fetch DailyAttendance records (include date so we can key by day, de-duplicating)
+    const dailyAttendanceRecords = await db.dailyAttendance.findMany({
+      where: { studentId, date: { gte: startDate, lte: endDate } },
+      select: { date: true, present: true },
     });
 
-    // Build daily attendance map (day number -> P/A)
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const dailyMarks: Record<number, string> = {};
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      dailyMarks[day] = '-'; // Default to no mark
+    // Mirror the renderer's exact logic so the AI always sees the same count the
+    // calendar shows: seed a date-keyed map from DailyAttendance records, then
+    // override with any parent-saved attendanceData.days entries.
+    const storedAtt = (report.attendanceData as any) || {};
+    const clearedSet = new Set<string>(storedAtt.cleared ?? []);
+    const dayStatusMap: Record<string, string> = {};
+    for (const r of dailyAttendanceRecords) {
+      const key = (r.date as Date).toISOString().substring(0, 10);
+      if (!clearedSet.has(key)) dayStatusMap[key] = r.present ? "P" : "A";
+    }
+    if (storedAtt.days) {
+      for (const [key, entry] of Object.entries(storedAtt.days) as [string, any][]) {
+        dayStatusMap[key] = entry.status;
+      }
+    }
+    let presentCount = 0, sickCount = 0, vacationCount = 0;
+    for (const status of Object.values(dayStatusMap)) {
+      if (status === "P") presentCount++;
+      else if (status === "S") sickCount++;
+      else if (status === "V") vacationCount++;
     }
 
-    // Mark present days
-    dailyAttendance.forEach(record => {
-      const day = new Date(record.date).getDate();
-      dailyMarks[day] = record.present ? 'P' : 'A';
-    });
-
-    const reportData = {
-      student: {
-        name: student.name,
-        grade: student.grade,
-      },
-      parent: {
-        name: student.parent.name,
-      },
-      period: {
-        month: monthNames[month - 1],
-        year: year,
-      },
+    // Build a compact summary payload for the AI (only what it needs)
+    const summaryData = {
+      student: { name: student.name, grade: student.grade },
+      parent: { name: student.parent.name },
+      period: { month: monthNames[month - 1], year },
       attendance: {
-        present: attendance.present || 0,
-        sick: attendance.sick || 0,
-        vacation: attendance.vacation || 0,
-        total: (attendance.present || 0) + (attendance.sick || 0) + (attendance.vacation || 0),
-        dailyMarks, // Day-by-day calendar data
-        daysInMonth,
+        present: presentCount,
+        sick: sickCount,
+        vacation: vacationCount,
+        total: presentCount + sickCount + vacationCount,
       },
-      courses: courseStats,
-      externalActivities: report.externalActivities.map((activity: any) => ({
-        title: activity.title,
-        description: activity.description,
-        date: new Date(activity.date).toLocaleDateString(),
-        hoursSpent: activity.hoursSpent,
-        category: activity.category,
+      // Online curriculum courses (time logged in the app)
+      courses: courseStats.map((c: any) => ({
+        name: c.name,
+        subject: c.subject,
+        lessonsCompleted: c.lessonsCompleted,
+        hoursSpent: c.hoursSpent,
       })),
       totalAppHours,
+      // External activities logged by student/parent outside the app
+      externalActivities: report.externalActivities.map((a: any) => ({
+        title: a.title,
+        category: a.category || "Other",
+        hoursSpent: a.hoursSpent || 0,
+      })),
       totalExternalHours,
       totalSchoolHours,
-      parentNotes: report.parentNotes || null,
-      educatorEvaluation: report.educatorEvaluation || null,
     };
 
-    // Generate report using chat completion
+    // Generate narrative summary using chat completion
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -442,11 +323,11 @@ export async function POST(req: Request) {
         },
         {
           role: "user",
-          content: `Generate a monthly homeschool progress report based on this data:\n\n${JSON.stringify(reportData, null, 2)}`,
+          content: `Write the progress summary for this student's monthly report:\n\n${JSON.stringify(summaryData, null, 2)}`,
         },
       ],
-      temperature: 0.3,
-      max_tokens: 2500,
+      temperature: 0.4,
+      max_tokens: 400,
     });
 
     const reportContent = completion.choices[0]?.message?.content;

@@ -143,6 +143,7 @@ model Student {
   // Subscription status
   subscriptionActive  Boolean   @default(false)
   subscriptionEndDate DateTime?
+  paywallExempt       Boolean   @default(false) // Skip paywall for pilots/testers
 
   user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   parent       User         @relation("StudentParent", fields: [parentId], references: [id], onDelete: Cascade)

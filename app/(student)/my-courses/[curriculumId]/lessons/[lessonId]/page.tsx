@@ -98,7 +98,7 @@ export default async function LessonPage({
       studentId={student.id}
       curriculumId={curriculumId}
       isLocked={isLocked}
-      previousLesson={previousLesson}
+      previousLesson={null}
       attempts={attempts}
       bestScore={bestAttempt?.score}
       bestAttempt={bestAttempt}

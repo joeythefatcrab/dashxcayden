@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { NotificationBanner } from "@/components/notifications/NotificationBanner";
 import { ParentDashboard } from "@/components/parent/ParentDashboard";
+import { PaywallNotice } from "@/components/parent/PaywallNotice";
 import { markAttendance } from "@/lib/attendance";
 
 export default async function DashboardPage() {
@@ -21,35 +22,50 @@ export default async function DashboardPage() {
 
   // Show parent dashboard
   if (user.role === "PARENT") {
-    const students = await db.student.findMany({
-      where: { parentId: user.id },
-      select: {
-        id: true,
-        name: true,
-        grade: true,
-        user: {
-          select: {
-            email: true,
+    const [students, paywallSetting] = await Promise.all([
+      db.student.findMany({
+        where: { parentId: user.id },
+        select: {
+          id: true,
+          name: true,
+          grade: true,
+          subscriptionActive: true,
+          paywallExempt: true,
+          user: {
+            select: {
+              email: true,
+            },
           },
-        },
-        enrollments: {
-          include: {
-            curriculum: {
-              select: {
-                id: true,
-                name: true,
-                subject: true,
+          enrollments: {
+            include: {
+              curriculum: {
+                select: {
+                  id: true,
+                  name: true,
+                  subject: true,
+                },
               },
             },
           },
         },
-      },
-      orderBy: { name: "asc" },
-    });
+        orderBy: { name: "asc" },
+      }),
+      db.systemSetting.findUnique({ where: { key: "paywall_enabled" } }),
+    ]);
+
+    const paywallEnabled = paywallSetting?.value === "true";
+    const unpaidStudents = paywallEnabled
+      ? students
+          .filter((s) => !s.subscriptionActive && !s.paywallExempt)
+          .map((s) => ({ id: s.id, name: s.name }))
+      : [];
 
     return (
       <div className="px-4 py-8">
         <div className="container mx-auto">
+          {unpaidStudents.length > 0 && (
+            <PaywallNotice unpaidStudents={unpaidStudents} />
+          )}
           <NotificationBanner />
           <ParentDashboard
             parentName={user.name || "there"}

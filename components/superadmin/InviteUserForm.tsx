@@ -4,122 +4,117 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 export function InviteUserForm() {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("PARENT");
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [inviteUrl, setInviteUrl] = useState("");
-  const [emailSent, setEmailSent] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  const handleInvite = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setInviteUrl("");
+    setSuccess(false);
 
     try {
-      const response = await fetch("/api/superadmin/invite", {
+      const response = await fetch("/api/superadmin/create-admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, role }),
+        body: JSON.stringify({ email, password, name }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Failed to create invite");
+        setError(data.error || "Failed to create admin");
         return;
       }
 
-      setInviteUrl(data.inviteUrl);
-      setEmailSent(data.emailSent === true);
-      setEmail("");
-    } catch (err) {
-      setError("Failed to create invite");
+      setSuccess(true);
+    } catch {
+      setError("Failed to create admin");
     } finally {
       setLoading(false);
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(inviteUrl);
-    alert("Invite link copied to clipboard!");
+  const handleReset = () => {
+    setEmail("");
+    setName("");
+    setPassword("");
+    setSuccess(false);
+    setError("");
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Invite New User</CardTitle>
+        <CardTitle>Create New Admin</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleInvite} className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              Email Address
-            </label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@example.com"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700">Role</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="SUPERADMIN">Superadmin</option>
-              <option value="ADMIN">Admin</option>
-              <option value="PARENT">Parent</option>
-              <option value="STUDENT">Student</option>
-            </select>
-          </div>
-
-          {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
-              {error}
-            </div>
-          )}
-
-          {inviteUrl && (
-            <div className="space-y-2">
-              <div className="rounded-md bg-green-50 p-3">
-                <p className="text-sm font-medium text-green-900 mb-2">
-                  {emailSent
-                    ? "Invite created and emailed to the user!"
-                    : "Invite created! Share this link manually (email not configured):"}
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={inviteUrl}
-                    readOnly
-                    className="flex-1 rounded border bg-white px-2 py-1 text-sm"
-                  />
-                  <Button
-                    type="button"
-                    onClick={copyToClipboard}
-                    size="sm"
-                    variant="outline"
-                  >
-                    Copy
-                  </Button>
-                </div>
+        {success ? (
+          <div className="space-y-4">
+            <div className="rounded-md bg-green-50 p-4 space-y-2">
+              <p className="text-sm font-semibold text-green-900">Admin account created. Share these credentials:</p>
+              <div className="rounded bg-white border p-3 text-sm space-y-1 font-mono">
+                <p><span className="text-gray-500">Email:</span> {email}</p>
+                <p><span className="text-gray-500">Password:</span> {password}</p>
               </div>
+              <p className="text-xs text-green-700">Tell them to sign in at /sign-in and change their password after first login.</p>
             </div>
-          )}
+            <Button variant="outline" onClick={handleReset} className="w-full">
+              Create Another Admin
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Name (optional)</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Jane Smith"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@example.com"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="text"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Set a temporary password"
+                required
+              />
+            </div>
 
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Creating Invite..." : "Create Invite"}
-          </Button>
-        </form>
+            {error && (
+              <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+                {error}
+              </div>
+            )}
+
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? "Creating..." : "Create Admin Account"}
+            </Button>
+          </form>
+        )}
       </CardContent>
     </Card>
   );

@@ -10,6 +10,7 @@ export function InviteUserForm() {
   const [role, setRole] = useState("PARENT");
   const [loading, setLoading] = useState(false);
   const [inviteUrl, setInviteUrl] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
   const [error, setError] = useState("");
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -33,6 +34,7 @@ export function InviteUserForm() {
       }
 
       setInviteUrl(data.inviteUrl);
+      setEmailSent(data.emailSent === true);
       setEmail("");
     } catch (err) {
       setError("Failed to create invite");
@@ -90,7 +92,9 @@ export function InviteUserForm() {
             <div className="space-y-2">
               <div className="rounded-md bg-green-50 p-3">
                 <p className="text-sm font-medium text-green-900 mb-2">
-                  Invite created! Share this link:
+                  {emailSent
+                    ? "Invite created and emailed to the user!"
+                    : "Invite created! Share this link manually (email not configured):"}
                 </p>
                 <div className="flex gap-2">
                   <input

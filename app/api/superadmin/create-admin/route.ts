@@ -6,7 +6,9 @@ import bcrypt from "bcryptjs";
 export async function POST(request: NextRequest) {
   const session = await auth();
 
-  if (!session?.user || session.user.role !== "SUPERADMIN") {
+  // @ts-ignore - realRole is set when superadmin is using role impersonation
+  const effectiveRole = session?.user?.realRole || session?.user?.role;
+  if (!session?.user || effectiveRole !== "SUPERADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

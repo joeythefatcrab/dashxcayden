@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, User, Shield, Globe } from "lucide-react";
+import { Loader2, Users, User, Shield, Globe, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 
 type Message = {
@@ -22,6 +23,7 @@ type Message = {
 export function MessagesList() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMessages();
@@ -39,6 +41,23 @@ export function MessagesList() {
       console.error("Error fetching messages:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const deleteMessage = async (id: string) => {
+    if (!confirm("Delete this message? It will be removed for all recipients.")) return;
+    setDeletingId(id);
+    try {
+      const response = await fetch(`/api/admin/messages/${id}`, { method: "DELETE" });
+      if (response.ok) {
+        setMessages((prev) => prev.filter((m) => m.id !== id));
+      } else {
+        alert("Failed to delete message.");
+      }
+    } catch {
+      alert("Failed to delete message.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -105,10 +124,25 @@ export function MessagesList() {
                     {message.content}
                   </p>
                 </div>
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  {getRecipientIcon(message.recipientType)}
-                  {getRecipientLabel(message.recipientType)}
-                </Badge>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    {getRecipientIcon(message.recipientType)}
+                    {getRecipientLabel(message.recipientType)}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => deleteMessage(message.id)}
+                    disabled={deletingId === message.id}
+                  >
+                    {deletingId === message.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
 
               <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t">

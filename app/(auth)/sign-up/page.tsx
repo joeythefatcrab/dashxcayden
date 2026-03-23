@@ -6,45 +6,63 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
-export default function SignUpPage() {
+function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteCodeParam = searchParams.get("invite");
+
   const [isValidated, setIsValidated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
+  const [inviteRole, setInviteRole] = useState<string | null>(null); // role from invite code
+  const [inviteLabel, setInviteLabel] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Check if the signup code was validated
-    const checkValidation = async () => {
+    const check = async () => {
       try {
-        const response = await fetch("/api/auth/check-signup-validation");
-        const data = await response.json();
-
-        if (!data.validated) {
-          // Redirect to signup gate if not validated
-          router.push("/signup-gate");
+        if (inviteCodeParam) {
+          // Validate invite code and get preset role
+          const res = await fetch(`/api/auth/invite-code?code=${encodeURIComponent(inviteCodeParam)}`);
+          const data = await res.json();
+          if (!res.ok || !data.valid) {
+            setInviteError(data.error || "Invalid invite code");
+            setIsChecking(false);
+            return;
+          }
+          setInviteRole(data.role);
+          setInviteLabel(data.label);
+          setRole(data.role);
+          setIsValidated(true);
         } else {
+          // Fall back to signup-code gate
+          const res = await fetch("/api/auth/check-signup-validation");
+          const data = await res.json();
+          if (!data.validated) {
+            router.push("/signup-gate");
+            return;
+          }
           setIsValidated(true);
         }
-      } catch (error) {
-        router.push("/signup-gate");
+      } catch {
+        if (!inviteCodeParam) router.push("/signup-gate");
       } finally {
         setIsChecking(false);
       }
     };
+    check();
+  }, [inviteCodeParam, router]);
 
-    checkValidation();
-  }, [router]);
-
-  if (isChecking || !isValidated) {
+  if (isChecking) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -52,13 +70,33 @@ export default function SignUpPage() {
     );
   }
 
+  if (inviteError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Invalid Invite</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{inviteError}</div>
+            <p className="text-sm text-muted-foreground">
+              Contact your administrator for a new invite link.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!isValidated) return null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
     try {
-      const response = await fetch("/api/auth/signup", {
+      const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -66,24 +104,22 @@ export default function SignUpPage() {
           password,
           name: name || undefined,
           role,
+          inviteCode: inviteCodeParam || undefined,
         }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (!response.ok) {
-        // Handle specific error cases
-        if (response.status === 409) {
+      if (!res.ok) {
+        if (res.status === 409) {
           throw new Error("This email is already registered. Please sign in instead or use a different email.");
         }
         throw new Error(data.error || "Sign up failed");
       }
 
-      // Redirect to sign in page
       router.push("/sign-in?registered=true");
-    } catch (error: any) {
-      console.error("Sign up error:", error);
-      setError(error.message);
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +131,11 @@ export default function SignUpPage() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
           <CardDescription>
-            Enter your details to get started
+            {inviteLabel
+              ? `You've been invited as ${inviteRole?.toLowerCase()} — ${inviteLabel}`
+              : inviteRole
+              ? `You've been invited to join as ${inviteRole?.toLowerCase()}`
+              : "Enter your details to get started"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -138,18 +178,28 @@ export default function SignUpPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="role">I am a...</Label>
-              <Select value={role} onValueChange={setRole} required disabled={isLoading}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PARENT">Parent/Guardian</SelectItem>
-                  <SelectItem value="STUDENT">Student</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* If invite code sets the role, show it read-only */}
+            {inviteRole ? (
+              <div className="space-y-2">
+                <Label>Account type</Label>
+                <div className="rounded-md border px-3 py-2 text-sm bg-muted/50">
+                  {inviteRole === "PARENT" ? "Parent/Guardian" : inviteRole === "STUDENT" ? "Student" : inviteRole}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="role">I am a...</Label>
+                <Select value={role} onValueChange={setRole} required disabled={isLoading}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PARENT">Parent/Guardian</SelectItem>
+                    <SelectItem value="STUDENT">Student</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {error && (
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -178,5 +228,17 @@ export default function SignUpPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <SignUpForm />
+    </Suspense>
   );
 }

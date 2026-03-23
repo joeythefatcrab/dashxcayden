@@ -1,53 +1,92 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
+
+const ALLOWED_SELF_SIGNUP_ROLES = ["PARENT", "STUDENT"];
 
 export async function POST(req: Request) {
   try {
-    const { email, password, name, role } = await req.json();
+    const { email, password, name, role, inviteCode } = await req.json();
 
-    // Validate input
-    if (!email || !password || !role) {
+    if (!email || !password) {
       return NextResponse.json(
-        { error: "Email, password, and role are required" },
+        { error: "Email and password are required" },
         { status: 400 }
       );
     }
 
-    // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { email },
-    });
+    let assignedRole: string;
 
+    if (inviteCode) {
+      // --- Invite code path ---
+      const invite = await db.inviteCode.findUnique({ where: { code: inviteCode } });
+
+      if (!invite) {
+        return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
+      }
+      if (invite.usedAt) {
+        return NextResponse.json({ error: "This invite code has already been used" }, { status: 400 });
+      }
+      if (invite.expiresAt && invite.expiresAt < new Date()) {
+        return NextResponse.json({ error: "This invite code has expired" }, { status: 400 });
+      }
+
+      assignedRole = invite.role;
+    } else {
+      // --- Signup-code gate path ---
+      const cookieStore = await cookies();
+      const validated = cookieStore.get("signup_code_validated");
+      if (!validated) {
+        return NextResponse.json({ error: "Invalid or missing signup code" }, { status: 403 });
+      }
+
+      if (!role || !ALLOWED_SELF_SIGNUP_ROLES.includes(role.toUpperCase())) {
+        return NextResponse.json(
+          { error: "Invalid role. Must be PARENT or STUDENT" },
+          { status: 400 }
+        );
+      }
+      assignedRole = role.toUpperCase();
+    }
+
+    // Check if user already exists
+    const existingUser = await db.user.findUnique({ where: { email } });
     if (existingUser) {
       return NextResponse.json(
-        { error: "User with this email already exists" },
+        { error: "This email is already registered. Please use a different email or sign in." },
         { status: 409 }
       );
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user with auto-verified email
     const user = await db.user.create({
       data: {
         email,
         password: hashedPassword,
         name: name || null,
-        role: role.toUpperCase(),
-        emailVerified: new Date(), // Auto-verify all users
+        role: assignedRole as any,
+        emailVerified: new Date(),
       },
     });
 
     // If student, auto-create student profile
-    if (role.toUpperCase() === "STUDENT") {
+    if (assignedRole === "STUDENT") {
       await db.student.create({
         data: {
           name: name || email.split("@")[0],
           userId: user.id,
-          parentId: user.id, // Self-managed student
+          parentId: user.id,
         },
+      });
+    }
+
+    // Mark invite code as used
+    if (inviteCode) {
+      await db.inviteCode.update({
+        where: { code: inviteCode },
+        data: { usedAt: new Date(), usedByEmail: email },
       });
     }
 
@@ -65,23 +104,6 @@ export async function POST(req: Request) {
     );
   } catch (error) {
     console.error("Sign up error:", error);
-
-    // Handle Prisma unique constraint violation
-    if (error instanceof Error) {
-      if (error.message.includes("Unique constraint failed on the fields: (`email`)")) {
-        return NextResponse.json(
-          { error: "This email is already registered. Please use a different email or sign in." },
-          { status: 409 }
-        );
-      }
-    }
-
-    // Send the actual error message for debugging
-    const errorMessage = error instanceof Error ? error.message : "Failed to create user";
-
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to create account" }, { status: 500 });
   }
 }

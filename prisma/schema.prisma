@@ -614,6 +614,24 @@ model DailyQuote {
   @@index([studentId, createdAt])
 }
 
+// Single-use invite codes with preset roles
+model InviteCode {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  role           Role
+  label          String?   // Optional human-readable label, e.g. "Johnson Family"
+  createdById    String
+  organizationId String?   // Scoped org for admin-created codes
+  usedAt         DateTime?
+  usedByEmail    String?   // Who redeemed it
+  expiresAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([code])
+  @@index([createdById])
+  @@index([organizationId])
+}
+
 // System Settings (for superadmin configuration)
 model SystemSetting {
   id        String   @id @default(cuid())

@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ParentManager } from "@/components/admin/ParentManager";
 import { NotificationBanner } from "@/components/notifications/NotificationBanner";
+import { InviteCodeManager } from "@/components/admin/InviteCodeManager";
 
 export default async function AdminParentsPage() {
   const session = await auth();
@@ -65,6 +66,10 @@ export default async function AdminParentsPage() {
       </div>
 
       <NotificationBanner />
+
+      <div className="mb-6">
+        <InviteCodeManager />
+      </div>
 
       <ParentManager parents={serializedParents} />
     </div>

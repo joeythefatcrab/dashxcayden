@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { InviteUserForm } from "@/components/superadmin/InviteUserForm";
+import { InviteCodeManager } from "@/components/admin/InviteCodeManager";
 
 export default async function UsersPage() {
   // Fetch all users
@@ -25,6 +26,8 @@ export default async function UsersPage() {
       </div>
 
       <InviteUserForm />
+
+      <InviteCodeManager isSuperAdmin />
 
       <Card>
         <CardHeader>

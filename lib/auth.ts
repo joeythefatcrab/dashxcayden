@@ -126,7 +126,7 @@ export const {
           const impersonateUserId = cookieStore.get("impersonate_user_id");
           const impersonateAdminId = cookieStore.get("impersonate_admin_id");
 
-          if (token.role === "SUPERADMIN" && impersonateUserId?.value && impersonateAdminId?.value) {
+          if ((token.role === "SUPERADMIN" || token.role === "ADMIN") && impersonateUserId?.value && impersonateAdminId?.value) {
             // Load the impersonated user's data
             const impersonatedUser = await db.user.findUnique({
               where: { id: impersonateUserId.value },

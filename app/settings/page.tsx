@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { EmailPreferencesForm } from "@/components/settings/EmailPreferencesForm";
+import { ChangePasswordForm } from "@/components/settings/ChangePasswordForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { DashboardNav } from "@/components/auth/dashboard-nav";
@@ -25,6 +26,7 @@ export default async function SettingsPage() {
       theme: true,
       stripeCustomerId: true,
       stripeSubscriptionId: true,
+      password: true,
     },
   });
 
@@ -98,6 +100,19 @@ export default async function SettingsPage() {
                 <ThemeToggle currentTheme={user.theme || "light"} />
               </CardContent>
             </Card>
+
+            {/* Change Password - Only for credential-based accounts */}
+            {user.password && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Change Password</CardTitle>
+                  <CardDescription>Update your account password</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChangePasswordForm />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Email Preferences - Only for Parents */}
             {isParent && (

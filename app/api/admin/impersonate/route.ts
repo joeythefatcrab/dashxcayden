@@ -7,11 +7,9 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
 
-    // Only SUPERADMIN can impersonate
-    // Check realRole if impersonating, otherwise check current role
     // @ts-ignore
     const userRole = session?.user?.realRole || session?.user?.role;
-    if (!session?.user || userRole !== "SUPERADMIN") {
+    if (!session?.user || !["ADMIN", "SUPERADMIN"].includes(userRole)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -24,11 +22,34 @@ export async function POST(req: NextRequest) {
     // Verify the target user exists
     const targetUser = await db.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, role: true, name: true },
+      select: { id: true, email: true, role: true, name: true, organizationId: true },
     });
 
     if (!targetUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // ADMIN can only impersonate PARENT and STUDENT (not other admins/superadmins)
+    if (userRole === "ADMIN") {
+      if (!["PARENT", "STUDENT"].includes(targetUser.role)) {
+        return NextResponse.json(
+          { error: "Admins can only impersonate parents and students" },
+          { status: 403 }
+        );
+      }
+
+      // Admins can only impersonate users in their own organization
+      const adminUser = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { organizationId: true },
+      });
+
+      if (adminUser?.organizationId && targetUser.organizationId !== adminUser.organizationId) {
+        return NextResponse.json(
+          { error: "Cannot impersonate users outside your organization" },
+          { status: 403 }
+        );
+      }
     }
 
     // Store impersonation in cookie
@@ -48,7 +69,7 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 2, // 2 hours
     });
 
-    console.log(`[IMPERSONATION] Admin ${session.user.email} impersonating user ${targetUser.email}`);
+    console.log(`[IMPERSONATION] ${userRole} ${session.user.email} impersonating user ${targetUser.email}`);
 
     return NextResponse.json({
       success: true,

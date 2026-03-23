@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const session = await auth();
 
     // @ts-ignore
-    const userRole = session?.user?.realRole || session?.user?.role;
+    const userRole: string = session?.user?.realRole || session?.user?.role || "";
     if (!session?.user || !["ADMIN", "SUPERADMIN"].includes(userRole)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }

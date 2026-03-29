@@ -91,15 +91,9 @@ Extract every distinct course and requirement you can find. Do not merge items.`
     }
 
     // Fetch all curricula for fuzzy matching
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: { organizationId: true },
-    });
     const curricula = await db.curriculum.findMany({
-      where: userRole === "ADMIN" && user?.organizationId
-        ? { organizationId: user.organizationId }
-        : {},
       select: { id: true, name: true, subject: true },
+      orderBy: [{ subject: "asc" }, { name: "asc" }],
     });
 
     // Fuzzy match: compare lowercased titles

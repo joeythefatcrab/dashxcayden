@@ -181,7 +181,7 @@ export function ProgramChecksheet({ studentId, programId }: Props) {
                                   {lesson.title}
                                 </span>
                                 {lesson.isOffline && (
-                                  <WifiOff className="h-3 w-3 text-muted-foreground" title="Offline lesson" />
+                                  <span title="Offline lesson"><WifiOff className="h-3 w-3 text-muted-foreground" /></span>
                                 )}
                                 {lesson.completed && lesson.completedAt && (
                                   <span className="ml-auto text-xs text-muted-foreground print:inline hidden">

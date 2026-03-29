@@ -237,14 +237,14 @@ export function ProgramPDFImport({ programId }: Props) {
                   <div className="flex items-center gap-2 pl-1">
                     <Label className="text-xs text-muted-foreground shrink-0">Match to curriculum:</Label>
                     <Select
-                      value={item.selectedCurriculumId || ""}
-                      onValueChange={(v) => updateItem(item.tempId, { selectedCurriculumId: v })}
+                      value={item.selectedCurriculumId || "__none__"}
+                      onValueChange={(v) => updateItem(item.tempId, { selectedCurriculumId: v === "__none__" ? "" : v })}
                     >
                       <SelectTrigger className={`h-7 text-xs flex-1 ${!item.selectedCurriculumId ? "border-amber-300" : ""}`}>
                         <SelectValue placeholder="Select curriculum..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="" className="text-xs text-muted-foreground">— No match / skip —</SelectItem>
+                        <SelectItem value="__none__" className="text-xs text-muted-foreground">— No match / skip —</SelectItem>
                         {curricula.map((c) => (
                           <SelectItem key={c.id} value={c.id} className="text-xs">
                             {c.name}{c.subject ? ` (${c.subject})` : ""}

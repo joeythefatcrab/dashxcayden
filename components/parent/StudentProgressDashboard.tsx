@@ -93,7 +93,7 @@ export function StudentProgressDashboard({ student }: StudentProgressDashboardPr
   const programStats = latestProgramEnrollment ? (() => {
     const program = latestProgramEnrollment.program;
     // Build a map of curriculumId -> completion % from existing enrollments
-    const enrollmentBycurriculum = new Map(
+    const enrollmentBycurriculum = new Map<string, any>(
       student.enrollments.map((e: any) => [e.curriculumId, e])
     );
     const courses = program.programCourses.map((pc: any) => {

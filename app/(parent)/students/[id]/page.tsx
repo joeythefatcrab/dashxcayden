@@ -97,7 +97,7 @@ export default async function StudentDetailPage({
             },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { enrolledAt: "desc" },
         take: 1,
       },
     },

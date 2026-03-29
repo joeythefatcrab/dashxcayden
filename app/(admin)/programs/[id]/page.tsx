@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { ProgramEditor } from "@/components/admin/ProgramEditor";
+import { ProgramPDFImport } from "@/components/admin/ProgramPDFImport";
 
 export default async function ProgramDetailPage({
   params,
@@ -50,12 +51,13 @@ export default async function ProgramDetailPage({
   if (!program) notFound();
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 space-y-6">
       <ProgramEditor
         program={JSON.parse(JSON.stringify(program))}
         allCurricula={allCurricula}
         allStudents={allStudents}
       />
+      <ProgramPDFImport programId={id} />
     </div>
   );
 }

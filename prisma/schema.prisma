@@ -631,11 +631,27 @@ model Program {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  programCourses ProgramCourse[]
-  enrollments    ProgramEnrollment[]
+  programCourses     ProgramCourse[]
+  programActivities  ProgramActivity[]
+  enrollments        ProgramEnrollment[]
 
   @@index([createdById])
   @@index([academicYear])
+}
+
+model ProgramActivity {
+  id           String   @id @default(cuid())
+  programId    String
+  title        String
+  description  String?  @db.Text
+  activityType String   @default("OTHER") // VOLUNTEERING, FIELD_TRIP, PRACTICAL, READING, PE, OTHER
+  hoursRequired Float?
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  @@index([programId])
 }
 
 model ProgramCourse {

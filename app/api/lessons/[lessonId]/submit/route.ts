@@ -123,6 +123,49 @@ export async function POST(
       return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
     }
 
+    // Handle offline lessons (OFFLINE_CHECKBOX / OFFLINE_PARENT_SIGNOFF)
+    if (body.offlineComplete === true && lesson.lessonType !== "ONLINE") {
+      const score = 100;
+      const progress = (enrollment.progress as any) || {};
+      progress[lessonId] = {
+        ...(progress[lessonId] || {}),
+        unlocked: true,
+        bestScore: 100,
+        lastAttempt: new Date().toISOString(),
+        completed: true,
+      };
+      // Unlock next lesson
+      const currentIndex = lesson.unit.lessons.findIndex((l) => l.id === lessonId);
+      const nextLesson = lesson.unit.lessons[currentIndex + 1];
+      if (nextLesson) {
+        progress[nextLesson.id] = { ...(progress[nextLesson.id] || {}), unlocked: true };
+      }
+      await db.enrollment.update({
+        where: { studentId_curriculumId: { studentId, curriculumId } },
+        data: { progress },
+      });
+      const attempt = await db.attempt.create({
+        data: { studentId, lessonId, score, maxScore: 1, earned: 1, detail: { offlineComplete: true } },
+      });
+      await db.activity.create({
+        data: {
+          studentId,
+          type: "lesson_completed",
+          lessonId,
+          metadata: { score, threshold: lesson.threshold, passed: true, offline: true },
+        },
+      });
+      await markAttendance(studentId);
+      await logActivity({
+        userId: session.user.id,
+        userRole: "STUDENT",
+        type: "LESSON_COMPLETE",
+        description: `Completed offline lesson: ${lesson.title}`,
+        metadata: { studentId, lessonId, curriculumId, offline: true },
+      });
+      return NextResponse.json({ success: true, score: 100, earned: 1, maxScore: 1, passed: true, detail: { offlineComplete: true } });
+    }
+
     // Get student grade level for AI grading
     const studentRecord = await db.student.findUnique({
       where: { id: studentId },

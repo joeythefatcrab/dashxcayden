@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Lock, CheckCircle2, XCircle, Loader2, FileText } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, XCircle, Loader2, FileText, WifiOff, ClipboardCheck } from "lucide-react";
 import Link from "next/link";
 import { GlossaryMarkdown } from "./glossary-markdown";
 import { FloatingEssaySubmission } from "./student/FloatingEssaySubmission";
@@ -82,6 +82,27 @@ export function LessonPlayer({
     setAnswers((prev) => ({ ...prev, [itemId]: value }));
   };
 
+  const isOffline = lesson.lessonType && lesson.lessonType !== "ONLINE";
+
+  const handleOfflineComplete = async () => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`/api/lessons/${lesson.id}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId, curriculumId, offlineComplete: true }),
+      });
+      if (!response.ok) throw new Error("Submission failed");
+      const data = await response.json();
+      setResult({ ...data, isOffline: true });
+      setShowContent(false);
+    } catch {
+      alert("Failed to mark complete. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
@@ -138,6 +159,33 @@ export function LessonPlayer({
               You need to score at least <strong>{previousLesson?.threshold}%</strong> on{" "}
               <strong>{previousLesson?.title}</strong> to unlock this lesson.
             </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (result?.isOffline) {
+    return (
+      <div className="container mx-auto max-w-4xl px-4 py-8">
+        <Link href={`/my-courses/${curriculumId}`}>
+          <Button variant="ghost" size="sm" className="mb-8">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Course
+          </Button>
+        </Link>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-6 w-6 text-green-600" />
+              Activity Complete!
+            </CardTitle>
+            <CardDescription>This offline activity has been marked as complete.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild>
+              <Link href={`/my-courses/${curriculumId}`}>Continue</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -317,6 +365,84 @@ export function LessonPlayer({
                 </div>
               );
             })}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isOffline) {
+    const isParentSignoff = lesson.lessonType === "OFFLINE_PARENT_SIGNOFF";
+    const alreadyDone = bestScore !== undefined && bestScore >= lesson.threshold;
+
+    return (
+      <div className="container mx-auto max-w-4xl px-4 py-8">
+        <Link href={`/my-courses/${curriculumId}`}>
+          <Button variant="ghost" size="sm" className="mb-8">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Course
+          </Button>
+        </Link>
+
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <WifiOff className="h-5 w-5 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground uppercase tracking-wide font-medium">
+              {isParentSignoff ? "Parent Sign-off Activity" : "Offline Activity"}
+            </span>
+          </div>
+          <h1 className="mb-2 text-3xl font-bold">{lesson.title}</h1>
+          {lesson.description && <p className="text-muted-foreground">{lesson.description}</p>}
+        </div>
+
+        {lesson.contentMd && (
+          <Card className="mb-6">
+            <CardHeader><CardTitle>Instructions</CardTitle></CardHeader>
+            <CardContent className="prose prose-sm max-w-none">
+              <GlossaryMarkdown content={lesson.contentMd} />
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardContent className="pt-6">
+            {alreadyDone ? (
+              <div className="flex items-center gap-3 text-green-700">
+                <CheckCircle2 className="h-6 w-6" />
+                <div>
+                  <p className="font-semibold">Activity completed</p>
+                  <p className="text-sm text-muted-foreground">You have already marked this activity complete.</p>
+                </div>
+              </div>
+            ) : isParentSignoff ? (
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                  <ClipboardCheck className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-medium text-amber-800">Parent sign-off required</p>
+                    <p className="text-sm text-amber-700 mt-1">
+                      This activity must be verified by your parent or teacher. Ask them to mark it complete from your student profile.
+                    </p>
+                  </div>
+                </div>
+                <Link href={`/my-courses/${curriculumId}`}>
+                  <Button variant="outline">Back to Course</Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Complete the offline activity described above, then mark it as done below.
+                </p>
+                <Button onClick={handleOfflineComplete} disabled={isSubmitting} className="gap-2">
+                  {isSubmitting ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" />Saving...</>
+                  ) : (
+                    <><CheckCircle2 className="h-4 w-4" />Mark as Complete</>
+                  )}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

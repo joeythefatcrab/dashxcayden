@@ -76,6 +76,30 @@ export default async function StudentDetailPage({
         orderBy: { createdAt: "desc" },
         take: 10,
       },
+      programEnrollments: {
+        include: {
+          program: {
+            include: {
+              programCourses: {
+                include: {
+                  curriculum: {
+                    include: {
+                      units: {
+                        include: {
+                          lessons: { select: { id: true } },
+                        },
+                      },
+                    },
+                  },
+                },
+                orderBy: { order: "asc" },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
     },
   });
 

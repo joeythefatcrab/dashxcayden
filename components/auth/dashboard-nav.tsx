@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, RotateCcw, MessageSquare, UserCog, Clock, Shield, ChevronDown, ClipboardList, Activity } from "lucide-react";
+import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, RotateCcw, MessageSquare, UserCog, Clock, Shield, ChevronDown, ClipboardList, Activity, CalendarCheck } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -51,11 +51,13 @@ export function DashboardNav() {
   const adminCurriculumMenu = [
     { name: "Curricula", href: "/curricula", icon: BookOpen },
     { name: "Curriculum Access", href: "/curriculum-access", icon: Shield },
+    { name: "Programs", href: "/programs", icon: CalendarCheck },
   ];
 
   // Student navigation
   const studentNav = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
+    { name: "My Program", href: "/my-program", icon: CalendarCheck },
     { name: "My Courses", href: "/my-courses", icon: BookOpen },
     { name: "My Submissions", href: "/my-submissions", icon: ClipboardList },
     { name: "My Time", href: "/my-time", icon: Clock },
@@ -201,6 +203,10 @@ export function DashboardNav() {
           <Link href="/monthly-reports" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
             <FileText className="h-4 w-4" />
             Reports
+          </Link>
+          <Link href="/programs" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+            <CalendarCheck className="h-4 w-4" />
+            Programs
           </Link>
           <Link href="/settings" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
             <Settings className="h-4 w-4" />

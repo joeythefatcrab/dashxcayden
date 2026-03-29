@@ -156,6 +156,7 @@ model Student {
   dailyQuotes  DailyQuote[]
   dailyTimeLogs DailyTimeLog[]
   dailyAttendance DailyAttendance[]
+  programEnrollments ProgramEnrollment[]
 
   @@index([parentId])
   @@index([subscriptionActive])
@@ -186,6 +187,7 @@ model Curriculum {
   enrollments Enrollment[]
   dailyTimeLogs DailyTimeLog[]
   parentAccess ParentCurriculumAccess[]
+  programCourses ProgramCourse[]
 
   @@index([createdById])
 }
@@ -219,6 +221,10 @@ model Lesson {
   objectives  String[] // Array of learning objective codes
 
   attachmentUrl String? // Optional uploaded PDF (checksheet, etc.)
+
+  // Offline lesson support
+  isOffline    Boolean  @default(false)
+  lessonType   String   @default("ONLINE") // ONLINE | OFFLINE_CHECKBOX | OFFLINE_PARENT_SIGNOFF
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -612,6 +618,55 @@ model DailyQuote {
   student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId, createdAt])
+}
+
+// Yearly Curriculum Program
+model Program {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?  @db.Text
+  academicYear   String   // e.g. "2025-2026"
+  createdById    String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  programCourses ProgramCourse[]
+  enrollments    ProgramEnrollment[]
+
+  @@index([createdById])
+  @@index([academicYear])
+}
+
+model ProgramCourse {
+  id           String   @id @default(cuid())
+  programId    String
+  curriculumId String
+  order        Int      @default(0)
+  isRequired   Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  program    Program    @relation(fields: [programId], references: [id], onDelete: Cascade)
+  curriculum Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+
+  @@unique([programId, curriculumId])
+  @@index([programId])
+  @@index([curriculumId])
+}
+
+model ProgramEnrollment {
+  id          String    @id @default(cuid())
+  programId   String
+  studentId   String
+  enrolledAt  DateTime  @default(now())
+  completedAt DateTime?
+
+  program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([programId, studentId])
+  @@index([programId])
+  @@index([studentId])
 }
 
 // Single-use invite codes with preset roles

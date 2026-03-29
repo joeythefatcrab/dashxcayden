@@ -16,6 +16,7 @@ import {
   Sparkles,
   Loader2,
   MessageSquare,
+  CalendarCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { AIProgressInsights } from "./AIProgressInsights";
@@ -86,6 +87,37 @@ export function StudentProgressDashboard({ student }: StudentProgressDashboardPr
       attemptCount: lessonsAttempts.length,
     };
   });
+
+  // Build program stats from most recent enrollment
+  const latestProgramEnrollment = student.programEnrollments?.[0] ?? null;
+  const programStats = latestProgramEnrollment ? (() => {
+    const program = latestProgramEnrollment.program;
+    // Build a map of curriculumId -> completion % from existing enrollments
+    const enrollmentBycurriculum = new Map(
+      student.enrollments.map((e: any) => [e.curriculumId, e])
+    );
+    const courses = program.programCourses.map((pc: any) => {
+      const curriculum = pc.curriculum;
+      const enrollment = enrollmentBycurriculum.get(curriculum.id);
+      const allLessonIds = new Set(
+        curriculum.units.flatMap((u: any) => u.lessons.map((l: any) => l.id))
+      );
+      const totalLessons = allLessonIds.size;
+      let completedLessons = 0;
+      if (enrollment) {
+        const progress = (enrollment.progress as any) || {};
+        completedLessons = Object.entries(progress).filter(
+          ([id, p]: [string, any]) => allLessonIds.has(id) && p.completed
+        ).length;
+      }
+      const pct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+      return { id: curriculum.id, name: curriculum.name, subject: curriculum.subject, totalLessons, completedLessons, pct, isRequired: pc.isRequired };
+    });
+    const totalLessons = courses.reduce((s: number, c: any) => s + c.totalLessons, 0);
+    const completedLessons = courses.reduce((s: number, c: any) => s + c.completedLessons, 0);
+    const overallPct = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+    return { program, courses, totalLessons, completedLessons, overallPct };
+  })() : null;
 
   // Get performance level
   const getPerformanceLevel = (score: number) => {
@@ -202,6 +234,43 @@ export function StudentProgressDashboard({ student }: StudentProgressDashboardPr
           }}
         />
       </div>
+
+      {/* Year Program */}
+      {programStats && (
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarCheck className="h-5 w-5 text-primary" />
+                  {programStats.program.name}
+                </CardTitle>
+                <CardDescription>{programStats.program.academicYear} · Year Program</CardDescription>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold">{programStats.overallPct}%</div>
+                <p className="text-xs text-muted-foreground">{programStats.completedLessons}/{programStats.totalLessons} lessons</p>
+              </div>
+            </div>
+            <Progress value={programStats.overallPct} className="h-3 mt-3" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {programStats.courses.map((course: any) => (
+              <div key={course.id} className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{course.name}</span>
+                    {course.subject && <span className="text-muted-foreground">· {course.subject}</span>}
+                    {!course.isRequired && <span className="text-xs text-muted-foreground">(optional)</span>}
+                  </div>
+                  <span className="text-muted-foreground">{course.completedLessons}/{course.totalLessons} · {course.pct}%</span>
+                </div>
+                <Progress value={course.pct} className="h-2" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Course Progress */}
       <Card className="mb-8">

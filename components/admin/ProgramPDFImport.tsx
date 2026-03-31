@@ -14,9 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Upload, Loader2, FileText, CheckCircle2, XCircle,
-  BookOpen, PenLine, CheckSquare, Sparkles, AlertCircle,
+  BookOpen, PenLine, CheckSquare, Sparkles, AlertCircle, ClipboardPaste,
 } from "lucide-react";
 
 type ParsedChecklistItem = {
@@ -46,6 +47,8 @@ export function ProgramPDFImport({ programId }: { programId: string }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<"upload" | "review" | "done">("upload");
+  const [inputMode, setInputMode] = useState<"pdf" | "paste">("pdf");
+  const [pasteText, setPasteText] = useState("");
   const [parsing, setParsing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +84,28 @@ export function ProgramPDFImport({ programId }: { programId: string }) {
     } finally {
       setParsing(false);
       if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const handlePasteSubmit = async () => {
+    if (!pasteText.trim()) return;
+    setError(null);
+    setParsing(true);
+    try {
+      const res = await fetch("/api/admin/programs/parse-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: pasteText }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Failed to parse text"); return; }
+      setSections(data.sections || []);
+      setCurricula(data.curricula || []);
+      setStep("review");
+    } catch {
+      setError("Network error — please try again.");
+    } finally {
+      setParsing(false);
     }
   };
 
@@ -252,41 +277,80 @@ export function ProgramPDFImport({ programId }: { programId: string }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
-          Import Checklist from PDF
+          Import Checklist
         </CardTitle>
         <CardDescription>
-          Upload your yearly program PDF. AI extracts every section and item — courses link to your curricula, essays route to admin review.
+          Upload a PDF or paste your checklist text. AI extracts every section and item automatically.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {/* Mode toggle */}
+        <div className="flex gap-1 rounded-lg border p-1 w-fit">
+          <button
+            onClick={() => setInputMode("pdf")}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${inputMode === "pdf" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <Upload className="h-3.5 w-3.5" />Upload PDF
+          </button>
+          <button
+            onClick={() => setInputMode("paste")}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${inputMode === "paste" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <ClipboardPaste className="h-3.5 w-3.5" />Paste Text
+          </button>
+        </div>
+
         {error && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+          <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
             <AlertCircle className="h-4 w-4 shrink-0" />{error}
           </div>
         )}
-        <label className={`flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 text-center cursor-pointer transition-colors ${parsing ? "opacity-60 pointer-events-none" : "hover:border-primary/50 hover:bg-muted/30"}`}>
-          <input ref={fileRef} type="file" accept=".pdf" className="sr-only" onChange={handleFileChange} disabled={parsing} />
-          {parsing ? (
-            <>
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              <div>
-                <p className="font-medium">Parsing PDF…</p>
-                <p className="text-sm text-muted-foreground">AI is reading your program document</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <Upload className="h-10 w-10 text-muted-foreground" />
-              <div>
-                <p className="font-medium">Click to upload your yearly program PDF</p>
-                <p className="text-sm text-muted-foreground">Sections, checkboxes, essays, and courses detected automatically</p>
-              </div>
-              <Button type="button" variant="outline" size="sm" onClick={(e) => { e.preventDefault(); fileRef.current?.click(); }}>
-                Choose File
-              </Button>
-            </>
-          )}
-        </label>
+
+        {inputMode === "paste" ? (
+          <div className="space-y-3">
+            <Textarea
+              value={pasteText}
+              onChange={(e) => setPasteText(e.target.value)}
+              placeholder={"Paste your checklist here…\n\nExample:\nEnglish\n________Student read 20 books.\n________Submitted final essay.\n\nMathematics\n________Completed math workbook."}
+              rows={14}
+              className="font-mono text-sm"
+              disabled={parsing}
+            />
+            <Button
+              onClick={handlePasteSubmit}
+              disabled={parsing || !pasteText.trim()}
+              className="w-full gap-2"
+            >
+              {parsing
+                ? <><Loader2 className="h-4 w-4 animate-spin" />Parsing…</>
+                : <><Sparkles className="h-4 w-4" />Parse Checklist</>}
+            </Button>
+          </div>
+        ) : (
+          <label className={`flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 text-center cursor-pointer transition-colors ${parsing ? "opacity-60 pointer-events-none" : "hover:border-primary/50 hover:bg-muted/30"}`}>
+            <input ref={fileRef} type="file" accept=".pdf" className="sr-only" onChange={handleFileChange} disabled={parsing} />
+            {parsing ? (
+              <>
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <div>
+                  <p className="font-medium">Parsing PDF…</p>
+                  <p className="text-sm text-muted-foreground">AI is reading your program document</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <Upload className="h-10 w-10 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">Click to upload your yearly program PDF</p>
+                  <p className="text-sm text-muted-foreground">Sections, checkboxes, essays, and courses detected automatically</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={(e) => { e.preventDefault(); fileRef.current?.click(); }}>
+                  Choose File
+                </Button>
+              </>
+            )}
+          </label>
+        )}
       </CardContent>
     </Card>
   );

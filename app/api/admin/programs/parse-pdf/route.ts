@@ -36,23 +36,34 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-    if (!file) return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
-      return NextResponse.json({ error: "Only PDF files are supported" }, { status: 400 });
-    }
+    const contentType = req.headers.get("content-type") || "";
+    let rawText = "";
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const pdfParse = (await import("pdf-parse")).default;
-    const pdfData = await pdfParse(buffer);
-    const rawText = pdfData.text.trim();
-
-    if (!rawText || rawText.length < 20) {
-      return NextResponse.json(
-        { error: "Could not extract text from PDF. Is it a scanned image?" },
-        { status: 422 }
-      );
+    if (contentType.includes("application/json")) {
+      // Text paste mode
+      const { text } = await req.json();
+      rawText = (text || "").trim();
+      if (!rawText || rawText.length < 20) {
+        return NextResponse.json({ error: "Pasted text is too short to parse." }, { status: 422 });
+      }
+    } else {
+      // PDF upload mode
+      const formData = await req.formData();
+      const file = formData.get("file") as File | null;
+      if (!file) return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+      if (!file.name.toLowerCase().endsWith(".pdf")) {
+        return NextResponse.json({ error: "Only PDF files are supported" }, { status: 400 });
+      }
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const pdfParse = (await import("pdf-parse")).default;
+      const pdfData = await pdfParse(buffer);
+      rawText = pdfData.text.trim();
+      if (!rawText || rawText.length < 20) {
+        return NextResponse.json(
+          { error: "Could not extract text from PDF. Is it a scanned image?" },
+          { status: 422 }
+        );
+      }
     }
 
     const completion = await openai.chat.completions.create({

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { EmailPreferencesForm } from "@/components/settings/EmailPreferencesForm";
 import { ChangePasswordForm } from "@/components/settings/ChangePasswordForm";
+import { TestEmailButton } from "@/components/settings/TestEmailButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { DashboardNav } from "@/components/auth/dashboard-nav";
@@ -113,6 +114,19 @@ export default async function SettingsPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Test Email — all roles */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Test Email</CardTitle>
+                <CardDescription>
+                  Send a test email to confirm your Resend integration is working.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TestEmailButton defaultEmail={user.email} />
+              </CardContent>
+            </Card>
 
             {/* Email Preferences - Only for Parents */}
             {isParent && (

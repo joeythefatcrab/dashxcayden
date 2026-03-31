@@ -20,70 +20,90 @@ export async function POST(
     const program = await db.program.findUnique({ where: { id: programId } });
     if (!program) return NextResponse.json({ error: "Program not found" }, { status: 404 });
 
-    const { items } = await req.json() as {
-      items: Array<{
-        tempId: string;
+    const { sections } = await req.json() as {
+      sections: Array<{
         title: string;
-        description: string;
-        type: string;
-        hoursRequired?: number;
-        selectedCurriculumId?: string;
-        skip?: boolean;
+        items: Array<{
+          tempId: string;
+          sectionTitle: string;
+          title: string;
+          description: string;
+          itemType: "CHECKBOX" | "ESSAY" | "COURSE_LINK";
+          isOptional: boolean;
+          requiresReview: boolean;
+          selectedCurriculumId?: string;
+          skip?: boolean;
+        }>;
       }>;
     };
 
-    if (!Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: "No items provided" }, { status: 400 });
+    if (!Array.isArray(sections) || sections.length === 0) {
+      return NextResponse.json({ error: "No sections provided" }, { status: 400 });
     }
 
-    // Determine current max order for courses and activities
-    const [maxCourseOrder, maxActivityOrder] = await Promise.all([
-      db.programCourse.findFirst({ where: { programId }, orderBy: { order: "desc" }, select: { order: true } }),
-      db.programActivity.findFirst({ where: { programId }, orderBy: { order: "desc" }, select: { order: true } }),
-    ]);
+    const maxOrder = await db.programChecklistItem.findFirst({
+      where: { programId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
+    let order = (maxOrder?.order ?? -1) + 1;
 
+    const maxCourseOrder = await db.programCourse.findFirst({
+      where: { programId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
     let courseOrder = (maxCourseOrder?.order ?? -1) + 1;
-    let activityOrder = (maxActivityOrder?.order ?? -1) + 1;
 
+    let checklistAdded = 0;
     let coursesAdded = 0;
-    let activitiesAdded = 0;
     let skipped = 0;
 
-    for (const item of items) {
-      if (item.skip) { skipped++; continue; }
+    for (const section of sections) {
+      for (const item of section.items) {
+        if (item.skip) { skipped++; continue; }
 
-      if (item.type === "COURSE" && item.selectedCurriculumId) {
-        // Upsert: skip if already in program
-        await db.programCourse.upsert({
-          where: { programId_curriculumId: { programId, curriculumId: item.selectedCurriculumId } },
-          update: {},
-          create: {
-            programId,
-            curriculumId: item.selectedCurriculumId,
-            order: courseOrder++,
-            isRequired: true,
-          },
-        });
-        coursesAdded++;
-      } else if (item.type !== "COURSE") {
-        await db.programActivity.create({
+        // Every non-skipped item becomes a checklist item
+        await db.programChecklistItem.create({
           data: {
             programId,
+            sectionTitle: section.title,
             title: item.title,
             description: item.description || null,
-            activityType: item.type,
-            hoursRequired: item.hoursRequired ?? null,
-            order: activityOrder++,
+            itemType: item.itemType,
+            curriculumId: item.itemType === "COURSE_LINK" && item.selectedCurriculumId
+              ? item.selectedCurriculumId
+              : null,
+            isOptional: item.isOptional,
+            requiresReview: item.requiresReview,
+            order: order++,
           },
         });
-        activitiesAdded++;
-      } else {
-        // COURSE type but no curriculum selected — skip
-        skipped++;
+        checklistAdded++;
+
+        // COURSE_LINK items with a matched curriculum also become a ProgramCourse
+        if (item.itemType === "COURSE_LINK" && item.selectedCurriculumId) {
+          await db.programCourse.upsert({
+            where: {
+              programId_curriculumId: {
+                programId,
+                curriculumId: item.selectedCurriculumId,
+              },
+            },
+            update: {},
+            create: {
+              programId,
+              curriculumId: item.selectedCurriculumId,
+              order: courseOrder++,
+              isRequired: !item.isOptional,
+            },
+          });
+          coursesAdded++;
+        }
       }
     }
 
-    return NextResponse.json({ coursesAdded, activitiesAdded, skipped });
+    return NextResponse.json({ checklistAdded, coursesAdded, skipped });
   } catch (error) {
     console.error("Import items error:", error);
     return NextResponse.json({ error: "Failed to import items" }, { status: 500 });

@@ -633,6 +633,7 @@ model Program {
 
   programCourses     ProgramCourse[]
   programActivities  ProgramActivity[]
+  checklistItems     ProgramChecklistItem[]
   enrollments        ProgramEnrollment[]
 
   @@index([createdById])
@@ -677,12 +678,53 @@ model ProgramEnrollment {
   enrolledAt  DateTime  @default(now())
   completedAt DateTime?
 
-  program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  program     Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  student     Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  completions ProgramItemCompletion[]
 
   @@unique([programId, studentId])
   @@index([programId])
   @@index([studentId])
+}
+
+model ProgramChecklistItem {
+  id             String   @id @default(cuid())
+  programId      String
+  sectionTitle   String?
+  title          String
+  description    String?  @db.Text
+  itemType       String   @default("CHECKBOX") // CHECKBOX | ESSAY | COURSE_LINK
+  curriculumId   String?
+  isOptional     Boolean  @default(false)
+  requiresReview Boolean  @default(false)
+  order          Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  program     Program                @relation(fields: [programId], references: [id], onDelete: Cascade)
+  completions ProgramItemCompletion[]
+
+  @@index([programId])
+}
+
+model ProgramItemCompletion {
+  id           String    @id @default(cuid())
+  enrollmentId String
+  itemId       String
+  status       String    @default("PENDING") // PENDING | IN_PROGRESS | DONE | SUBMITTED | APPROVED | OPT_OUT | MOVE
+  content      String?   @db.Text
+  adminNote    String?   @db.Text
+  completedAt  DateTime?
+  reviewedAt   DateTime?
+  reviewedById String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  enrollment ProgramEnrollment    @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  item       ProgramChecklistItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, itemId])
+  @@index([enrollmentId])
+  @@index([itemId])
 }
 
 // Single-use invite codes with preset roles

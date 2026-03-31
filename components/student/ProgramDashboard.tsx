@@ -130,12 +130,20 @@ export function ProgramDashboard() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Courses</h2>
-          <Link href="/my-program/checksheet">
-            <Button variant="outline" size="sm">
-              <CheckSquare className="mr-2 h-4 w-4" />
-              Full Checksheet
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/my-program/checklist">
+              <Button variant="default" size="sm">
+                <CheckSquare className="mr-2 h-4 w-4" />
+                Yearly Checklist
+              </Button>
+            </Link>
+            <Link href="/my-program/checksheet">
+              <Button variant="outline" size="sm">
+                <CheckSquare className="mr-2 h-4 w-4" />
+                Checksheet
+              </Button>
+            </Link>
+          </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {data.courses.map((course) => {

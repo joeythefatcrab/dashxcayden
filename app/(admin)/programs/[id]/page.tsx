@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { ProgramEditor } from "@/components/admin/ProgramEditor";
 import { ProgramPDFImport } from "@/components/admin/ProgramPDFImport";
+import { ChecklistReviewPanel } from "@/components/admin/ChecklistReviewPanel";
 
 export default async function ProgramDetailPage({
   params,
@@ -58,6 +59,7 @@ export default async function ProgramDetailPage({
         allStudents={allStudents}
       />
       <ProgramPDFImport programId={id} />
+      <ChecklistReviewPanel programId={id} />
     </div>
   );
 }

@@ -30,6 +30,8 @@ interface ParentDigestEmailProps {
   students: StudentProgress[];
   frequency: "daily" | "weekly";
   dashboardUrl: string;
+  showLessons?: boolean;
+  showScores?: boolean;
 }
 
 export const ParentDigestEmail = ({
@@ -37,6 +39,8 @@ export const ParentDigestEmail = ({
   students = [],
   frequency = "daily",
   dashboardUrl = "https://homeschoolhub.com/dashboard",
+  showLessons = true,
+  showScores = true,
 }: ParentDigestEmailProps) => {
   const previewText = `Your ${frequency} learning update for ${students.map((s) => s.name).join(", ")}`;
 
@@ -64,16 +68,22 @@ export const ParentDigestEmail = ({
                 <Heading style={h2}>🎓 {student.name}</Heading>
 
                 {/* Stats */}
-                <div style={statsContainer}>
-                  <div style={statBox}>
-                    <Text style={statNumber}>{student.lessonsCompleted}</Text>
-                    <Text style={statLabel}>Lessons Completed</Text>
+                {(showLessons || showScores) && (
+                  <div style={statsContainer}>
+                    {showLessons && (
+                      <div style={statBox}>
+                        <Text style={statNumber}>{student.lessonsCompleted}</Text>
+                        <Text style={statLabel}>Lessons Completed</Text>
+                      </div>
+                    )}
+                    {showScores && (
+                      <div style={statBox}>
+                        <Text style={statNumber}>{student.averageScore}%</Text>
+                        <Text style={statLabel}>Average Score</Text>
+                      </div>
+                    )}
                   </div>
-                  <div style={statBox}>
-                    <Text style={statNumber}>{student.averageScore}%</Text>
-                    <Text style={statLabel}>Average Score</Text>
-                  </div>
-                </div>
+                )}
 
                 {student.topCurriculum && (
                   <Text style={curriculumText}>

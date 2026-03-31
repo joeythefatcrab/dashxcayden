@@ -1,6 +1,10 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { resend, SENDER_EMAIL, isResendConfigured } from "@/lib/email/resend";
+import { EssaySubmissionAlert } from "@/emails/EssaySubmissionAlert";
+import { render } from "@react-email/render";
+import { format } from "date-fns";
 
 // POST /api/student/my-checklist/[itemId]
 // Body: { enrollmentId, status, content? }
@@ -26,6 +30,7 @@ export async function POST(
     // Verify enrollment exists
     const enrollment = await db.programEnrollment.findUnique({
       where: { id: enrollmentId },
+      include: { student: { include: { parent: { select: { id: true, email: true, name: true, notifyEmail: true, emailPrefsJson: true } } } } },
     });
     if (!enrollment) return NextResponse.json({ error: "Enrollment not found" }, { status: 404 });
 
@@ -45,6 +50,42 @@ export async function POST(
         completedAt: status === "DONE" || status === "SUBMITTED" ? new Date() : null,
       },
     });
+
+    // Send essay submission alert to parent when status = SUBMITTED
+    if (status === "SUBMITTED" && isResendConfigured()) {
+      const parent = enrollment.student?.parent;
+      if (parent?.notifyEmail && parent.email) {
+        let prefs: Record<string, boolean> = {};
+        try { prefs = JSON.parse(parent.emailPrefsJson || "{}"); } catch {}
+        const essayAlerts = prefs.essayAlerts !== false; // default true
+
+        if (essayAlerts) {
+          const item = await db.programChecklistItem.findUnique({ where: { id: itemId }, select: { title: true } });
+          const appUrl = process.env.NEXTAUTH_URL || "https://example.com";
+          const enrollmentProgramId = enrollment.programId;
+          try {
+            const html = await render(
+              EssaySubmissionAlert({
+                parentName: parent.name || "Parent",
+                studentName: enrollment.student?.name || "Your student",
+                essayTitle: item?.title || "Essay",
+                submittedAt: format(new Date(), "MMM d, yyyy 'at' h:mm a"),
+                reviewUrl: `${appUrl}/programs/${enrollmentProgramId}/submissions`,
+              })
+            );
+            await resend.emails.send({
+              from: SENDER_EMAIL,
+              to: parent.email,
+              subject: `${enrollment.student?.name || "Your student"} submitted an essay for review`,
+              html,
+            });
+          } catch (emailErr) {
+            console.error("Essay alert email failed:", emailErr);
+            // Non-fatal — don't fail the whole request
+          }
+        }
+      }
+    }
 
     return NextResponse.json(completion);
   } catch (error) {

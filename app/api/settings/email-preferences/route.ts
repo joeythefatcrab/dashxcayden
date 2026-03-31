@@ -10,7 +10,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { digestFrequency, notifyEmail } = await req.json();
+    const { digestFrequency, notifyEmail, emailPrefsJson } = await req.json();
 
     // Validate input
     if (!["daily", "weekly", "none"].includes(digestFrequency)) {
@@ -27,12 +27,24 @@ export async function POST(req: Request) {
       );
     }
 
+    // Validate emailPrefsJson is valid JSON if provided
+    let prefsJson = "{}";
+    if (emailPrefsJson) {
+      try {
+        JSON.parse(emailPrefsJson); // validate
+        prefsJson = emailPrefsJson;
+      } catch {
+        return NextResponse.json({ error: "Invalid emailPrefsJson" }, { status: 400 });
+      }
+    }
+
     // Update user preferences
     await db.user.update({
       where: { id: session.user.id },
       data: {
         digestFrequency,
         notifyEmail,
+        emailPrefsJson: prefsJson,
       },
     });
 

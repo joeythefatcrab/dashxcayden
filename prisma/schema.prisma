@@ -112,6 +112,7 @@ model User {
   notifyEmail     Boolean @default(true)
   notifySms       Boolean @default(false)
   phoneNumber     String?
+  emailPrefsJson  String @default("{}") // JSON: { lessonCompletions, scores, checklistUpdates, essayAlerts }
 
   // UI preferences
   theme           String @default("light") // light, dark, system

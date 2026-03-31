@@ -25,7 +25,7 @@ export async function GET(req: Request) {
 
   const parents = await db.user.findMany({
     where: { role: "PARENT", digestFrequency: "weekly", notifyEmail: true },
-    select: { id: true, email: true, name: true },
+    select: { id: true, email: true, name: true, emailPrefsJson: true },
   });
 
   let sent = 0;
@@ -40,6 +40,10 @@ export async function GET(req: Request) {
       skipped++;
       continue;
     }
+    let prefs: Record<string, boolean> = {};
+    try { prefs = JSON.parse(parent.emailPrefsJson || "{}"); } catch {}
+    const showLessons = prefs.lessonCompletions !== false;
+    const showScores = prefs.scores !== false;
     try {
       const html = await render(
         ParentDigestEmail({
@@ -47,6 +51,8 @@ export async function GET(req: Request) {
           students: data.students,
           frequency: "weekly",
           dashboardUrl: `${appUrl}/dashboard`,
+          showLessons,
+          showScores,
         })
       );
       await resend.emails.send({

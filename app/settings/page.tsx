@@ -21,6 +21,7 @@ export default async function SettingsPage() {
     select: {
       digestFrequency: true,
       notifyEmail: true,
+      emailPrefsJson: true,
       email: true,
       name: true,
       role: true,
@@ -141,6 +142,7 @@ export default async function SettingsPage() {
                   <EmailPreferencesForm
                     initialDigestFrequency={user.digestFrequency}
                     initialNotifyEmail={user.notifyEmail}
+                    initialEmailPrefsJson={user.emailPrefsJson}
                   />
                 </CardContent>
               </Card>

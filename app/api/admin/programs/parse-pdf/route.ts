@@ -38,6 +38,7 @@ export async function POST(req: Request) {
 
     const contentType = req.headers.get("content-type") || "";
     let rawText = "";
+    let pageCount: number | undefined;
 
     if (contentType.includes("application/json")) {
       // Text paste mode
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
       const pdfParse = (await import("pdf-parse")).default;
       const pdfData = await pdfParse(buffer);
       rawText = pdfData.text.trim();
+      pageCount = pdfData.numpages;
       if (!rawText || rawText.length < 20) {
         return NextResponse.json(
           { error: "Could not extract text from PDF. Is it a scanned image?" },
@@ -170,7 +172,7 @@ Parse every item you see — do not skip or merge items. Preserve the document's
     return NextResponse.json({
       sections: enrichedSections,
       curricula: curricula.map((c) => ({ id: c.id, name: c.name, subject: c.subject })),
-      pageCount: pdfData.numpages,
+      pageCount,
     });
   } catch (error: any) {
     console.error("PDF parse error:", error);

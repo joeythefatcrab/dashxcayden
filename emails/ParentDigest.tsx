@@ -12,11 +12,20 @@ import {
 } from "@react-email/components";
 import * as React from "react";
 
+interface TimeEntry {
+  curriculumName: string;
+  minutesSpent: number;
+  description?: string;
+  date: string;
+}
+
 interface StudentProgress {
   name: string;
   lessonsCompleted: number;
   averageScore: number;
   topCurriculum: string;
+  totalMinutes: number;
+  timeEntries: TimeEntry[];
   recentActivities: Array<{
     type: string;
     lessonTitle: string;
@@ -32,6 +41,13 @@ interface ParentDigestEmailProps {
   dashboardUrl: string;
   showLessons?: boolean;
   showScores?: boolean;
+}
+
+function fmtMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
 export const ParentDigestEmail = ({
@@ -58,32 +74,37 @@ export const ParentDigestEmail = ({
           <Text style={greeting}>Hi {parentName}! 👋</Text>
 
           <Text style={intro}>
-            Here's your {frequency} update on your {students.length === 1 ? "child's" : "children's"} learning journey:
+            Here's your {frequency} update on your{" "}
+            {students.length === 1 ? "child's" : "children's"} learning journey:
           </Text>
 
-          {/* Student Progress Sections */}
+          {/* Student sections */}
           {students.map((student, index) => (
             <div key={index}>
               <Section style={studentSection}>
                 <Heading style={h2}>🎓 {student.name}</Heading>
 
-                {/* Stats */}
-                {(showLessons || showScores) && (
-                  <div style={statsContainer}>
-                    {showLessons && (
-                      <div style={statBox}>
-                        <Text style={statNumber}>{student.lessonsCompleted}</Text>
-                        <Text style={statLabel}>Lessons Completed</Text>
-                      </div>
-                    )}
-                    {showScores && (
-                      <div style={statBox}>
-                        <Text style={statNumber}>{student.averageScore}%</Text>
-                        <Text style={statLabel}>Average Score</Text>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Stats row */}
+                <div style={statsContainer}>
+                  {showLessons && (
+                    <div style={statBox}>
+                      <Text style={statNumber}>{student.lessonsCompleted}</Text>
+                      <Text style={statLabel}>Lessons Completed</Text>
+                    </div>
+                  )}
+                  {showScores && student.averageScore > 0 && (
+                    <div style={statBox}>
+                      <Text style={statNumber}>{student.averageScore}%</Text>
+                      <Text style={statLabel}>Average Score</Text>
+                    </div>
+                  )}
+                  {student.totalMinutes > 0 && (
+                    <div style={statBox}>
+                      <Text style={statNumber}>{fmtMinutes(student.totalMinutes)}</Text>
+                      <Text style={statLabel}>Time Logged</Text>
+                    </div>
+                  )}
+                </div>
 
                 {student.topCurriculum && (
                   <Text style={curriculumText}>
@@ -91,17 +112,36 @@ export const ParentDigestEmail = ({
                   </Text>
                 )}
 
-                {/* Recent Activities */}
+                {/* Time log entries */}
+                {student.timeEntries.length > 0 && (
+                  <>
+                    <Text style={sectionHeading}>⏱ Time Log:</Text>
+                    {student.timeEntries.map((entry, i) => (
+                      <div key={i} style={timeLogItem}>
+                        <div style={timeLogRow}>
+                          <Text style={timeLogCurriculum}>{entry.curriculumName}</Text>
+                          <Text style={timeLogDuration}>{fmtMinutes(entry.minutesSpent)}</Text>
+                        </div>
+                        {entry.description && (
+                          <Text style={timeLogDesc}>{entry.description}</Text>
+                        )}
+                        <Text style={timeLogDate}>{entry.date}</Text>
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {/* Recent activity */}
                 {student.recentActivities.length > 0 && (
                   <>
-                    <Text style={activitiesHeading}>Recent Activity:</Text>
+                    <Text style={sectionHeading}>Recent Activity:</Text>
                     {student.recentActivities.map((activity, actIndex) => (
                       <div key={actIndex} style={activityItem}>
                         <Text style={activityText}>
                           {activity.type === "lesson_completed" ? "✅" : "📖"}{" "}
                           <strong>{activity.lessonTitle}</strong>
                           {activity.score !== undefined && (
-                            <span style={scoreText}> - {activity.score}%</span>
+                            <span style={scoreText}> — {activity.score}%</span>
                           )}
                         </Text>
                         <Text style={activityTime}>{activity.timestamp}</Text>
@@ -125,7 +165,8 @@ export const ParentDigestEmail = ({
           {/* Footer */}
           <Hr style={hr} />
           <Text style={footer}>
-            You're receiving this {frequency} digest because you've chosen to get updates about your children's progress.
+            You're receiving this {frequency} digest because you've chosen to get updates about
+            your children's progress.
             <br />
             <Link href={`${dashboardUrl}/settings`} style={link}>
               Change email preferences
@@ -139,10 +180,12 @@ export const ParentDigestEmail = ({
 
 export default ParentDigestEmail;
 
-// Styles
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const main = {
   backgroundColor: "#f9fafb",
-  fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
+  fontFamily:
+    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
 };
 
 const container = {
@@ -188,53 +231,90 @@ const h2 = {
   margin: "0 0 20px",
 };
 
-const studentSection = {
-  padding: "20px 0",
-};
+const studentSection = { padding: "20px 0" };
 
 const statsContainer = {
   display: "flex",
-  gap: "20px",
+  gap: "12px",
   marginBottom: "20px",
+  flexWrap: "wrap" as const,
 };
 
 const statBox = {
   flex: "1",
+  minWidth: "100px",
   textAlign: "center" as const,
-  padding: "20px",
+  padding: "16px",
   backgroundColor: "#fef3c7",
   borderRadius: "8px",
 };
 
 const statNumber = {
-  fontSize: "32px",
+  fontSize: "28px",
   fontWeight: "700",
   color: "#f59e0b",
   margin: "0",
 };
 
 const statLabel = {
-  fontSize: "14px",
+  fontSize: "13px",
   color: "#78716c",
-  margin: "5px 0 0",
+  margin: "4px 0 0",
 };
 
 const curriculumText = {
-  fontSize: "16px",
+  fontSize: "15px",
   color: "#6b7280",
-  margin: "0 0 20px",
+  margin: "0 0 16px",
 };
 
-const activitiesHeading = {
-  fontSize: "16px",
+const sectionHeading = {
+  fontSize: "15px",
   fontWeight: "600",
   color: "#111827",
-  margin: "20px 0 10px",
+  margin: "20px 0 8px",
 };
 
-const activityItem = {
-  marginBottom: "12px",
+const timeLogItem = {
+  backgroundColor: "#f9fafb",
+  borderRadius: "6px",
+  padding: "10px 14px",
+  marginBottom: "8px",
 };
+
+const timeLogRow = {
+  display: "flex",
+  justifyContent: "space-between",
+};
+
+const timeLogCurriculum = {
+  fontSize: "14px",
+  fontWeight: "600",
+  color: "#374151",
+  margin: "0",
+};
+
+const timeLogDuration = {
+  fontSize: "14px",
+  fontWeight: "700",
+  color: "#f59e0b",
+  margin: "0",
+};
+
+const timeLogDesc = {
+  fontSize: "13px",
+  color: "#6b7280",
+  margin: "3px 0 0",
+  fontStyle: "italic",
+};
+
+const timeLogDate = {
+  fontSize: "12px",
+  color: "#9ca3af",
+  margin: "3px 0 0",
+};
+
+const activityItem = { marginBottom: "12px" };
 
 const activityText = {
   fontSize: "15px",
@@ -254,10 +334,7 @@ const activityTime = {
   margin: "4px 0 0",
 };
 
-const hr = {
-  borderColor: "#e5e7eb",
-  margin: "30px 0",
-};
+const hr = { borderColor: "#e5e7eb", margin: "30px 0" };
 
 const ctaSection = {
   textAlign: "center" as const,
@@ -283,7 +360,4 @@ const footer = {
   lineHeight: "20px",
 };
 
-const link = {
-  color: "#f97316",
-  textDecoration: "underline",
-};
+const link = { color: "#f97316", textDecoration: "underline" };

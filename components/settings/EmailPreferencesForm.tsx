@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 
@@ -118,16 +118,16 @@ export function EmailPreferencesForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Master toggle */}
-      <div className="flex items-center justify-between">
-        <div>
-          <Label htmlFor="notifyEmail" className="text-sm font-medium">Enable email notifications</Label>
-          <p className="text-xs text-muted-foreground">Receive email updates about your children's progress</p>
-        </div>
-        <Switch
+      <div className="flex items-center gap-3">
+        <Checkbox
           id="notifyEmail"
           checked={notifyEmail}
-          onCheckedChange={setNotifyEmail}
+          onCheckedChange={(checked) => setNotifyEmail(checked as boolean)}
         />
+        <div>
+          <Label htmlFor="notifyEmail" className="text-sm font-medium cursor-pointer">Enable email notifications</Label>
+          <p className="text-xs text-muted-foreground">Receive email updates about your children's progress</p>
+        </div>
       </div>
 
       {notifyEmail && (
@@ -170,9 +170,9 @@ export function EmailPreferencesForm({
                     <p className="text-sm font-medium">{label}</p>
                     <p className="text-xs text-muted-foreground">{description}</p>
                   </div>
-                  <Switch
+                  <Checkbox
                     checked={prefs[key]}
-                    onCheckedChange={(v) => setPref(key, v)}
+                    onCheckedChange={(v) => setPref(key, v as boolean)}
                     disabled={key === "essayAlerts" ? false : digestFrequency === "none"}
                   />
                 </div>

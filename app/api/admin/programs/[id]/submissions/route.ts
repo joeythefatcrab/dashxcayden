@@ -82,3 +82,41 @@ export async function PATCH(
     return NextResponse.json({ error: "Failed to update submission" }, { status: 500 });
   }
 }
+
+// DELETE — cancel/dismiss a revision request (clears adminNote, resets to SUBMITTED)
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await params;
+    const session = await auth();
+    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // @ts-ignore
+    const userRole: string = session.user.realRole || session.user.role || "";
+    if (!["ADMIN", "SUPERADMIN"].includes(userRole)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { completionId } = await req.json();
+    if (!completionId) {
+      return NextResponse.json({ error: "completionId required" }, { status: 400 });
+    }
+
+    const updated = await db.programItemCompletion.update({
+      where: { id: completionId },
+      data: {
+        status: "SUBMITTED",
+        adminNote: null,
+        reviewedAt: new Date(),
+        reviewedById: session.user.id,
+      },
+    });
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error("submissions DELETE error:", error);
+    return NextResponse.json({ error: "Failed to cancel revision" }, { status: 500 });
+  }
+}

@@ -21,8 +21,10 @@ export async function POST(req: Request) {
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     // @ts-ignore
-    const role = session.user.realRole || session.user.role;
-    if (!["PARENT", "ADMIN", "SUPERADMIN"].includes(role)) {
+    const role: string = session.user.realRole || session.user.role || "";
+    // @ts-ignore
+    const isImpersonating = !!session.user.isImpersonating;
+    if (!isImpersonating && !["PARENT", "ADMIN", "SUPERADMIN"].includes(role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -45,7 +47,7 @@ export async function POST(req: Request) {
 
     if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });
 
-    if (role === "PARENT" && report.student.parent?.id !== session.user.id) {
+    if (role === "PARENT" && !isImpersonating && report.student.parent?.id !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

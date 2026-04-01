@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, RotateCcw, Loader2, PenLine, ChevronDown, ChevronUp } from "lucide-react";
+import { CheckCircle2, RotateCcw, Loader2, PenLine, ChevronDown, ChevronUp, X } from "lucide-react";
 
 type Submission = {
   id: string;
@@ -31,6 +31,24 @@ export function ChecklistReviewPanel({ programId }: { programId: string }) {
       .then((data) => setSubmissions(Array.isArray(data) ? data : []))
       .finally(() => setLoading(false));
   }, [programId]);
+
+  const cancelRevision = async (completionId: string) => {
+    setSaving(completionId);
+    try {
+      const res = await fetch(`/api/admin/programs/${programId}/submissions`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completionId }),
+      });
+      if (!res.ok) return;
+      const updated = await res.json();
+      setSubmissions((prev) =>
+        prev.map((s) => (s.id === completionId ? { ...s, ...updated } : s))
+      );
+    } finally {
+      setSaving(null);
+    }
+  };
 
   const review = async (completionId: string, status: "APPROVED" | "PENDING") => {
     setSaving(completionId);
@@ -135,7 +153,7 @@ export function ChecklistReviewPanel({ programId }: { programId: string }) {
 
             {/* Actions */}
             {sub.status !== "APPROVED" && (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
                   className="gap-1"
@@ -145,16 +163,30 @@ export function ChecklistReviewPanel({ programId }: { programId: string }) {
                   {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                   Approve
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1"
-                  disabled={isSaving}
-                  onClick={() => review(sub.id, "PENDING")}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Return for Revision
-                </Button>
+                {sub.status === "SUBMITTED" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                    disabled={isSaving}
+                    onClick={() => review(sub.id, "PENDING")}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Return for Revision
+                  </Button>
+                )}
+                {sub.status === "PENDING" && sub.adminNote && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1 text-destructive hover:text-destructive"
+                    disabled={isSaving}
+                    onClick={() => cancelRevision(sub.id)}
+                  >
+                    <X className="h-4 w-4" />
+                    Cancel Revision
+                  </Button>
+                )}
               </div>
             )}
 

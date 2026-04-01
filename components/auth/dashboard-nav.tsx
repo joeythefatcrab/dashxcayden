@@ -27,13 +27,18 @@ export function DashboardNav() {
   const router = useRouter();
   const role = session?.user?.role;
 
+  // Unified revision count — works for STUDENT, PARENT, and ADMIN/SUPERADMIN
   useEffect(() => {
-    if (role === "STUDENT") {
-      fetch("/api/student/revision-count")
+    if (!role) return;
+    const poll = () => {
+      fetch("/api/revision-count")
         .then((r) => r.json())
         .then((d) => setRevisionCount(d.count || 0))
         .catch(() => {});
-    }
+    };
+    poll();
+    const id = setInterval(poll, 30_000);
+    return () => clearInterval(id);
   }, [role]);
 
   useEffect(() => {
@@ -120,7 +125,7 @@ export function DashboardNav() {
 
       <NavDropdown label="People" icon={<Users className="h-4 w-4" />} triggerClass={dropTrigger} items={adminPeopleMenu} />
       <NavDropdown label="Content" icon={<BookOpen className="h-4 w-4" />} triggerClass={dropTrigger} items={adminContentMenu} />
-      <NavDropdown label="Track" icon={<Activity className="h-4 w-4" />} triggerClass={dropTrigger} items={adminTrackMenu} badge={pendingReports} />
+      <NavDropdown label="Track" icon={<Activity className="h-4 w-4" />} triggerClass={dropTrigger} items={adminTrackMenu} badge={pendingReports + revisionCount} />
     </>
   );
 
@@ -146,6 +151,11 @@ export function DashboardNav() {
         <Link key={item.name} href={item.href} className={navLink}>
           <item.icon className="h-4 w-4" />
           {item.name}
+          {item.name === "Students" && revisionCount > 0 && (
+            <span className="ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+              {revisionCount > 9 ? "9+" : revisionCount}
+            </span>
+          )}
         </Link>
       ))}
     </>
@@ -184,7 +194,13 @@ export function DashboardNav() {
         <>
           {parentNav.map((item) => (
             <Link key={item.name} href={item.href} className={mobileLink} onClick={close}>
-              <item.icon className="h-4 w-4" />{item.name}
+              <item.icon className="h-4 w-4" />
+              {item.name}
+              {item.name === "Students" && revisionCount > 0 && (
+                <span className="ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                  {revisionCount > 9 ? "9+" : revisionCount}
+                </span>
+              )}
             </Link>
           ))}
           <Link href="/settings" className={mobileLink} onClick={close}><Settings className="h-4 w-4" />Settings</Link>

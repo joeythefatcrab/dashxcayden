@@ -6,7 +6,7 @@ export async function PATCH(req: NextRequest) {
   const session = await auth();
   // @ts-ignore
   const realRole = session?.user?.realRole || session?.user?.role;
-  if (!session?.user || !["ADMIN", "SUPERADMIN"].includes(realRole)) {
+  if (!session?.user || !["ADMIN", "SUPERADMIN"].includes(realRole ?? "")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

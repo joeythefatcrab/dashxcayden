@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { EmailPreferencesForm } from "@/components/settings/EmailPreferencesForm";
 import { ChangePasswordForm } from "@/components/settings/ChangePasswordForm";
 import { TestEmailButton } from "@/components/settings/TestEmailButton";
+import { AdminNotifyToggle } from "@/components/settings/AdminNotifyToggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { DashboardNav } from "@/components/auth/dashboard-nav";
@@ -22,6 +23,7 @@ export default async function SettingsPage() {
       digestFrequency: true,
       notifyEmail: true,
       emailPrefsJson: true,
+      notifyOnReportSubmission: true,
       email: true,
       name: true,
       role: true,
@@ -37,6 +39,7 @@ export default async function SettingsPage() {
   }
 
   const isParent = user.role === "PARENT";
+  const isAdmin = user.role === "ADMIN" || user.role === "SUPERADMIN";
 
   // Fetch students for parents (for subscription management)
   let students: any[] = [];
@@ -128,6 +131,21 @@ export default async function SettingsPage() {
                 <TestEmailButton defaultEmail={user.email} />
               </CardContent>
             </Card>
+
+            {/* Report submission notifications — admins only */}
+            {isAdmin && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Report Notifications</CardTitle>
+                  <CardDescription>
+                    Receive an email with a PDF-ready attachment whenever a parent submits a monthly report
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AdminNotifyToggle initialValue={user.notifyOnReportSubmission} />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Email Preferences - Only for Parents */}
             {isParent && (

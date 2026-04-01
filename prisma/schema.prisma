@@ -110,6 +110,7 @@ model User {
   // Parent settings
   digestFrequency String @default("daily") // daily, weekly, none
   notifyEmail     Boolean @default(true)
+  notifyOnReportSubmission Boolean @default(false) // admin: receive email when parent submits a report
   notifySms       Boolean @default(false)
   phoneNumber     String?
   emailPrefsJson  String @default("{}") // JSON: { lessonCompletions, scores, checklistUpdates, essayAlerts }
@@ -542,6 +543,9 @@ model MonthlyReport {
   attendanceData  Json?               @default("{}") // { "present": 20, "sick": 1, "vacation": 2 }
   parentNotes     String?             @db.Text       // Custom notes from parent
   educatorEvaluation Json?            // Answers to APS educator evaluation questions
+
+  // Submission
+  submittedAt     DateTime?           // Set when parent clicks Submit; null = draft
 
   // Metadata
   createdAt       DateTime            @default(now())

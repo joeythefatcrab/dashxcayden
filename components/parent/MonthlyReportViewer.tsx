@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, Printer, Pencil } from "lucide-react";
+import { Loader2, Plus, Trash2, Printer, Pencil, Send, CheckCircle2 } from "lucide-react";
 import { ExternalActivityForm } from "./ExternalActivityForm";
 import { DayAttendancePicker } from "./DayAttendancePicker";
 import { ParentNotesEditor } from "./ParentNotesEditor";
@@ -43,6 +43,8 @@ export function MonthlyReportViewer({ students }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [showActivityForm, setShowActivityForm] = useState(false);
   const [editingActivity, setEditingActivity] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitResult, setSubmitResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   const months = [
     "January", "February", "March", "April", "May", "June",
@@ -104,6 +106,30 @@ export function MonthlyReportViewer({ students }: Props) {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleSubmitReport = async () => {
+    if (!reportData?.report?.id) return;
+    setIsSubmitting(true);
+    setSubmitResult(null);
+    try {
+      const res = await fetch("/api/parent/submit-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reportId: reportData.report.id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSubmitResult({ ok: true, message: `Report submitted! ${data.emailResult?.sent > 0 ? `${data.emailResult.sent} admin${data.emailResult.sent !== 1 ? "s" : ""} notified by email.` : ""}` });
+        await loadReportData();
+      } else {
+        setSubmitResult({ ok: false, message: data.error || "Failed to submit report." });
+      }
+    } catch {
+      setSubmitResult({ ok: false, message: "Network error — please try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const selectedStudentData = students.find((s) => s.id === selectedStudent);
@@ -374,19 +400,43 @@ export function MonthlyReportViewer({ students }: Props) {
           {/* Report Preview */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Report Preview</CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePrint}
-                >
-                  <Printer className="mr-2 h-4 w-4" />
-                  Print / Save PDF
-                </Button>
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <CardTitle>Report Preview</CardTitle>
+                  {reportData.report.submittedAt && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Submitted
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2 print:hidden">
+                  <Button variant="outline" size="sm" onClick={handlePrint}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print / Save PDF
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSubmitReport}
+                    disabled={isSubmitting}
+                    variant={reportData.report.submittedAt ? "outline" : "default"}
+                  >
+                    {isSubmitting
+                      ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</>
+                      : reportData.report.submittedAt
+                        ? <><Send className="mr-2 h-4 w-4" />Resubmit</>
+                        : <><Send className="mr-2 h-4 w-4" />Submit Report</>}
+                  </Button>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Fill in the sections above, then use "Print / Save PDF" to export.
+              {submitResult && (
+                <div className={`mt-2 flex items-center gap-2 rounded-md border px-3 py-2 text-sm ${submitResult.ok ? "border-green-200 bg-green-50 text-green-800" : "border-red-200 bg-red-50 text-red-800"}`}>
+                  {submitResult.ok ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : null}
+                  {submitResult.message}
+                </div>
+              )}
+              <p className="text-sm text-muted-foreground mt-1 print:hidden">
+                Fill in the sections above, then submit to notify your admin or use Print to export.
               </p>
             </CardHeader>
             <CardContent className="p-0 sm:p-2">

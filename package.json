@@ -31,6 +31,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@react-email/components": "^0.0.25",
     "@sparticuz/chromium": "^143.0.4",
+    "@sparticuz/chromium-min": "^143.0.4",
     "@stripe/stripe-js": "^8.6.1",
     "@t3-oss/env-nextjs": "^0.11.1",
     "@tailwindcss/typography": "^0.5.15",

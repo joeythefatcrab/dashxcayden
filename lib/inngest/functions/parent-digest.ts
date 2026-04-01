@@ -9,6 +9,8 @@ interface StudentProgressData {
   lessonsCompleted: number;
   averageScore: number;
   topCurriculum: string;
+  totalMinutes: number;
+  timeEntries: Array<{ curriculumName: string; minutes: number; description: string; date: string }>;
   recentActivities: Array<{
     type: string;
     lessonTitle: string;
@@ -135,6 +137,8 @@ async function generateDigestData(
       lessonsCompleted,
       averageScore,
       topCurriculum,
+      totalMinutes: 0,
+      timeEntries: [],
       recentActivities: formattedActivities,
     });
   }

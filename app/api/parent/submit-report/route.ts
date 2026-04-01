@@ -186,6 +186,33 @@ export async function POST(req: Request) {
         const appUrl = process.env.NEXTAUTH_URL || "https://example.com";
         const evalData = report.educatorEvaluation as Record<string, string> | null;
 
+        // Compute attendance counts from dailyAttendance records (same logic as MonthlyReportRenderer)
+        const attendanceRaw = report.attendanceData as { present?: number; sick?: number; vacation?: number; days?: Record<string, { status: string }>; cleared?: string[] } | null;
+        const clearedSet = new Set<string>(attendanceRaw?.cleared ?? []);
+        const dailyMarksForEmail: Record<string, { status: string }> = {};
+        dailyAttendance.forEach((r) => {
+          const key = typeof r.date === "string" ? (r.date as string).substring(0, 10) : (r.date as Date).toISOString().substring(0, 10);
+          if (clearedSet.has(key)) return;
+          dailyMarksForEmail[key] = { status: r.present ? "P" : "A" };
+        });
+        if (attendanceRaw?.days) {
+          for (const [key, entry] of Object.entries(attendanceRaw.days)) {
+            dailyMarksForEmail[key] = entry;
+          }
+        }
+        let presentCount = 0, sickCount = 0, vacationCount = 0;
+        for (const entry of Object.values(dailyMarksForEmail)) {
+          if (entry.status === "P") presentCount++;
+          else if (entry.status === "S") sickCount++;
+          else if (entry.status === "V") vacationCount++;
+        }
+        const hasDailyData = Object.keys(dailyMarksForEmail).length > 0;
+        const computedAttendance = {
+          present: hasDailyData ? presentCount : (attendanceRaw?.present ?? 0),
+          sick: hasDailyData ? sickCount : (attendanceRaw?.sick ?? 0),
+          vacation: hasDailyData ? vacationCount : (attendanceRaw?.vacation ?? 0),
+        };
+
         const emailHtml = await render(
           MonthlyReportEmail({
             studentName: report.student.name,
@@ -193,7 +220,7 @@ export async function POST(req: Request) {
             month: monthName,
             year: report.year,
             grade: String(report.student.grade ?? ""),
-            attendanceData: report.attendanceData as any,
+            attendanceData: computedAttendance,
             parentNotes: report.parentNotes || "",
             educatorEvaluation: evalData,
             externalActivities: report.externalActivities.map((a) => ({
@@ -206,9 +233,16 @@ export async function POST(req: Request) {
           })
         );
 
-        const pdfBuffer = await generatePdfFromHtml(reportHtml);
-        const attachment = pdfBuffer.toString("base64");
+        // Generate PDF attachment — fall back to no attachment if chromium unavailable
+        let attachments: { filename: string; content: string }[] = [];
         const filename = `${report.student.name.replace(/\s+/g, "_")}_${monthName}_${report.year}_Report.pdf`;
+        try {
+          const pdfBuffer = await generatePdfFromHtml(reportHtml);
+          attachments = [{ filename, content: pdfBuffer.toString("base64") }];
+        } catch (pdfErr) {
+          console.error("PDF generation failed, sending email without attachment:", pdfErr);
+        }
+
         const subject = `Monthly Report Submitted — ${report.student.name} (${monthName} ${report.year})`;
 
         try {
@@ -218,7 +252,7 @@ export async function POST(req: Request) {
               to: notifyAdmins[0].email,
               subject,
               html: emailHtml,
-              attachments: [{ filename, content: attachment }],
+              attachments,
             });
           } else {
             await resend.batch.send(
@@ -227,7 +261,7 @@ export async function POST(req: Request) {
                 to: admin.email,
                 subject,
                 html: emailHtml,
-                attachments: [{ filename, content: attachment }],
+                attachments,
               }))
             );
           }

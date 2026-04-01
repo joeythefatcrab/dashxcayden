@@ -10,12 +10,17 @@ export async function GET() {
     return NextResponse.json({ count: 0 });
   }
 
-  const count = await db.monthlyReport.count({
-    where: {
-      submittedAt: { not: null },
-      adminReviewed: false,
-    },
-  });
-
-  return NextResponse.json({ count });
+  try {
+    // Use raw SQL so this works even before the adminReviewed migration is applied
+    const result = await db.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*)::bigint as count
+      FROM "MonthlyReport"
+      WHERE "submittedAt" IS NOT NULL
+        AND ("adminReviewed" = false OR "adminReviewed" IS NULL)
+    `;
+    return NextResponse.json({ count: Number(result[0]?.count ?? 0) });
+  } catch {
+    // Column doesn't exist yet — return 0 gracefully
+    return NextResponse.json({ count: 0 });
+  }
 }

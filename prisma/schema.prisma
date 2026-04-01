@@ -546,7 +546,8 @@ model MonthlyReport {
 
   // Submission
   submittedAt     DateTime?           // Set when parent clicks Submit; null = draft
-  adminReviewed   Boolean             @default(false) // Set when an admin views the submission
+  // adminReviewed is stored in the DB but managed via raw SQL to avoid
+  // breaking queries if the migration hasn't been applied yet.
 
   // Metadata
   createdAt       DateTime            @default(now())

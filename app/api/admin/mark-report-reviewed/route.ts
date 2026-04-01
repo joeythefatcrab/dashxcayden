@@ -12,18 +12,19 @@ export async function PATCH(req: NextRequest) {
 
   const { reportId } = await req.json();
 
-  if (reportId) {
-    // Mark a single report reviewed
-    await db.monthlyReport.update({
-      where: { id: reportId },
-      data: { adminReviewed: true },
-    });
-  } else {
-    // Mark all pending reports reviewed (used when admin dismisses the banner)
-    await db.monthlyReport.updateMany({
-      where: { submittedAt: { not: null }, adminReviewed: false },
-      data: { adminReviewed: true },
-    });
+  try {
+    if (reportId) {
+      await db.$executeRaw`
+        UPDATE "MonthlyReport" SET "adminReviewed" = true WHERE id = ${reportId}
+      `;
+    } else {
+      await db.$executeRaw`
+        UPDATE "MonthlyReport" SET "adminReviewed" = true
+        WHERE "submittedAt" IS NOT NULL AND ("adminReviewed" = false OR "adminReviewed" IS NULL)
+      `;
+    }
+  } catch {
+    // Column doesn't exist yet — no-op, migration pending
   }
 
   return NextResponse.json({ success: true });

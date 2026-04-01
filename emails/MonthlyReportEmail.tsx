@@ -29,6 +29,7 @@ interface MonthlyReportEmailProps {
   educatorEvaluation: Record<string, string> | null;
   externalActivities: ExternalActivity[];
   reportUrl: string;
+  pdfUrl?: string;
 }
 
 const EVAL_LABELS: Record<string, string> = {
@@ -52,6 +53,7 @@ export const MonthlyReportEmail = ({
   educatorEvaluation,
   externalActivities,
   reportUrl,
+  pdfUrl,
 }: MonthlyReportEmailProps) => {
   const present = attendanceData?.present ?? 0;
   const sick = attendanceData?.sick ?? 0;
@@ -144,15 +146,15 @@ export const MonthlyReportEmail = ({
           {/* CTA */}
           <Section style={ctaSection}>
             <Link href={reportUrl} style={button}>View Full Report in Dashboard</Link>
+            {pdfUrl && (
+              <Link href={pdfUrl} style={buttonSecondary}>Download PDF Report</Link>
+            )}
           </Section>
 
           <Hr style={hr} />
           <Text style={footer}>
             This report was submitted via HomeschoolHub.{" "}
             <Link href={reportUrl} style={footerLink}>Open dashboard</Link>
-          </Text>
-          <Text style={{ ...footer, marginTop: "4px" }}>
-            An HTML copy of this report is attached. Open it in any browser and use Print → Save as PDF.
           </Text>
         </Container>
       </Body>
@@ -202,6 +204,11 @@ const button = {
   backgroundColor: "#f97316", borderRadius: "9999px", color: "#fff",
   fontSize: "14px", fontWeight: "600", textDecoration: "none",
   display: "inline-block", padding: "12px 28px",
+};
+const buttonSecondary = {
+  backgroundColor: "#1e293b", borderRadius: "9999px", color: "#fff",
+  fontSize: "14px", fontWeight: "600", textDecoration: "none",
+  display: "inline-block", padding: "12px 28px", marginTop: "12px",
 };
 const hr = { borderColor: "#e5e7eb", margin: "32px 0 20px" };
 const footer = { fontSize: "12px", color: "#9ca3af", textAlign: "center" as const, margin: "0 32px" };

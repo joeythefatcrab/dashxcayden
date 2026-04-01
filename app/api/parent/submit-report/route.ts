@@ -5,6 +5,7 @@ import { resend, SENDER_EMAIL, isResendConfigured } from "@/lib/email/resend";
 import { render } from "@react-email/render";
 import { MonthlyReportEmail } from "@/emails/MonthlyReportEmail";
 import { buildReportHtml } from "@/lib/build-report-html";
+import { generatePdfFromHtml } from "@/lib/generate-pdf";
 import type { ReportRendererData } from "@/components/parent/MonthlyReportRenderer";
 
 export const runtime = "nodejs";
@@ -203,8 +204,9 @@ export async function POST(req: Request) {
           })
         );
 
-        const attachment = Buffer.from(reportHtml).toString("base64");
-        const filename = `${report.student.name.replace(/\s+/g, "_")}_${monthName}_${report.year}_Report.html`;
+        const pdfBuffer = await generatePdfFromHtml(reportHtml);
+        const attachment = pdfBuffer.toString("base64");
+        const filename = `${report.student.name.replace(/\s+/g, "_")}_${monthName}_${report.year}_Report.pdf`;
         const subject = `Monthly Report Submitted — ${report.student.name} (${monthName} ${report.year})`;
 
         try {

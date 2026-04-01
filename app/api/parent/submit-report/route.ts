@@ -3,10 +3,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { resend, SENDER_EMAIL, isResendConfigured } from "@/lib/email/resend";
 import { render } from "@react-email/render";
-import { renderToStaticMarkup } from "react-dom/server";
-import React from "react";
 import { MonthlyReportEmail } from "@/emails/MonthlyReportEmail";
-import { MonthlyReportRenderer } from "@/components/parent/MonthlyReportRenderer";
+import { buildReportHtml } from "@/lib/build-report-html";
 import type { ReportRendererData } from "@/components/parent/MonthlyReportRenderer";
 
 export const runtime = "nodejs";
@@ -162,27 +160,8 @@ export async function POST(req: Request) {
       })),
     };
 
-    const reportBodyHtml = renderToStaticMarkup(
-      React.createElement(MonthlyReportRenderer, { data: rendererData })
-    );
-
     const monthName = MONTH_NAMES[report.month] || String(report.month);
-    const reportHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>${report.student.name} — ${monthName} ${report.year} Report</title>
-  <style>
-    @media print {
-      body { margin: 0; }
-      @page { margin: 0.75in; }
-    }
-    body { font-family: Arial, Helvetica, sans-serif; background: #fff; margin: 0; padding: 0; }
-  </style>
-</head>
-<body>${reportBodyHtml}</body>
-</html>`;
+    const reportHtml = buildReportHtml(rendererData);
 
     // ── Send email notification to opted-in admins ─────────────────────────────
     let emailResult: { sent: number; error?: string } = { sent: 0 };

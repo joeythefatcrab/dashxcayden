@@ -10,7 +10,7 @@ interface StudentProgressData {
   averageScore: number;
   topCurriculum: string;
   totalMinutes: number;
-  timeEntries: Array<{ curriculumName: string; minutes: number; description: string; date: string }>;
+  timeEntries: Array<{ curriculumName: string; minutesSpent: number; description?: string; date: string }>;
   recentActivities: Array<{
     type: string;
     lessonTitle: string;

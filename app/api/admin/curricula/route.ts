@@ -16,19 +16,25 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const { id, apsSubject } = body;
+    const { id, apsSubject, name, description } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Curriculum id is required" }, { status: 400 });
     }
 
+    const updateData: Record<string, any> = {
+      apsSubject: apsSubject ?? null,
+    };
+    if (name !== undefined) {
+      if (!name.trim()) return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 });
+      updateData.name = name.trim();
+    }
+    if (description !== undefined) updateData.description = description.trim() || null;
+
     const curriculum = await db.curriculum.update({
       where: { id },
-      data: {
-        // Only allow updating apsSubject via this endpoint (null clears it)
-        apsSubject: apsSubject ?? null,
-      },
-      select: { id: true, name: true, apsSubject: true },
+      data: updateData,
+      select: { id: true, name: true, description: true, apsSubject: true },
     });
 
     return NextResponse.json(curriculum);

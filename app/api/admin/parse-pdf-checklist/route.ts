@@ -66,7 +66,7 @@ ${chunkText}`;
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-4.1-mini",
       max_completion_tokens: 16000, // Smaller limit for chunks
       messages: [
         { role: "user", content: chunkPrompt }
@@ -422,7 +422,7 @@ CRITICAL JSON OUTPUT REQUIREMENTS:
 
       // Use streaming with GPT-5 mini for fast, efficient parsing
       const stream = await openai.chat.completions.create({
-        model: "gpt-5-mini", // GPT-5 mini model
+        model: "gpt-4.1-mini",
         max_completion_tokens: 64000, // Large enough for complete curricula
         messages: [
           {

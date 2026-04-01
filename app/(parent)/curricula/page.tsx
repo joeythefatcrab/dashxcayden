@@ -9,6 +9,7 @@ import Link from "next/link";
 import { PDFChecklistGenerator } from "@/components/curriculum/PDFChecklistGenerator";
 import { AssignCurriculumDialog } from "@/components/curriculum/AssignCurriculumDialog";
 import { DeleteCurriculumButton } from "@/components/curriculum/DeleteCurriculumButton";
+import { RenameCurriculumButton } from "@/components/curriculum/RenameCurriculumButton";
 import { PendingGradesList } from "@/components/grading/pending-grades-list";
 import { PendingEssaysList } from "@/components/parent/PendingEssaysList";
 import { NotificationBanner } from "@/components/notifications/NotificationBanner";
@@ -138,11 +139,20 @@ export default async function CurriculaPage() {
                   <CardHeader>
                     <CardTitle className="flex items-start justify-between gap-2">
                       <span className="line-clamp-2">{curriculum.name}</span>
-                      <DeleteCurriculumButton
-                        curriculumId={curriculum.id}
-                        curriculumName={curriculum.name}
-                        enrollmentCount={curriculum._count.enrollments}
-                      />
+                      <div className="flex items-center gap-1 shrink-0">
+                        {["ADMIN", "SUPERADMIN"].includes(session.user.role) && (
+                          <RenameCurriculumButton
+                            curriculumId={curriculum.id}
+                            currentName={curriculum.name}
+                            currentDescription={curriculum.description}
+                          />
+                        )}
+                        <DeleteCurriculumButton
+                          curriculumId={curriculum.id}
+                          curriculumName={curriculum.name}
+                          enrollmentCount={curriculum._count.enrollments}
+                        />
+                      </div>
                     </CardTitle>
                     {curriculum.description && (
                       <CardDescription className="line-clamp-2">

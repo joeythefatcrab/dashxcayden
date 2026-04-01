@@ -59,6 +59,7 @@ export function DashboardNav() {
   const adminPeopleMenu = [
     { name: "Manage Parents", href: "/parents", icon: Users },
     { name: "Assign Students", href: "/assign-students", icon: UserCog },
+    { name: "Impersonate User", href: "/admin/impersonate", icon: UserSearch },
   ];
 
   const adminContentMenu = [
@@ -223,16 +224,6 @@ export function DashboardNav() {
             >
               <RotateCcw className="mr-1.5 h-4 w-4" />
               Exit QA
-            </Button>
-          )}
-
-          {/* Impersonate button — admin/superadmin only */}
-          {isAdmin && !isImpersonating && (
-            <Button variant="outline" size="sm" asChild className="hidden md:flex">
-              <Link href="/admin/impersonate">
-                <UserSearch className="mr-1.5 h-4 w-4" />
-                Impersonate
-              </Link>
             </Button>
           )}
 

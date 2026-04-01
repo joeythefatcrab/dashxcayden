@@ -19,6 +19,7 @@ export function DashboardNav() {
   const [isExiting, setIsExiting] = useState(false);
   const [revisionCount, setRevisionCount] = useState(0);
   const router = useRouter();
+  const role = session?.user?.role;
 
   useEffect(() => {
     if (role === "STUDENT") {
@@ -30,8 +31,6 @@ export function DashboardNav() {
   }, [role]);
 
   if (!session?.user) return null;
-
-  const role = session.user.role;
   // @ts-ignore - Check if impersonating
   const isImpersonating = session.user.isImpersonating || false;
 

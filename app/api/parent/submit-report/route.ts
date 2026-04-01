@@ -58,21 +58,22 @@ export async function POST(req: Request) {
 
     if (isResendConfigured()) {
       // Find all admins/superadmins with notifyOnReportSubmission: true
-      const notifyAdmins = await db.user.findMany({
-        where: {
-          role: { in: ["ADMIN", "SUPERADMIN"] },
-          notifyOnReportSubmission: true,
-          email: { not: "" },
-        },
-        select: { email: true, name: true },
-      });
+      // Use raw SQL so this works even if the migration hasn't been applied yet
+      let notifyAdmins: { email: string; name: string | null }[] = [];
+      try {
+        notifyAdmins = await db.$queryRaw<{ email: string; name: string | null }[]>`
+          SELECT email, name FROM "User"
+          WHERE role IN ('ADMIN', 'SUPERADMIN')
+            AND "notifyOnReportSubmission" = true
+            AND email <> ''
+        `;
+      } catch (err) {
+        console.error("Could not query notifyOnReportSubmission (migration pending?):", err);
+      }
 
       if (notifyAdmins.length > 0) {
         const monthName = MONTH_NAMES[report.month] || String(report.month);
         const appUrl = process.env.NEXTAUTH_URL || "https://example.com";
-
-        // Gather course stats for the email (reuse from existing data shape)
-        // We don't re-run the full stats query here — pass what we have
         const evalData = report.educatorEvaluation as Record<string, string> | null;
 
         const html = await render(
@@ -95,25 +96,31 @@ export async function POST(req: Request) {
           })
         );
 
-        // Attach the HTML as a printable file
         const attachment = Buffer.from(html).toString("base64");
-
-        const emails = notifyAdmins.map((admin) => ({
-          from: SENDER_EMAIL,
-          to: admin.email,
-          subject: `Monthly Report Submitted — ${report.student.name} (${monthName} ${report.year})`,
-          html,
-          attachments: [
-            {
-              filename: `${report.student.name.replace(/\s+/g, "_")}_${monthName}_${report.year}_Report.html`,
-              content: attachment,
-            },
-          ],
-        }));
+        const filename = `${report.student.name.replace(/\s+/g, "_")}_${monthName}_${report.year}_Report.html`;
+        const subject = `Monthly Report Submitted — ${report.student.name} (${monthName} ${report.year})`;
 
         try {
-          await resend.emails.send(emails as any);
-          emailResult = { sent: emails.length };
+          if (notifyAdmins.length === 1) {
+            await resend.emails.send({
+              from: SENDER_EMAIL,
+              to: notifyAdmins[0].email,
+              subject,
+              html,
+              attachments: [{ filename, content: attachment }],
+            });
+          } else {
+            await resend.batch.send(
+              notifyAdmins.map((admin) => ({
+                from: SENDER_EMAIL,
+                to: admin.email,
+                subject,
+                html,
+                attachments: [{ filename, content: attachment }],
+              }))
+            );
+          }
+          emailResult = { sent: notifyAdmins.length };
         } catch (err: any) {
           console.error("Report notification email failed:", err);
           emailResult = { sent: 0, error: err?.message || "Email failed" };

@@ -234,11 +234,11 @@ export async function POST(req: Request) {
         );
 
         // Generate PDF attachment — fall back to no attachment if chromium unavailable
-        let attachments: { filename: string; content: string }[] = [];
+        let attachments: { filename: string; content: Buffer }[] = [];
         const filename = `${report.student.name.replace(/\s+/g, "_")}_${monthName}_${report.year}_Report.pdf`;
         try {
           const pdfBuffer = await generatePdfFromHtml(reportHtml);
-          attachments = [{ filename, content: pdfBuffer.toString("base64") }];
+          attachments = [{ filename, content: pdfBuffer }];
         } catch (pdfErr) {
           console.error("PDF generation failed, sending email without attachment:", pdfErr);
         }

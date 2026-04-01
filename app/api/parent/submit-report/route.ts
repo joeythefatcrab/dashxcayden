@@ -237,25 +237,29 @@ export async function POST(req: Request) {
         let attachments: { filename: string; content: Buffer }[] = [];
         const filename = `${report.student.name.replace(/\s+/g, "_")}_${monthName}_${report.year}_Report.pdf`;
         try {
+          console.log("[submit-report] generating PDF...");
           const pdfBuffer = await generatePdfFromHtml(reportHtml);
+          console.log("[submit-report] PDF generated, size:", pdfBuffer.length);
           attachments = [{ filename, content: pdfBuffer }];
         } catch (pdfErr) {
-          console.error("PDF generation failed, sending email without attachment:", pdfErr);
+          console.error("[submit-report] PDF generation failed:", pdfErr);
         }
 
         const subject = `Monthly Report Submitted — ${report.student.name} (${monthName} ${report.year})`;
+        console.log("[submit-report] sending email to", notifyAdmins.length, "admin(s), attachments:", attachments.length);
 
         try {
           if (notifyAdmins.length === 1) {
-            await resend.emails.send({
+            const result = await resend.emails.send({
               from: SENDER_EMAIL,
               to: notifyAdmins[0].email,
               subject,
               html: emailHtml,
               attachments,
             });
+            console.log("[submit-report] resend result:", JSON.stringify(result));
           } else {
-            await resend.batch.send(
+            const result = await resend.batch.send(
               notifyAdmins.map((admin) => ({
                 from: SENDER_EMAIL,
                 to: admin.email,
@@ -264,10 +268,11 @@ export async function POST(req: Request) {
                 attachments,
               }))
             );
+            console.log("[submit-report] resend batch result:", JSON.stringify(result));
           }
           emailResult = { sent: notifyAdmins.length };
         } catch (err: any) {
-          console.error("Report notification email failed:", err);
+          console.error("[submit-report] email send failed:", err);
           emailResult = { sent: 0, error: err?.message || "Email failed" };
         }
       }

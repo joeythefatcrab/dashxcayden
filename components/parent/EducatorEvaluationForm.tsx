@@ -14,45 +14,29 @@ type Props = {
 };
 
 export function EducatorEvaluationForm({ reportId, initialAnswers, onSave }: Props) {
-  const defaultAnswers = {
-    parentSuccesses: "",
-    studentSuccesses: "",
-    progressRating: "",
-    progressExplanation: "",
-    mostSuccessful: "",
-    programCompletions: "",
-    needsHelp: "",
-  };
+  const init = initialAnswers && typeof initialAnswers === "object" ? initialAnswers : {};
 
-  const [answers, setAnswers] = useState(() => {
-    // Ensure we never have undefined values
-    const initial = initialAnswers && typeof initialAnswers === 'object' ? initialAnswers : {};
-    return {
-      ...defaultAnswers,
-      ...initial,
-    };
+  const [answers, setAnswers] = useState({
+    educatorName: init.educatorName ?? "",
+    successes:    init.successes    ?? init.parentSuccesses ?? "", // fall back to old key
+    programTargets: init.programTargets ?? init.programCompletions ?? "",
+    needsHelp:    init.needsHelp    ?? "",
   });
   const [isSaving, setIsSaving] = useState(false);
+
+  const set = (key: string, val: string) => setAnswers((p) => ({ ...p, [key]: val }));
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch("/api/parent/educator-evaluation", {
+      const res = await fetch("/api/parent/educator-evaluation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reportId,
-          answers,
-        }),
+        body: JSON.stringify({ reportId, answers }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to save answers");
-      }
-
+      if (!res.ok) throw new Error("Failed to save");
       onSave();
-    } catch (error) {
-      console.error("Error saving answers:", error);
+    } catch {
       alert("Failed to save answers");
     } finally {
       setIsSaving(false);
@@ -62,119 +46,57 @@ export function EducatorEvaluationForm({ reportId, initialAnswers, onSave }: Pro
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Educator Evaluation</CardTitle>
+        <CardTitle>Monthly Progress Notes</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Answer these questions to complete the monthly report. Your answers will be
-          included exactly as written in the generated report.
+          Answer the questions below to complete the report.
         </p>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="parentSuccesses">
-            What successes did you have this month?
-          </Label>
-          <Textarea
-            id="parentSuccesses"
-            value={answers.parentSuccesses || ""}
-            onChange={(e) =>
-              setAnswers({ ...answers, parentSuccesses: e.target.value })
-            }
-            placeholder="Describe your successes as an educator this month..."
-            rows={3}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="studentSuccesses">
-            What successes did your student have this month?
-          </Label>
-          <Textarea
-            id="studentSuccesses"
-            value={answers.studentSuccesses || ""}
-            onChange={(e) =>
-              setAnswers({ ...answers, studentSuccesses: e.target.value })
-            }
-            placeholder="Describe your student's successes this month..."
-            rows={3}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="progressRating">
-            On a scale of 1 to 10, how would you rate your student's overall progress
-            this period?
-          </Label>
+      <CardContent className="space-y-5">
+        <div className="space-y-1">
+          <Label htmlFor="educatorName">Name of person filling out form</Label>
           <Input
-            id="progressRating"
-            type="number"
-            min="1"
-            max="10"
-            value={answers.progressRating || ""}
-            onChange={(e) =>
-              setAnswers({ ...answers, progressRating: e.target.value })
-            }
-            placeholder="1-10"
-            className="w-24"
+            id="educatorName"
+            value={answers.educatorName}
+            onChange={(e) => set("educatorName", e.target.value)}
+            placeholder="Your name"
           />
-          <Label htmlFor="progressExplanation" className="text-sm text-muted-foreground">
-            If not 10, please explain:
-          </Label>
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="successes">Any educator or student success?</Label>
           <Textarea
-            id="progressExplanation"
-            value={answers.progressExplanation || ""}
-            onChange={(e) =>
-              setAnswers({ ...answers, progressExplanation: e.target.value })
-            }
-            placeholder="Explanation (if rating is not 10)..."
+            id="successes"
+            value={answers.successes}
+            onChange={(e) => set("successes", e.target.value)}
+            placeholder="Describe any successes from this month…"
+            rows={3}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="programTargets">Any program targets completed?</Label>
+          <Textarea
+            id="programTargets"
+            value={answers.programTargets}
+            onChange={(e) => set("programTargets", e.target.value)}
+            placeholder="List any completed programs, courses, or targets…"
             rows={2}
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="mostSuccessful">
-            What do you feel was most successful?
-          </Label>
-          <Textarea
-            id="mostSuccessful"
-            value={answers.mostSuccessful || ""}
-            onChange={(e) =>
-              setAnswers({ ...answers, mostSuccessful: e.target.value })
-            }
-            placeholder="Describe what was most successful..."
-            rows={2}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="programCompletions">
-            Were there any program completions?
-          </Label>
-          <Textarea
-            id="programCompletions"
-            value={answers.programCompletions || ""}
-            onChange={(e) =>
-              setAnswers({ ...answers, programCompletions: e.target.value })
-            }
-            placeholder="List any completed programs or courses..."
-            rows={2}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="needsHelp">
-            Is there anything that you need help on or would like to communicate?
-          </Label>
+        <div className="space-y-1">
+          <Label htmlFor="needsHelp">Anything you would like to share or need help with?</Label>
           <Textarea
             id="needsHelp"
-            value={answers.needsHelp || ""}
-            onChange={(e) => setAnswers({ ...answers, needsHelp: e.target.value })}
-            placeholder="Any needs, questions, or communications..."
+            value={answers.needsHelp}
+            onChange={(e) => set("needsHelp", e.target.value)}
+            placeholder="Any needs, questions, or communications…"
             rows={3}
           />
         </div>
 
         <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? "Saving..." : "Save Answers"}
+          {isSaving ? "Saving…" : "Save"}
         </Button>
       </CardContent>
     </Card>

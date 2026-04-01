@@ -54,31 +54,15 @@ export function ExternalActivityForm({ reportId, onSuccess, onCancel, activity }
     }
   }, [activity]);
 
-  // Mirror exact APS subject names so they map 1:1 to the monthly report
+  // Mirror exact APS subject names so they map 1:1 to the monthly report (2026 categories)
   const categories = [
-    "Study Skills/Study Technology",
-    "Reading",
-    "Vocabulary",
-    "Handwriting",
-    "Creative Writing",
-    "Grammar",
-    "Spelling",
-    "Mathematics",
-    "Geography",
-    "American/World History",
-    "Economics/Money",
-    "Government/Civics",
-    "Science",
-    "Research",
-    "Performing Arts",
-    "Foreign Language",
-    "PE",
-    "Educational Films",
-    "Seminars",
-    "Field Trips",
-    "Online Coursework",
-    "Electives",
-    "Other",
+    "ENGLISH (Reading, Writing, Spelling, Grammar)",
+    "MATH/ECONOMICS/BUSINESS",
+    "GEOGRAPHY/HISTORY/GOVERNMENT/CIVICS",
+    "SCIENCE/RESEARCH",
+    "ART/MUSIC/PERFORMANCE",
+    "PHYSICAL EDUCATION",
+    "ELECTIVES/SEMINARS/FIELD TRIPS/OTHER",
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -29,31 +29,15 @@ import {
   Check,
 } from "lucide-react";
 
-// APS subject categories (must match MonthlyReportRenderer)
+// 2026 APS subject categories (must match MonthlyReportRenderer)
 const APS_SUBJECTS = [
-  "Study Skills/Study Technology",
-  "Reading",
-  "Vocabulary",
-  "Handwriting",
-  "Creative Writing",
-  "Grammar",
-  "Spelling",
-  "Mathematics",
-  "Geography",
-  "American/World History",
-  "Economics/Money",
-  "Government/Civics",
-  "Science",
-  "Research",
-  "Performing Arts",
-  "Foreign Language",
-  "PE",
-  "Educational Films",
-  "Seminars",
-  "Field Trips",
-  "Online Coursework",
-  "Electives",
-  "Other",
+  "ENGLISH (Reading, Writing, Spelling, Grammar)",
+  "MATH/ECONOMICS/BUSINESS",
+  "GEOGRAPHY/HISTORY/GOVERNMENT/CIVICS",
+  "SCIENCE/RESEARCH",
+  "ART/MUSIC/PERFORMANCE",
+  "PHYSICAL EDUCATION",
+  "ELECTIVES/SEMINARS/FIELD TRIPS/OTHER",
 ] as const;
 
 // ─── Types ───────────────────────────────────────────────────────────────────

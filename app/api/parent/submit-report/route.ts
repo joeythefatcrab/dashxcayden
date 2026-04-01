@@ -81,7 +81,7 @@ export async function POST(req: Request) {
             parentName: report.student.parent?.name || "Parent",
             month: monthName,
             year: report.year,
-            grade: report.student.grade || "",
+            grade: String(report.student.grade ?? ""),
             attendanceData: report.attendanceData as any,
             parentNotes: report.parentNotes || "",
             educatorEvaluation: evalData,

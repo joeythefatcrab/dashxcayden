@@ -7,31 +7,15 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-// Exact APS subject list in official form order
+// 2026 APS subject list — 7 consolidated categories
 const APS_SUBJECTS = [
-  "Study Skills/Study Technology",
-  "Reading",
-  "Vocabulary",
-  "Handwriting",
-  "Creative Writing",
-  "Grammar",
-  "Spelling",
-  "Mathematics",
-  "Geography",
-  "American/World History",
-  "Economics/Money",
-  "Government/Civics",
-  "Science",
-  "Research",
-  "Performing Arts",
-  "Foreign Language",
-  "PE",
-  "Educational Films",
-  "Seminars",
-  "Field Trips",
-  "Online Coursework",
-  "Electives",
-  "Other",
+  "ENGLISH (Reading, Writing, Spelling, Grammar)",
+  "MATH/ECONOMICS/BUSINESS",
+  "GEOGRAPHY/HISTORY/GOVERNMENT/CIVICS",
+  "SCIENCE/RESEARCH",
+  "ART/MUSIC/PERFORMANCE",
+  "PHYSICAL EDUCATION",
+  "ELECTIVES/SEMINARS/FIELD TRIPS/OTHER",
 ] as const;
 
 type ApsSubject = (typeof APS_SUBJECTS)[number];
@@ -63,13 +47,18 @@ type ExternalActivity = {
 };
 
 type EducatorEvaluation = {
+  // 2026 fields
+  educatorName?: string;
+  successes?: string;
+  programTargets?: string;
+  needsHelp?: string;
+  // Legacy fields (pre-2026) — kept for backward-compatible rendering
   parentSuccesses?: string;
   studentSuccesses?: string;
   progressRating?: string;
   progressExplanation?: string;
   mostSuccessful?: string;
   programCompletions?: string;
-  needsHelp?: string;
 };
 
 type DayEntry = {
@@ -108,55 +97,63 @@ export type ReportRendererData = {
 
 function mapToApsSubject(name: string, subject: string | null): ApsSubject {
   const s = (name + " " + (subject || "")).toLowerCase();
-  if (s.includes("study skill") || s.includes("study tech")) return "Study Skills/Study Technology";
-  if (s.includes("vocab")) return "Vocabulary";
-  if (s.includes("handwrit")) return "Handwriting";
-  if (s.includes("grammar")) return "Grammar";
-  if (s.includes("spell")) return "Spelling";
-  if (s.includes("creat") && s.includes("writ")) return "Creative Writing";
-  if (s.includes("essay") || s.includes("writ") || s.includes("composition")) return "Creative Writing";
-  if (s.includes("read")) return "Reading";
-  if (s.includes("math") || s.includes("algebra") || s.includes("arithmetic") || s.includes("geometry")) return "Mathematics";
-  if (s.includes("geography")) return "Geography";
-  if (s.includes("history") || s.includes("civili")) return "American/World History";
-  if (s.includes("econ") || s.includes("money") || s.includes("financ") || s.includes("budget")) return "Economics/Money";
-  if (s.includes("government") || s.includes("civic") || s.includes("politic")) return "Government/Civics";
-  if (s.includes("science") || s.includes("biology") || s.includes("chem") || s.includes("physics") || s.includes("earth")) return "Science";
-  if (s.includes("research")) return "Research";
-  if (s.includes("music") || s.includes("art") || s.includes("drama") || s.includes("perform") || s.includes("theater")) return "Performing Arts";
-  if (s.includes("spanish") || s.includes("french") || s.includes("foreign") || s.includes("language") || s.includes("latin")) return "Foreign Language";
-  if (s.includes(" pe ") || s.includes("physical") || s.includes("sport") || s.includes("gym") || s.includes("exercise") || s.includes("fitness")) return "PE";
-  if (s.includes("film") || s.includes("documentary") || s.includes("video lesson")) return "Educational Films";
-  if (s.includes("seminar")) return "Seminars";
-  return "Online Coursework";
+  // English bucket
+  if (s.includes("read") || s.includes("vocab") || s.includes("handwrit") || s.includes("grammar") ||
+      s.includes("spell") || s.includes("writ") || s.includes("essay") || s.includes("composition") ||
+      s.includes("study skill") || s.includes("study tech") || s.includes("language art"))
+    return "ENGLISH (Reading, Writing, Spelling, Grammar)";
+  // Math/Econ bucket
+  if (s.includes("math") || s.includes("algebra") || s.includes("arithmetic") || s.includes("geometry") ||
+      s.includes("calculus") || s.includes("econ") || s.includes("money") || s.includes("financ") ||
+      s.includes("budget") || s.includes("business") || s.includes("account"))
+    return "MATH/ECONOMICS/BUSINESS";
+  // Geography/History bucket
+  if (s.includes("geography") || s.includes("history") || s.includes("civili") || s.includes("government") ||
+      s.includes("civic") || s.includes("politic") || s.includes("social stud"))
+    return "GEOGRAPHY/HISTORY/GOVERNMENT/CIVICS";
+  // Science bucket
+  if (s.includes("science") || s.includes("biology") || s.includes("chem") || s.includes("physics") ||
+      s.includes("earth") || s.includes("research") || s.includes("lab"))
+    return "SCIENCE/RESEARCH";
+  // Art/Music bucket
+  if (s.includes("music") || s.includes("art") || s.includes("drama") || s.includes("perform") ||
+      s.includes("theater") || s.includes("danc") || s.includes("choral") || s.includes("band") ||
+      s.includes("foreign") || s.includes("spanish") || s.includes("french") || s.includes("latin") ||
+      s.includes("language"))
+    return "ART/MUSIC/PERFORMANCE";
+  // PE bucket
+  if (s.includes(" pe ") || s.includes("physical") || s.includes("sport") || s.includes("gym") ||
+      s.includes("exercise") || s.includes("fitness") || s.includes("athlet"))
+    return "PHYSICAL EDUCATION";
+  return "ELECTIVES/SEMINARS/FIELD TRIPS/OTHER";
 }
 
 function mapExternalCategoryToAps(category: string | null): ApsSubject {
-  if (!category) return "Other";
-  // New entries use exact APS subject names — short-circuit immediately
+  if (!category) return "ELECTIVES/SEMINARS/FIELD TRIPS/OTHER";
+  // New entries already use exact 2026 category names
   if ((APS_SUBJECTS as readonly string[]).includes(category)) return category as ApsSubject;
-  // Legacy fallback for old category values stored before the rename
+  // Map old 23-subject values to new 7 buckets
   const c = category.toLowerCase();
-  if (c.includes("math")) return "Mathematics";
-  if (c.includes("reading")) return "Reading";
-  if (c.includes("grammar") || c.includes("language art")) return "Grammar";
-  if (c.includes("spelling")) return "Spelling";
-  if (c.includes("vocab")) return "Vocabulary";
-  if (c.includes("handwrit")) return "Handwriting";
-  if (c.includes("writing") || c.includes("creative writ") || c.includes("essay") || c.includes("composition")) return "Creative Writing";
-  if (c.includes("science")) return "Science";
-  if (c.includes("history")) return "American/World History";
-  if (c.includes("geography")) return "Geography";
-  if (c.includes("econ") || c.includes("money")) return "Economics/Money";
-  if (c.includes("government") || c.includes("civic")) return "Government/Civics";
-  if (c.includes("foreign language") || c.includes("spanish") || c.includes("french") || c.includes("latin")) return "Foreign Language";
-  if (c.includes("study skill")) return "Study Skills/Study Technology";
-  if (c.includes("field trip")) return "Field Trips";
-  if (c.includes("pe") || c.includes("sport") || c.includes("physical") || c.includes("exercise") || c.includes("fitness")) return "PE";
-  if (c.includes("music") || c.includes("art") || c.includes("perform") || c.includes("theater") || c.includes("drama")) return "Performing Arts";
-  if (c.includes("seminar")) return "Seminars";
-  if (c.includes("volunteer") || c.includes("community service")) return "Other";
-  return "Other";
+  if (c.includes("math") || c.includes("econ") || c.includes("money") || c.includes("business") ||
+      c.includes("financ") || c.includes("account"))
+    return "MATH/ECONOMICS/BUSINESS";
+  if (c.includes("read") || c.includes("grammar") || c.includes("language art") || c.includes("spelling") ||
+      c.includes("vocab") || c.includes("handwrit") || c.includes("writing") || c.includes("essay") ||
+      c.includes("composition") || c.includes("study skill"))
+    return "ENGLISH (Reading, Writing, Spelling, Grammar)";
+  if (c.includes("science") || c.includes("research") || c.includes("biology") || c.includes("chem") ||
+      c.includes("physics"))
+    return "SCIENCE/RESEARCH";
+  if (c.includes("history") || c.includes("geography") || c.includes("government") || c.includes("civic"))
+    return "GEOGRAPHY/HISTORY/GOVERNMENT/CIVICS";
+  if (c.includes("music") || c.includes("art") || c.includes("perform") || c.includes("theater") ||
+      c.includes("drama") || c.includes("foreign") || c.includes("spanish") || c.includes("french") ||
+      c.includes("latin") || c.includes("danc"))
+    return "ART/MUSIC/PERFORMANCE";
+  if (c.includes("pe") || c.includes("sport") || c.includes("physical") || c.includes("exercise") ||
+      c.includes("fitness") || c.includes("athlet"))
+    return "PHYSICAL EDUCATION";
+  return "ELECTIVES/SEMINARS/FIELD TRIPS/OTHER";
 }
 
 function dayMarkColor(mark: string): string {
@@ -229,9 +226,8 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
   (report.externalActivities ?? []).forEach((a) => {
     if (!a.hoursSpent) return;
     let aps: ApsSubject = mapExternalCategoryToAps(a.category);
-    if (aps === "Other") {
-      const titleAps = mapToApsSubject(a.title, null);
-      if (titleAps !== "Electives") aps = titleAps;
+    if (aps === "ELECTIVES/SEMINARS/FIELD TRIPS/OTHER") {
+      aps = mapToApsSubject(a.title, null);
     }
     if (!subjectMap[aps]) subjectMap[aps] = { hours: 0, items: [] };
     subjectMap[aps].hours += a.hoursSpent;
@@ -257,7 +253,7 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
       {/* ── HEADER ── */}
       <div style={{ textAlign: "center", marginBottom: "20px", paddingBottom: "16px", borderBottom: "2px solid #111827" }}>
         <div style={{ fontSize: "18px", fontWeight: "bold", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>
-          Monthly Homeschool Progress Report
+          Monthly Homeschool Attendance &amp; Progress Report
         </div>
         <div style={{ fontSize: "14px", marginBottom: "12px" }}>{monthName} {year}</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 24px", fontSize: "12px", maxWidth: "440px", margin: "0 auto", textAlign: "left" }}>
@@ -321,20 +317,26 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
 
       {/* ── 2. EDUCATOR EVALUATION ── */}
       <Section title="Educator Evaluation">
-        <EvalRow label="Name of person filling out form:" value={parentName} />
-        <EvalRow label="What successes did you have this month?" value={eval_?.parentSuccesses} />
-        <EvalRow label="What successes did your student have this month?" value={eval_?.studentSuccesses} />
         <EvalRow
-          label={`On a scale of 1 to 10, how would you rate your student's overall progress this period?${eval_?.progressRating ? ` (${eval_.progressRating}/10)` : ""}`}
-          value={eval_?.progressExplanation}
+          label="Name of person filling out form:"
+          value={eval_?.educatorName || parentName}
         />
-        <EvalRow label="What do you feel was most successful?" value={eval_?.mostSuccessful} />
-        <EvalRow label="Were there any program completions?" value={eval_?.programCompletions} />
-        <EvalRow label="Is there anything that you need help on or would like to communicate?" value={eval_?.needsHelp} />
+        <EvalRow
+          label="Any educator or student success?"
+          value={eval_?.successes ?? eval_?.parentSuccesses ?? eval_?.studentSuccesses}
+        />
+        <EvalRow
+          label="Any program targets completed?"
+          value={eval_?.programTargets ?? eval_?.programCompletions}
+        />
+        <EvalRow
+          label="Anything you would like to share or need help with?"
+          value={eval_?.needsHelp}
+        />
       </Section>
 
       {/* ── 3. SUBJECT TABLE ── */}
-      <Section title="Subject">
+      <Section title="Monthly Study Progress">
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
           <thead>
             <tr style={{ backgroundColor: "#f3f4f6" }}>

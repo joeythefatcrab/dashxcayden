@@ -2,8 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Pencil, Check, X } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 export function EditUserName({ userId, initialName }: { userId: string; initialName: string | null }) {
+  const { data: session, update } = useSession();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(initialName || "");
   const [saving, setSaving] = useState(false);
@@ -26,6 +28,9 @@ export function EditUserName({ userId, initialName }: { userId: string; initialN
     setSaving(false);
     if (res.ok) {
       setEditing(false);
+      if (session?.user?.id === userId) {
+        await update({ name: name.trim() });
+      }
     } else {
       const d = await res.json();
       setError(d.error || "Failed to save");

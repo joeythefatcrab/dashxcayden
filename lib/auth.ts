@@ -102,11 +102,14 @@ export const {
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session: updateData }) {
       if (user) {
         token.id = user.id;
         // @ts-ignore - role exists in our User model
         token.role = user.role;
+      }
+      if (trigger === "update" && updateData?.name) {
+        token.name = updateData.name;
       }
       return token;
     },

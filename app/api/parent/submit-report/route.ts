@@ -84,8 +84,9 @@ export async function POST(req: Request) {
       }
 
       if (notifyAdmins.length > 0) {
-        const appUrl = process.env.NEXTAUTH_URL ||
+        const rawUrl = process.env.NEXTAUTH_URL ||
           (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+        const appUrl = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`;
         const evalData = report.educatorEvaluation as Record<string, string> | null;
 
         // Compute attendance counts from dailyAttendance records (same logic as MonthlyReportRenderer)

@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
     // @ts-ignore
     const role = session.user.realRole || session.user.role;
-    if (role !== "PARENT" && role !== "ADMIN") {
+    if (!["PARENT", "ADMIN", "SUPERADMIN"].includes(role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
     if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });
 
-    // Auth check: parent must own this student
+    // Auth check: parents must own this student; admins/superadmins can submit any report
     if (role === "PARENT" && report.student.parent?.id !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

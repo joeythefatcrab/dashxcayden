@@ -14,7 +14,7 @@ const MONTH_NAMES = [
 
 export async function GET(
   _req: Request,
-  { params }: { params: { reportId: string } }
+  { params }: { params: Promise<{ reportId: string }> }
 ) {
   try {
     const session = await auth();
@@ -26,7 +26,7 @@ export async function GET(
       return new NextResponse("Forbidden", { status: 403 });
     }
 
-    const { reportId } = params;
+    const { reportId } = await params;
 
     const report = await db.monthlyReport.findUnique({
       where: { id: reportId },

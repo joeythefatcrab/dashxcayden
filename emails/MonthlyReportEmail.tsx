@@ -77,6 +77,12 @@ export const MonthlyReportEmail = ({
             <strong>{studentName}</strong> ({month} {year}).
           </Text>
 
+          {pdfUrl && (
+            <Section style={{ textAlign: "center" as const, margin: "16px 0 0" }}>
+              <Link href={pdfUrl} style={buttonSecondary}>Download PDF Report</Link>
+            </Section>
+          )}
+
           {/* Student Info */}
           <Section style={infoBox}>
             <Row>
@@ -146,9 +152,6 @@ export const MonthlyReportEmail = ({
           {/* CTA */}
           <Section style={ctaSection}>
             <Link href={reportUrl} style={button}>View Full Report in Dashboard</Link>
-            {pdfUrl && (
-              <Link href={pdfUrl} style={buttonSecondary}>Download PDF Report</Link>
-            )}
           </Section>
 
           <Hr style={hr} />

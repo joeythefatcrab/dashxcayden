@@ -1,0 +1,1 @@
+ALTER TABLE "MonthlyReport" ADD COLUMN IF NOT EXISTS "adminReviewed" BOOLEAN NOT NULL DEFAULT false;

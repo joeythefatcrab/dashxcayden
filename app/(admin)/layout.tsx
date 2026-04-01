@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/auth/dashboard-nav";
+import { ReportSubmissionBanner } from "@/components/admin/ReportSubmissionBanner";
 
 export default async function AdminLayout({
   children,
@@ -24,6 +25,7 @@ export default async function AdminLayout({
     <div className="flex min-h-screen flex-col">
       <DashboardNav />
       <main className="flex-1 bg-muted/30">{children}</main>
+      <ReportSubmissionBanner />
     </div>
   );
 }

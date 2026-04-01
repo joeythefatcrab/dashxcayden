@@ -546,6 +546,7 @@ model MonthlyReport {
 
   // Submission
   submittedAt     DateTime?           // Set when parent clicks Submit; null = draft
+  adminReviewed   Boolean             @default(false) // Set when an admin views the submission
 
   // Metadata
   createdAt       DateTime            @default(now())

@@ -11,7 +11,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, Printer, Pencil, Send, CheckCircle2 } from "lucide-react";
+import { Loader2, Plus, Trash2, Printer, Pencil, Send, CheckCircle2, AlertTriangle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ExternalActivityForm } from "./ExternalActivityForm";
 import { DayAttendancePicker } from "./DayAttendancePicker";
 import { ParentNotesEditor } from "./ParentNotesEditor";
@@ -45,6 +53,7 @@ export function MonthlyReportViewer({ students }: Props) {
   const [editingActivity, setEditingActivity] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const months = [
     "January", "February", "March", "April", "May", "June",
@@ -109,6 +118,7 @@ export function MonthlyReportViewer({ students }: Props) {
   };
 
   const handleSubmitReport = async () => {
+    setShowConfirm(false);
     if (!reportData?.report?.id) return;
     setIsSubmitting(true);
     setSubmitResult(null);
@@ -398,6 +408,7 @@ export function MonthlyReportViewer({ students }: Props) {
           </div>{/* end print:hidden data-entry section */}
 
           {/* Report Preview */}
+          {/* Report Preview */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -410,33 +421,13 @@ export function MonthlyReportViewer({ students }: Props) {
                     </span>
                   )}
                 </div>
-                <div className="flex gap-2 print:hidden">
-                  <Button variant="outline" size="sm" onClick={handlePrint}>
-                    <Printer className="mr-2 h-4 w-4" />
-                    Print / Save PDF
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleSubmitReport}
-                    disabled={isSubmitting}
-                    variant={reportData.report.submittedAt ? "outline" : "default"}
-                  >
-                    {isSubmitting
-                      ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</>
-                      : reportData.report.submittedAt
-                        ? <><Send className="mr-2 h-4 w-4" />Resubmit</>
-                        : <><Send className="mr-2 h-4 w-4" />Submit Report</>}
-                  </Button>
-                </div>
+                <Button variant="outline" size="sm" onClick={handlePrint} className="print:hidden">
+                  <Printer className="mr-2 h-4 w-4" />
+                  Print / Save PDF
+                </Button>
               </div>
-              {submitResult && (
-                <div className={`mt-2 flex items-center gap-2 rounded-md border px-3 py-2 text-sm ${submitResult.ok ? "border-green-200 bg-green-50 text-green-800" : "border-red-200 bg-red-50 text-red-800"}`}>
-                  {submitResult.ok ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : null}
-                  {submitResult.message}
-                </div>
-              )}
               <p className="text-sm text-muted-foreground mt-1 print:hidden">
-                Fill in the sections above, then submit to notify your admin or use Print to export.
+                Review your report below, then use the Submit button at the bottom when ready.
               </p>
             </CardHeader>
             <CardContent className="p-0 sm:p-2">
@@ -453,6 +444,76 @@ export function MonthlyReportViewer({ students }: Props) {
               />
             </CardContent>
           </Card>
+
+          {/* Big Submit Card */}
+          <Card className={`print:hidden border-2 ${reportData.report.submittedAt ? "border-green-200 bg-green-50" : "border-primary/20 bg-primary/5"}`}>
+            <CardContent className="py-8 flex flex-col items-center text-center gap-4">
+              {reportData.report.submittedAt ? (
+                <>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+                    <CheckCircle2 className="h-8 w-8 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-green-800">Report Submitted</p>
+                    <p className="text-sm text-green-700 mt-1">
+                      Submitted on {new Date(reportData.report.submittedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                    </p>
+                  </div>
+                  {submitResult?.ok && (
+                    <p className="text-sm text-green-700">{submitResult.message}</p>
+                  )}
+                  <Button variant="outline" onClick={() => setShowConfirm(true)} disabled={isSubmitting} className="border-green-300">
+                    {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Resubmitting…</> : <><Send className="mr-2 h-4 w-4" />Resubmit</>}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                    <Send className="h-7 w-7 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold">Ready to submit?</p>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                      Make sure attendance, activities, and the educator evaluation are filled in above. Once submitted, your admin will be notified.
+                    </p>
+                  </div>
+                  {submitResult && !submitResult.ok && (
+                    <p className="text-sm text-red-600">{submitResult.message}</p>
+                  )}
+                  <Button size="lg" onClick={() => setShowConfirm(true)} disabled={isSubmitting} className="px-10">
+                    {isSubmitting
+                      ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Submitting…</>
+                      : <><Send className="mr-2 h-5 w-5" />Submit Monthly Report</>}
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Confirmation Dialog */}
+          <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  Submit Monthly Report?
+                </DialogTitle>
+                <DialogDescription className="pt-2 space-y-2">
+                  <p>
+                    You're about to submit the <strong>{["January","February","March","April","May","June","July","August","September","October","November","December"][reportData.month - 1]} {reportData.year}</strong> report for <strong>{reportData.student.name}</strong>.
+                  </p>
+                  <p>Your admin will be notified and will receive a copy by email. You can resubmit if you need to make changes.</p>
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => setShowConfirm(false)}>Go Back</Button>
+                <Button onClick={handleSubmitReport}>
+                  <Send className="mr-2 h-4 w-4" />
+                  Yes, Submit
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </>
       ) : null}
     </div>

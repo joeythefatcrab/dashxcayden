@@ -23,6 +23,7 @@ export function DashboardNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [revisionCount, setRevisionCount] = useState(0);
+  const [pendingReports, setPendingReports] = useState(0);
   const router = useRouter();
   const role = session?.user?.role;
 
@@ -33,6 +34,19 @@ export function DashboardNav() {
         .then((d) => setRevisionCount(d.count || 0))
         .catch(() => {});
     }
+  }, [role]);
+
+  useEffect(() => {
+    if (role !== "ADMIN" && role !== "SUPERADMIN") return;
+    const poll = () => {
+      fetch("/api/admin/pending-reports")
+        .then((r) => r.json())
+        .then((d) => setPendingReports(d.count || 0))
+        .catch(() => {});
+    };
+    poll();
+    const id = setInterval(poll, 30_000);
+    return () => clearInterval(id);
   }, [role]);
 
   if (!session?.user) return null;
@@ -106,7 +120,7 @@ export function DashboardNav() {
 
       <NavDropdown label="People" icon={<Users className="h-4 w-4" />} triggerClass={dropTrigger} items={adminPeopleMenu} />
       <NavDropdown label="Content" icon={<BookOpen className="h-4 w-4" />} triggerClass={dropTrigger} items={adminContentMenu} />
-      <NavDropdown label="Track" icon={<Activity className="h-4 w-4" />} triggerClass={dropTrigger} items={adminTrackMenu} />
+      <NavDropdown label="Track" icon={<Activity className="h-4 w-4" />} triggerClass={dropTrigger} items={adminTrackMenu} badge={pendingReports} />
     </>
   );
 
@@ -312,17 +326,24 @@ function NavDropdown({
   icon,
   triggerClass,
   items,
+  badge,
 }: {
   label: string;
   icon: React.ReactNode;
   triggerClass: string;
   items: { name: string; href: string; icon: React.ComponentType<{ className?: string }> }[];
+  badge?: number;
 }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className={triggerClass}>
         {icon}
         {label}
+        {badge && badge > 0 ? (
+          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+            {badge > 9 ? "9+" : badge}
+          </span>
+        ) : null}
         <ChevronDown className="h-3 w-3" />
       </DropdownMenuTrigger>
       <DropdownMenuContent>

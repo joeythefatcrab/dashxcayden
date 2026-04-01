@@ -234,13 +234,13 @@ export async function POST(req: Request) {
         );
 
         // Generate PDF attachment — fall back to no attachment if chromium unavailable
-        let attachments: { filename: string; content: Buffer }[] = [];
+        let attachments: { filename: string; content: string }[] = [];
         const filename = `${report.student.name.replace(/\s+/g, "_")}_${monthName}_${report.year}_Report.pdf`;
         try {
           console.log("[submit-report] generating PDF...");
           const pdfBuffer = await generatePdfFromHtml(reportHtml);
           console.log("[submit-report] PDF generated, size:", pdfBuffer.length);
-          attachments = [{ filename, content: pdfBuffer }];
+          attachments = [{ filename, content: pdfBuffer.toString("base64") }];
         } catch (pdfErr) {
           console.error("[submit-report] PDF generation failed:", pdfErr);
         }

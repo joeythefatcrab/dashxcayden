@@ -61,7 +61,7 @@ export const MonthlyReportEmail = ({
   return (
     <Html>
       <Head />
-      <Preview>Monthly report submitted — {studentName} ({month} {year})</Preview>
+      <Preview>Monthly report submitted — {studentName} ({month} {String(year)})</Preview>
       <Body style={main}>
         <Container style={container}>
           {/* Header */}

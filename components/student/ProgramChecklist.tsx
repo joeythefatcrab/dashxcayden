@@ -27,6 +27,8 @@ import {
   ArrowRight,
   MinusCircle,
   MoveRight,
+  X,
+  RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -80,15 +82,49 @@ export function ProgramChecklist({ studentId, programId }: Props) {
   const [essayText, setEssayText] = useState("");
   const [essaySubmitting, setEssaySubmitting] = useState(false);
 
+  // Revision notification popup state
+  const [revisionPopupItems, setRevisionPopupItems] = useState<ChecklistItem[]>([]);
+  const [showRevisionPopup, setShowRevisionPopup] = useState(false);
+
+  const DISMISSED_KEY = `dismissed_revisions_${studentId}_${programId}`;
+
+  const getDismissed = (): string[] => {
+    try { return JSON.parse(localStorage.getItem(DISMISSED_KEY) || "[]"); } catch { return []; }
+  };
+
   useEffect(() => {
     fetch(`/api/student/my-checklist?studentId=${studentId}&programId=${programId}`)
       .then((r) => r.json())
       .then((data) => {
-        setSections(data.sections || []);
+        const secs: Section[] = data.sections || [];
+        setSections(secs);
         setEnrollmentId(data.enrollmentId || null);
+
+        // Find returned essays (PENDING + adminNote) not yet dismissed
+        const dismissed = getDismissed();
+        const returned = secs
+          .flatMap((s) => s.items)
+          .filter(
+            (i) =>
+              i.itemType === "ESSAY" &&
+              i.completion?.status === "PENDING" &&
+              i.completion?.adminNote &&
+              !dismissed.includes(i.id)
+          );
+        if (returned.length > 0) {
+          setRevisionPopupItems(returned);
+          setShowRevisionPopup(true);
+        }
       })
       .finally(() => setLoading(false));
   }, [studentId, programId]);
+
+  const dismissRevisionPopup = () => {
+    const dismissed = getDismissed();
+    const newDismissed = [...new Set([...dismissed, ...revisionPopupItems.map((i) => i.id)])];
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify(newDismissed));
+    setShowRevisionPopup(false);
+  };
 
   const updateCompletion = async (itemId: string, status: string, content?: string) => {
     if (!enrollmentId) return;
@@ -331,14 +367,80 @@ export function ProgramChecklist({ studentId, programId }: Props) {
         })}
       </div>
 
+      {/* Revision notification popup */}
+      <Dialog open={showRevisionPopup} onOpenChange={(open) => { if (!open) dismissRevisionPopup(); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <DialogTitle className="text-amber-700">Essays Returned for Revision</DialogTitle>
+                <DialogDescription className="mt-1">
+                  Your admin left notes on {revisionPopupItems.length === 1 ? "an essay" : `${revisionPopupItems.length} essays`}. Review them and resubmit when ready.
+                </DialogDescription>
+              </div>
+              <button
+                onClick={dismissRevisionPopup}
+                className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                aria-label="Dismiss"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </DialogHeader>
+          <div className="space-y-3 mt-2 max-h-80 overflow-y-auto">
+            {revisionPopupItems.map((item) => (
+              <div key={item.id} className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <p className="text-sm font-semibold text-amber-900">{item.title}</p>
+                <p className="text-xs text-amber-700 mt-1">
+                  <span className="font-medium">Admin note:</span> {item.completion?.adminNote}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2 mt-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => {
+                dismissRevisionPopup();
+                // Open the first essay for editing right away
+                const first = revisionPopupItems[0];
+                if (first) {
+                  setEssayItem(first);
+                  setEssayText(first.completion?.content || "");
+                }
+              }}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Start Revising
+            </Button>
+            <Button size="sm" onClick={dismissRevisionPopup}>
+              Got it
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Essay submission dialog */}
       <Dialog open={!!essayItem} onOpenChange={(open) => { if (!open) { setEssayItem(null); setEssayText(""); } }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{essayItem?.title}</DialogTitle>
-            <DialogDescription>
-              Write your submission below. It will be sent to your admin for review.
-            </DialogDescription>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <DialogTitle>{essayItem?.title}</DialogTitle>
+                <DialogDescription>
+                  Write your submission below. It will be sent to your admin for review.
+                </DialogDescription>
+              </div>
+              <button
+                onClick={() => { setEssayItem(null); setEssayText(""); }}
+                className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </DialogHeader>
           <Textarea
             value={essayText}

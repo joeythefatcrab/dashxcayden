@@ -10,14 +10,24 @@ import {
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Home, BookOpen, FileText, Users, LogOut, Menu, Settings, Search, RotateCcw, MessageSquare, UserCog, Clock, Shield, ChevronDown, ClipboardList, Activity, CalendarCheck } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export function DashboardNav() {
   const { data: session } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
+  const [revisionCount, setRevisionCount] = useState(0);
   const router = useRouter();
+
+  useEffect(() => {
+    if (role === "STUDENT") {
+      fetch("/api/student/revision-count")
+        .then((r) => r.json())
+        .then((d) => setRevisionCount(d.count || 0))
+        .catch(() => {});
+    }
+  }, [role]);
 
   if (!session?.user) return null;
 
@@ -149,6 +159,11 @@ export function DashboardNav() {
         >
           <item.icon className="h-4 w-4" />
           {item.name}
+          {item.name === "My Program" && revisionCount > 0 && (
+            <span className="ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+              {revisionCount > 9 ? "9+" : revisionCount}
+            </span>
+          )}
         </Link>
       ))}
     </>
@@ -226,6 +241,11 @@ export function DashboardNav() {
         <Link key={item.name} href={item.href} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
           <item.icon className="h-4 w-4" />
           {item.name}
+          {item.name === "My Program" && revisionCount > 0 && (
+            <span className="ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+              {revisionCount > 9 ? "9+" : revisionCount}
+            </span>
+          )}
         </Link>
       ));
     }

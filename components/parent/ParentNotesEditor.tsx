@@ -55,11 +55,8 @@ export function ParentNotesEditor({ reportId, initialNotes, onSave }: Props) {
           <div>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Parent Notes
+              Anything you would like to share or need help with?
             </CardTitle>
-            <CardDescription className="mt-1">
-              Add successes, observations, or any additional information for the provider
-            </CardDescription>
           </div>
           {hasChanges && (
             <Button onClick={handleSave} disabled={isSaving} size="sm">

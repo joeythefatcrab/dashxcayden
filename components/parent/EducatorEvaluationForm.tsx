@@ -46,7 +46,7 @@ export function EducatorEvaluationForm({ reportId, initialAnswers, onSave }: Pro
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Monthly Progress Notes</CardTitle>
+        <CardTitle>Monthly Study Progress</CardTitle>
         <p className="text-sm text-muted-foreground">
           Answer the questions below to complete the report.
         </p>

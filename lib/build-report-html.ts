@@ -153,7 +153,7 @@ export function buildReportHtml(data: ReportRendererData): string {
 
   function section(title: string, body: string) {
     return `<div style="margin-bottom:20px">
-      <div style="font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid #374151;padding-bottom:4px;margin-bottom:10px;color:#374151">${esc(title)}</div>
+      ${title ? `<div style="font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid #374151;padding-bottom:4px;margin-bottom:10px;color:#374151">${esc(title)}</div>` : ""}
       ${body}
     </div>`;
   }
@@ -204,7 +204,7 @@ export function buildReportHtml(data: ReportRendererData): string {
     </div>
   `)}
 
-  ${section("Educator Evaluation", `
+  ${section("", `
     ${evalRow("Name of person filling out form:", educatorName)}
     ${evalRow("Any educator or student success?", successes)}
     ${evalRow("Any program targets completed?", programTargets)}
@@ -233,7 +233,7 @@ export function buildReportHtml(data: ReportRendererData): string {
     </div>
   `)}
 
-  ${section("Additional Comments", report.parentNotes
+  ${section("Anything you would like to share or need help with?", report.parentNotes
     ? `<div style="white-space:pre-wrap;line-height:1.8">${esc(report.parentNotes)}</div>`
     : `<div style="min-height:60px;border-bottom:1px solid #d1d5db;margin-top:8px"></div><div style="font-size:10px;color:#6b7280;margin-top:6px;font-style:italic">Feel free to note any additional comments or questions here.</div>`
   )}

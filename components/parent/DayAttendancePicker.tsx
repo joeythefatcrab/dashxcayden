@@ -225,7 +225,7 @@ export function DayAttendancePicker({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
-          Attendance Calendar
+          Monthly Attendance
         </CardTitle>
         <CardDescription>
           Click any day to set attendance, log hours, and note activities.

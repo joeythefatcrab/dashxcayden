@@ -314,7 +314,7 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
       </Section>
 
       {/* ── 2. EDUCATOR EVALUATION ── */}
-      <Section title="Educator Evaluation">
+      <Section title="">
         <EvalRow
           label="Name of person filling out form:"
           value={eval_?.educatorName || parentName}
@@ -373,7 +373,7 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
       </Section>
 
       {/* ── 4. ADDITIONAL COMMENTS ── */}
-      <Section title="Additional Comments">
+      <Section title="Anything you would like to share or need help with?">
         {report.parentNotes ? (
           <div style={{ whiteSpace: "pre-wrap", lineHeight: "1.8" }}>{report.parentNotes}</div>
         ) : (
@@ -400,16 +400,19 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
 function Section({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
     <div style={{ marginBottom: "20px" }}>
-      <div style={{
-        fontSize: "11px", fontWeight: "bold", letterSpacing: "1.5px", textTransform: "uppercase",
-        borderBottom: "1px solid #374151", paddingBottom: "4px", marginBottom: "10px", color: "#374151",
-      }}>
-        {title}
-      </div>
+      {title && (
+        <div style={{
+          fontSize: "11px", fontWeight: "bold", letterSpacing: "1.5px", textTransform: "uppercase",
+          borderBottom: "1px solid #374151", paddingBottom: "4px", marginBottom: "10px", color: "#374151",
+        }}>
+          {title}
+        </div>
+      )}
       {children}
     </div>
   );
 }
+
 
 function EvalRow({ label, value }: { label: string; value?: string }) {
   return (

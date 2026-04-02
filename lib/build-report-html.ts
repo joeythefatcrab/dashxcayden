@@ -62,7 +62,7 @@ function esc(str: string | null | undefined): string {
 }
 
 export function buildReportHtml(data: ReportRendererData): string {
-  const { report, student, month, year, courseStats, summary, dailyAttendance } = data;
+  const { report, student, month, year, courseStats, summary, dailyAttendance, attachments } = data;
   const monthName = MONTH_NAMES[month - 1];
   const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   const parentName = student.parent.name || student.parent.email;
@@ -237,6 +237,10 @@ export function buildReportHtml(data: ReportRendererData): string {
     ? `<div style="white-space:pre-wrap;line-height:1.8">${esc(report.parentNotes)}</div>`
     : `<div style="min-height:60px;border-bottom:1px solid #d1d5db;margin-top:8px"></div><div style="font-size:10px;color:#6b7280;margin-top:6px;font-style:italic">Feel free to note any additional comments or questions here.</div>`
   )}
+
+  ${attachments && attachments.length > 0 ? section("Attachments", attachments.map(a =>
+    `<div style="font-size:12px;margin-bottom:4px"><a href="${esc(a.url)}" style="color:#2563eb">${esc(a.name)}</a></div>`
+  ).join("")) : ""}
 
   <!-- Footer -->
   <div style="margin-top:24px;padding-top:10px;border-top:2px solid #111827;text-align:center;font-size:10px;color:#6b7280;letter-spacing:0.5px">

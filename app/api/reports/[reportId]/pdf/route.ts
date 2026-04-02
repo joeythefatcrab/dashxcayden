@@ -38,6 +38,7 @@ export async function GET(
           },
         },
         externalActivities: { orderBy: { date: "asc" } },
+        attachments: { orderBy: { createdAt: "asc" }, select: { id: true, url: true, name: true } },
       },
     });
 
@@ -146,6 +147,7 @@ export async function GET(
         date: d.date instanceof Date ? d.date.toISOString() : String(d.date),
         present: d.present,
       })),
+      attachments: report.attachments ?? [],
     };
 
     const reportHtml = buildReportHtml(rendererData);

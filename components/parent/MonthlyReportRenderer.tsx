@@ -89,6 +89,7 @@ export type ReportRendererData = {
     totalSchoolHours: number;
   };
   dailyAttendance: DailyAttendanceRecord[];
+  attachments?: { id: string; url: string; name: string }[];
 };
 
 // ─── Subject mapping ──────────────────────────────────────────────────────────
@@ -383,6 +384,17 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
           Feel free to note any additional comments or questions here.
         </div>
       </Section>
+
+      {/* ── 5. ATTACHMENTS ── */}
+      {data.attachments && data.attachments.length > 0 && (
+        <Section title="Attachments">
+          {data.attachments.map((a) => (
+            <div key={a.id} style={{ fontSize: "12px", marginBottom: "4px" }}>
+              <a href={a.url} style={{ color: "#2563eb" }}>{a.name}</a>
+            </div>
+          ))}
+        </Section>
+      )}
 
       {/* ── FOOTER ── */}
       <div style={{

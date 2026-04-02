@@ -22,8 +22,8 @@ import {
 } from "@/components/ui/dialog";
 import { ExternalActivityForm } from "./ExternalActivityForm";
 import { DayAttendancePicker } from "./DayAttendancePicker";
-import { ParentNotesEditor } from "./ParentNotesEditor";
 import { EducatorEvaluationForm } from "./EducatorEvaluationForm";
+import { ReportAttachmentUploader } from "./ReportAttachmentUploader";
 import { MonthlyReportRenderer } from "./MonthlyReportRenderer";
 import type { ReportRendererData } from "./MonthlyReportRenderer";
 
@@ -295,13 +295,6 @@ export function MonthlyReportViewer({ students }: Props) {
             onSave={loadReportData}
           />
 
-          {/* Parent Notes */}
-          <ParentNotesEditor
-            reportId={reportData.report.id}
-            initialNotes={reportData.report.parentNotes || ""}
-            onSave={loadReportData}
-          />
-
           {/* Educator Evaluation */}
           {reportData?.report?.id && (
             <EducatorEvaluationForm
@@ -405,6 +398,11 @@ export function MonthlyReportViewer({ students }: Props) {
               )}
             </CardContent>
           </Card>
+
+          {/* File Attachments */}
+          <ReportAttachmentUploader
+            reportId={reportData.report.id}
+          />
           </div>{/* end print:hidden data-entry section */}
 
           {/* Report Preview */}

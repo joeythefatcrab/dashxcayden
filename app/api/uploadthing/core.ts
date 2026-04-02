@@ -46,6 +46,23 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata, file }) => {
       return { uploadedBy: metadata.userId, fileUrl: file.url };
     }),
+  reportAttachment: f({
+    pdf: { maxFileSize: "16MB", maxFileCount: 10 },
+    image: { maxFileSize: "8MB", maxFileCount: 10 },
+    "application/msword": { maxFileSize: "16MB", maxFileCount: 10 },
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": { maxFileSize: "16MB", maxFileCount: 10 },
+  })
+    .middleware(async () => {
+      const session = await auth();
+      if (!session?.user) throw new Error("Unauthorized");
+      // @ts-ignore
+      const role: string = session.user.realRole || session.user.role || "";
+      if (!["PARENT", "ADMIN", "SUPERADMIN"].includes(role)) throw new Error("Forbidden");
+      return { userId: session.user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      return { uploadedBy: metadata.userId, fileUrl: file.url, fileName: file.name, fileSize: file.size };
+    }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;

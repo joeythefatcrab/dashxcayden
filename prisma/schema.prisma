@@ -556,6 +556,7 @@ model MonthlyReport {
   // Relations
   student         Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
   externalActivities ExternalActivity[]
+  attachments     ReportAttachment[]
 
   @@unique([studentId, month, year])
   @@index([studentId])
@@ -582,6 +583,20 @@ model ExternalActivity {
 
   @@index([reportId])
   @@index([date])
+}
+
+model ReportAttachment {
+  id        String        @id @default(cuid())
+  reportId  String
+  url       String
+  name      String
+  size      Int?
+  mimeType  String?
+  createdAt DateTime      @default(now())
+
+  report    MonthlyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
 }
 
 // Daily Attendance (auto-tracked when student logs in or logs activity)

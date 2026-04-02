@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, Printer, Pencil, Send, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Loader2, Plus, Trash2, Printer, Pencil, Send, CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -419,10 +419,18 @@ export function MonthlyReportViewer({ students }: Props) {
                     </span>
                   )}
                 </div>
-                <Button variant="outline" size="sm" onClick={handlePrint} className="print:hidden">
-                  <Printer className="mr-2 h-4 w-4" />
-                  Print / Save PDF
-                </Button>
+                <div className="flex gap-2 print:hidden">
+                  {!reportData.report.submittedAt && (
+                    <Button variant="outline" size="sm" onClick={loadReportData} disabled={isLoading}>
+                      <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                      Refresh
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={handlePrint}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print / Save PDF
+                  </Button>
+                </div>
               </div>
               <p className="text-sm text-muted-foreground mt-1 print:hidden">
                 Review your report below, then use the Submit button at the bottom when ready.

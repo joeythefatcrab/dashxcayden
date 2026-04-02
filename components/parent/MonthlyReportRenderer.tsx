@@ -368,21 +368,6 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
             </tr>
           </tbody>
         </table>
-        <div style={{ marginTop: "6px", fontSize: "10px", color: "#6b7280" }}>
-          Online coursework: {summary.totalAppHours} hrs &nbsp;|&nbsp; External activities: {summary.totalExternalHours} hrs
-        </div>
-      </Section>
-
-      {/* ── 4. ADDITIONAL COMMENTS ── */}
-      <Section title="Anything you would like to share or need help with?">
-        {report.parentNotes ? (
-          <div style={{ whiteSpace: "pre-wrap", lineHeight: "1.8" }}>{report.parentNotes}</div>
-        ) : (
-          <div style={{ minHeight: "60px", borderBottom: "1px solid #d1d5db", marginTop: "8px" }} />
-        )}
-        <div style={{ fontSize: "10px", color: "#6b7280", marginTop: "6px", fontStyle: "italic" }}>
-          Feel free to note any additional comments or questions here.
-        </div>
       </Section>
 
       {/* ── 5. ATTACHMENTS ── */}

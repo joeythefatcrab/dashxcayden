@@ -228,15 +228,7 @@ export function buildReportHtml(data: ReportRendererData): string {
         </tr>
       </tbody>
     </table>
-    <div style="margin-top:6px;font-size:10px;color:#6b7280">
-      Online coursework: ${summary.totalAppHours} hrs &nbsp;|&nbsp; External activities: ${summary.totalExternalHours} hrs
-    </div>
   `)}
-
-  ${section("Anything you would like to share or need help with?", report.parentNotes
-    ? `<div style="white-space:pre-wrap;line-height:1.8">${esc(report.parentNotes)}</div>`
-    : `<div style="min-height:60px;border-bottom:1px solid #d1d5db;margin-top:8px"></div><div style="font-size:10px;color:#6b7280;margin-top:6px;font-style:italic">Feel free to note any additional comments or questions here.</div>`
-  )}
 
   ${attachments && attachments.length > 0 ? section("Attachments", attachments.map(a =>
     `<div style="font-size:12px;margin-bottom:4px"><a href="${esc(a.url)}" style="color:#2563eb">${esc(a.name)}</a></div>`

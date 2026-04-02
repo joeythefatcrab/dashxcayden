@@ -186,7 +186,7 @@ export function buildReportHtml(data: ReportRendererData): string {
     </div>
   </div>
 
-  ${section("Monthly Attendance and Progress", `
+  ${section("Monthly Attendance", `
     <div style="font-size:11px;margin-bottom:8px">
       <strong>P</strong> = Present &nbsp;&nbsp;
       <strong>A</strong> = Absent &nbsp;&nbsp;

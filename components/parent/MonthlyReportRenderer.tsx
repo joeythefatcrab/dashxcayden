@@ -264,7 +264,7 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
       </div>
 
       {/* ── 1. MONTHLY ATTENDANCE ── */}
-      <Section title="Monthly Attendance and Progress">
+      <Section title="Monthly Attendance">
         <div style={{ fontSize: "11px", marginBottom: "8px" }}>
           <strong>Mark:</strong>&nbsp;&nbsp;
           <strong>P</strong> = Present &nbsp;&nbsp;

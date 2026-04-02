@@ -175,7 +175,7 @@ export function buildReportHtml(data: ReportRendererData): string {
   <!-- Header -->
   <div style="text-align:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #111827">
     <div style="font-size:18px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">
-      Monthly Homeschool Attendance &amp; Progress Report
+      Monthly Attendance
     </div>
     <div style="font-size:14px;margin-bottom:12px">${esc(monthName)} ${year}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;font-size:12px;max-width:440px;margin:0 auto;text-align:left">

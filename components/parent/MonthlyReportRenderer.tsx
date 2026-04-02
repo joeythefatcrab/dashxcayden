@@ -252,7 +252,7 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
       {/* ── HEADER ── */}
       <div style={{ textAlign: "center", marginBottom: "20px", paddingBottom: "16px", borderBottom: "2px solid #111827" }}>
         <div style={{ fontSize: "18px", fontWeight: "bold", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>
-          Monthly Homeschool Attendance &amp; Progress Report
+          Monthly Attendance
         </div>
         <div style={{ fontSize: "14px", marginBottom: "12px" }}>{monthName} {year}</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 24px", fontSize: "12px", maxWidth: "440px", margin: "0 auto", textAlign: "left" }}>

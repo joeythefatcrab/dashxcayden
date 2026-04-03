@@ -4,6 +4,9 @@ import { db } from "@/lib/db";
 import { resend, SENDER_EMAIL, isResendConfigured } from "@/lib/email/resend";
 import { render } from "@react-email/render";
 import { MonthlyReportEmail } from "@/emails/MonthlyReportEmail";
+import { buildReportHtml } from "@/lib/build-report-html";
+import { generatePdfFromHtml } from "@/lib/generate-pdf";
+import type { ReportRendererData } from "@/components/parent/MonthlyReportRenderer";
 
 export const runtime = "nodejs";
 
@@ -59,11 +62,98 @@ export async function POST(req: Request) {
     const endDate = new Date(report.year, report.month, 0, 23, 59, 59);
     const studentId = report.studentId;
 
-    const dailyAttendance = await db.dailyAttendance.findMany({
-      where: { studentId, date: { gte: startDate, lte: endDate } },
-      select: { date: true, present: true },
-      orderBy: { date: "asc" },
+    const [enrollments, attempts, dailyTimeLogs, dailyAttendance] = await Promise.all([
+      db.enrollment.findMany({
+        where: { studentId },
+        include: { curriculum: { select: { id: true, name: true, subject: true } } },
+      }),
+      db.attempt.findMany({
+        where: { studentId, createdAt: { gte: startDate, lte: endDate } },
+        include: { lesson: { select: { id: true, unit: { select: { curriculumId: true } } } } },
+      }),
+      db.dailyTimeLog.findMany({
+        where: { studentId, date: { gte: startDate, lte: endDate } },
+        select: { curriculumId: true, minutesSpent: true },
+      }),
+      db.dailyAttendance.findMany({
+        where: { studentId, date: { gte: startDate, lte: endDate } },
+        select: { date: true, present: true },
+        orderBy: { date: "asc" },
+      }),
+    ]);
+
+    const apsSubjectMap: Record<string, string | null> = {};
+    try {
+      const curriculaAps = await db.curriculum.findMany({
+        where: { id: { in: enrollments.map((e) => e.curriculum.id) } },
+        select: { id: true, apsSubject: true },
+      });
+      for (const c of curriculaAps) apsSubjectMap[c.id] = c.apsSubject ?? null;
+    } catch { /* migration pending */ }
+
+    const courseStats = enrollments.map((enrollment) => {
+      const courseAttempts = attempts.filter(
+        (a) => a.lesson.unit.curriculumId === enrollment.curriculum.id
+      );
+      const uniqueLessons = new Set(courseAttempts.map((a) => a.lessonId));
+      const totalTimeSeconds = courseAttempts.reduce((s, a: any) => s + (a.timeSpent || 0), 0);
+      const timeLogMinutes = dailyTimeLogs
+        .filter((l) => l.curriculumId === enrollment.curriculum.id)
+        .reduce((s, l) => s + l.minutesSpent, 0);
+      const avgScore = courseAttempts.length > 0
+        ? courseAttempts.reduce((s, a: any) => s + a.score, 0) / courseAttempts.length : 0;
+      return {
+        curriculumId: enrollment.curriculum.id,
+        name: enrollment.curriculum.name,
+        subject: enrollment.curriculum.subject,
+        apsSubject: apsSubjectMap[enrollment.curriculum.id] ?? null,
+        lessonsCompleted: uniqueLessons.size,
+        averageScore: Math.round(avgScore),
+        timeSpentHours: parseFloat(((totalTimeSeconds + timeLogMinutes * 60) / 3600).toFixed(1)),
+      };
     });
+
+    const totalAppHours = parseFloat(
+      ((attempts.reduce((s, a: any) => s + (a.timeSpent || 0), 0) +
+        dailyTimeLogs.reduce((s, l) => s + l.minutesSpent, 0) * 60) / 3600).toFixed(1)
+    );
+    const totalExternalHours = report.externalActivities.reduce((s, a: any) => s + (a.hoursSpent || 0), 0);
+    const summary = {
+      totalAppHours,
+      totalExternalHours,
+      totalSchoolHours: parseFloat((totalAppHours + totalExternalHours).toFixed(1)),
+    };
+
+    const attachments = await db.reportAttachment.findMany({
+      where: { reportId: report.id },
+      select: { id: true, url: true, name: true },
+    });
+
+    const rendererData: ReportRendererData = {
+      report: {
+        id: report.id,
+        attendanceData: report.attendanceData as any,
+        parentNotes: report.parentNotes,
+        educatorEvaluation: report.educatorEvaluation as any,
+        reportContent: report.reportContent ?? null,
+        externalActivities: report.externalActivities as any,
+      },
+      student: {
+        id: report.student.id,
+        name: report.student.name,
+        grade: report.student.grade,
+        parent: { name: report.student.parent?.name ?? null, email: report.student.parent?.email ?? "" },
+      },
+      month: report.month,
+      year: report.year,
+      courseStats,
+      summary,
+      dailyAttendance: dailyAttendance.map((d) => ({
+        date: d.date instanceof Date ? d.date.toISOString() : String(d.date),
+        present: d.present,
+      })),
+      attachments,
+    };
 
     const monthName = MONTH_NAMES[report.month] || String(report.month);
 
@@ -116,11 +206,12 @@ export async function POST(req: Request) {
           vacation: hasDailyData ? vacationCount : (attendanceRaw?.vacation ?? 0),
         };
 
+        const parentName = report.student.parent?.name || "Parent";
         const pdfUrl = `${appUrl}/api/reports/${report.id}/pdf`;
         const emailHtml = await render(
           MonthlyReportEmail({
             studentName: report.student.name,
-            parentName: report.student.parent?.name || "Parent",
+            parentName,
             month: monthName,
             year: report.year,
             grade: String(report.student.grade ?? ""),
@@ -138,7 +229,18 @@ export async function POST(req: Request) {
           })
         );
 
-        const subject = `Monthly Report Submitted — ${report.student.name} (${monthName} ${report.year})`;
+        // Generate PDF attachment — fall back gracefully if chromium unavailable
+        const reportHtml = buildReportHtml(rendererData);
+        let pdfAttachments: { filename: string; content: string }[] = [];
+        const pdfFilename = `${report.student.name.replace(/\s+/g, "_")}_${monthName}_${report.year}_Report.pdf`;
+        try {
+          const pdfBuffer = await generatePdfFromHtml(reportHtml);
+          pdfAttachments = [{ filename: pdfFilename, content: pdfBuffer.toString("base64") }];
+        } catch (pdfErr) {
+          console.error("PDF generation failed, sending without attachment:", pdfErr);
+        }
+
+        const subject = `Monthly Report — ${report.student.name} submitted by ${parentName} (${monthName} ${report.year})`;
 
         try {
           if (notifyAdmins.length === 1) {
@@ -147,6 +249,7 @@ export async function POST(req: Request) {
               to: notifyAdmins[0].email,
               subject,
               html: emailHtml,
+              attachments: pdfAttachments,
             });
           } else {
             await resend.batch.send(
@@ -155,6 +258,7 @@ export async function POST(req: Request) {
                 to: admin.email,
                 subject,
                 html: emailHtml,
+                attachments: pdfAttachments,
               }))
             );
           }

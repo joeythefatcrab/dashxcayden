@@ -4,12 +4,16 @@ import { Badge } from "@/components/ui/badge";
 import { InviteUserForm } from "@/components/superadmin/InviteUserForm";
 import { InviteCodeManager } from "@/components/admin/InviteCodeManager";
 import { EditUserName } from "@/components/superadmin/EditUserName";
+import { NotifyToggle } from "@/components/admin/NotifyToggle";
 
 export default async function UsersPage() {
-  // Fetch all users
   const users = await db.user.findMany({
     orderBy: { createdAt: "desc" },
     take: 50,
+    select: {
+      id: true, name: true, email: true, role: true, createdAt: true,
+      notifyOnReportSubmission: true,
+    },
   });
 
   const roleColors: Record<string, string> = {
@@ -46,10 +50,14 @@ export default async function UsersPage() {
                   <p className="text-sm text-gray-500">{user.email}</p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <Badge
-                    variant="secondary"
-                    className={roleColors[user.role] || ""}
-                  >
+                  {["ADMIN", "SUPERADMIN", "PARENT"].includes(user.role) && (
+                    <NotifyToggle
+                      userId={user.id}
+                      initialValue={user.notifyOnReportSubmission}
+                      label={user.role === "PARENT" ? "Parent emails" : "Report emails"}
+                    />
+                  )}
+                  <Badge variant="secondary" className={roleColors[user.role] || ""}>
                     {user.role}
                   </Badge>
                   <p className="text-sm text-gray-400 w-24 text-right">

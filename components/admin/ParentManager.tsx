@@ -28,11 +28,13 @@ import {
   Edit,
   Key,
 } from "lucide-react";
+import { NotifyToggle } from "@/components/admin/NotifyToggle";
 
 type Parent = {
   id: string;
   name: string | null;
   email: string;
+  notifyOnReportSubmission: boolean;
   createdAt: string;
   children: Array<{
     id: string;
@@ -500,7 +502,12 @@ export function ParentManager({ parents: initialParents }: ParentManagerProps) {
                       </div>
                     </div>
                   </button>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
+                    <NotifyToggle
+                      userId={parent.id}
+                      initialValue={parent.notifyOnReportSubmission}
+                      label="Report emails"
+                    />
                     <Button
                       variant="destructive"
                       size="sm"

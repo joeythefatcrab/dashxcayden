@@ -246,25 +246,18 @@ export async function POST(req: Request) {
         const subject = `Monthly Report — ${report.student.name} submitted by ${parentName} (${monthName} ${report.year})`;
 
         try {
-          if (notifyAdmins.length === 1) {
-            await resend.emails.send({
-              from: SENDER_EMAIL,
-              to: notifyAdmins[0].email,
-              subject,
-              html: emailHtml,
-              attachments: pdfAttachments,
-            });
-          } else {
-            await resend.batch.send(
-              notifyAdmins.map((admin) => ({
+          // Always use individual sends — batch API silently drops attachments
+          await Promise.all(
+            notifyAdmins.map((admin) =>
+              resend.emails.send({
                 from: SENDER_EMAIL,
                 to: admin.email,
                 subject,
                 html: emailHtml,
                 attachments: pdfAttachments,
-              }))
-            );
-          }
+              })
+            )
+          );
           emailResult = { sent: notifyAdmins.length };
         } catch (err: any) {
           console.error("[submit-report] email send failed:", err);

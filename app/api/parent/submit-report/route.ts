@@ -233,11 +233,14 @@ export async function POST(req: Request) {
         const reportHtml = buildReportHtml(rendererData);
         let pdfAttachments: { filename: string; content: string }[] = [];
         const pdfFilename = `${report.student.name.replace(/\s+/g, "_")}_${monthName}_${report.year}_Report.pdf`;
+        let pdfError: string | null = null;
         try {
           const pdfBuffer = await generatePdfFromHtml(reportHtml);
+          console.log("[submit-report] PDF generated, bytes:", pdfBuffer.length);
           pdfAttachments = [{ filename: pdfFilename, content: pdfBuffer.toString("base64") }];
-        } catch (pdfErr) {
-          console.error("PDF generation failed, sending without attachment:", pdfErr);
+        } catch (pdfErr: any) {
+          pdfError = pdfErr?.message || String(pdfErr);
+          console.error("[submit-report] PDF generation failed:", pdfError);
         }
 
         const subject = `Monthly Report — ${report.student.name} submitted by ${parentName} (${monthName} ${report.year})`;
@@ -274,6 +277,7 @@ export async function POST(req: Request) {
       success: true,
       submittedAt: updatedReport.submittedAt,
       emailResult,
+      pdfError,
     });
   } catch (error) {
     console.error("submit-report error:", error);

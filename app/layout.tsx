@@ -10,8 +10,8 @@ import { db } from "@/lib/db";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Homeschool SaaS - Adaptive Curriculum Platform",
-  description: "Upload your curriculum, let students learn at their own pace with intelligent gating, and get automated progress reports.",
+  title: "Learnality",
+  description: "Homeschool attendance tracking, progress reports, and curriculum management.",
 };
 
 export default async function RootLayout({

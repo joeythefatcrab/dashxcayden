@@ -159,6 +159,7 @@ export async function POST(req: Request) {
 
     // ── Send email notification to opted-in admins ─────────────────────────────
     let emailResult: { sent: number; error?: string } = { sent: 0 };
+    let pdfError: string | null = null;
 
     if (isResendConfigured()) {
       let notifyAdmins: { email: string; name: string | null }[] = [];
@@ -233,7 +234,6 @@ export async function POST(req: Request) {
         const reportHtml = buildReportHtml(rendererData);
         let pdfAttachments: { filename: string; content: string }[] = [];
         const pdfFilename = `${report.student.name.replace(/\s+/g, "_")}_${monthName}_${report.year}_Report.pdf`;
-        let pdfError: string | null = null;
         try {
           const pdfBuffer = await generatePdfFromHtml(reportHtml);
           console.log("[submit-report] PDF generated, bytes:", pdfBuffer.length);

@@ -150,7 +150,13 @@ export async function GET(
       attachments: report.attachments ?? [],
     };
 
-    const reportHtml = buildReportHtml(rendererData);
+    // Merge superadmin override if present
+    const override = report.superadminOverride as Record<string, any> | null;
+    const finalData: ReportRendererData = override
+      ? { ...rendererData, ...override, report: { ...rendererData.report, ...(override.report ?? {}) } }
+      : rendererData;
+
+    const reportHtml = buildReportHtml(finalData);
     const pdfBuffer = await generatePdfFromHtml(reportHtml);
 
     const monthName = MONTH_NAMES[report.month] || String(report.month);

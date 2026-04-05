@@ -230,8 +230,14 @@ export async function POST(req: Request) {
           })
         );
 
+        // Merge superadmin override if present
+        const override = (report as any).superadminOverride as Record<string, any> | null;
+        const finalData: ReportRendererData = override
+          ? { ...rendererData, ...override, report: { ...rendererData.report, ...(override.report ?? {}) } }
+          : rendererData;
+
         // Generate PDF attachment — fall back gracefully if chromium unavailable
-        const reportHtml = buildReportHtml(rendererData);
+        const reportHtml = buildReportHtml(finalData);
         let pdfAttachments: { filename: string; content: string }[] = [];
         const pdfFilename = `${report.student.name.replace(/\s+/g, "_")}_${monthName}_${report.year}_Report.pdf`;
         try {

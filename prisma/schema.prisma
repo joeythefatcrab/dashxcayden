@@ -549,6 +549,9 @@ model MonthlyReport {
   // adminReviewed is stored in the DB but managed via raw SQL to avoid
   // breaking queries if the migration hasn't been applied yet.
 
+  // Superadmin override — merged on top of rendererData when generating PDFs
+  superadminOverride Json?
+
   // Metadata
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt

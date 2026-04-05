@@ -116,17 +116,25 @@ export function buildReportHtml(data: ReportRendererData): string {
   });
 
   // Calendar grid
-  const calendarCells = Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
-    const inMonth = day <= daysInMonth;
-    const entry = inMonth ? dailyMarks[day] : undefined;
+  const DAY_LABELS_PDF = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const firstDayOfWeek = new Date(year, month - 1, 1).getDay(); // 0=Sun
+  const dayHeaders = DAY_LABELS_PDF.map((d) =>
+    `<div style="text-align:center;font-size:9px;font-weight:bold;color:#6b7280;padding:2px 0;">${d}</div>`
+  ).join("");
+  const leadingEmpties = Array(firstDayOfWeek).fill(
+    `<div></div>`
+  ).join("");
+  const dayCells = Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+    const entry = dailyMarks[day];
     const status = entry?.status ?? "";
     const textColor = status === "P" ? "#16a34a" : status === "S" ? "#ca8a04" : status === "V" ? "#1d4ed8" : status === "A" ? "#dc2626" : "#9ca3af";
-    const bg = inMonth ? dayColor(status) : "#f9fafb";
-    return `<div style="border:1px solid #d1d5db;border-radius:2px;padding:3px 2px;text-align:center;background-color:${bg};opacity:${inMonth ? 1 : 0.35};">
+    const bg = dayColor(status);
+    return `<div style="border:1px solid #d1d5db;border-radius:2px;padding:3px 2px;text-align:center;background-color:${bg};">
       <div style="font-size:9px;color:#6b7280;line-height:1">${day}</div>
-      <div style="font-size:11px;font-weight:bold;color:${textColor};line-height:1.4">${inMonth ? (status || "—") : ""}</div>
+      <div style="font-size:11px;font-weight:bold;color:${textColor};line-height:1.4">${status || "—"}</div>
     </div>`;
   }).join("");
+  const calendarCells = dayHeaders + leadingEmpties + dayCells;
 
   // Eval rows (new 2026 format with legacy fallback)
   const educatorName = esc(eval_?.educatorName || parentName);

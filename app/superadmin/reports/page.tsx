@@ -23,15 +23,25 @@ export default async function SuperadminReportsPage() {
       month: true,
       year: true,
       submittedAt: true,
-      superadminOverride: true,
       student: { select: { name: true } },
     },
   });
 
+  // Fetch superadminOverride via raw SQL — column may not exist yet if migration hasn't run
+  const overrideMap: Record<string, any> = {};
+  try {
+    const rows = await db.$queryRaw<{ id: string; superadminOverride: any }[]>`
+      SELECT id, "superadminOverride" FROM "MonthlyReport"
+      WHERE "submittedAt" IS NOT NULL
+      ORDER BY "submittedAt" DESC LIMIT 50
+    `;
+    for (const row of rows) overrideMap[row.id] = row.superadminOverride ?? null;
+  } catch { /* column not migrated yet — all overrides will show as null */ }
+
   const serialized = reports.map((r) => ({
     ...r,
     submittedAt: r.submittedAt!.toISOString(),
-    superadminOverride: r.superadminOverride ?? null,
+    superadminOverride: overrideMap[r.id] ?? null,
   }));
 
   return (

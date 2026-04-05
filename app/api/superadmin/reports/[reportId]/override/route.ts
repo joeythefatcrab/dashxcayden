@@ -23,11 +23,17 @@ export async function PATCH(
     return NextResponse.json({ error: "override must be a JSON object or null" }, { status: 400 });
   }
 
-  const report = await db.monthlyReport.update({
-    where: { id: reportId },
-    data: { superadminOverride: override ?? undefined },
-    select: { id: true, superadminOverride: true },
-  });
+  try {
+    await db.$executeRaw`
+      UPDATE "MonthlyReport" SET "superadminOverride" = ${override === null ? null : JSON.stringify(override)}::jsonb
+      WHERE id = ${reportId}
+    `;
+  } catch (e: any) {
+    if (e?.code === "P2022" || String(e).includes("superadminOverride")) {
+      return NextResponse.json({ error: "Run migration first: ALTER TABLE \"MonthlyReport\" ADD COLUMN IF NOT EXISTS \"superadminOverride\" JSONB;" }, { status: 500 });
+    }
+    throw e;
+  }
 
-  return NextResponse.json(report);
+  return NextResponse.json({ id: reportId, superadminOverride: override });
 }

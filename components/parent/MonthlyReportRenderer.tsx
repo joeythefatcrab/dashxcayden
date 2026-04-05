@@ -273,11 +273,19 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
           <strong>V</strong> = Vacation
         </div>
 
-        {/* Always render 1–31; dim days that fall outside the month */}
+        {/* Calendar grid with day-of-week alignment */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "3px", marginBottom: "10px" }}>
-          {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
-            const inMonth = day <= daysInMonth;
-            const entry = inMonth ? dailyMarks[day] : undefined;
+          {/* Day-of-week headers */}
+          {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (
+            <div key={d} style={{ textAlign: "center", fontSize: "9px", fontWeight: "bold", color: "#6b7280", paddingBottom: "2px" }}>{d}</div>
+          ))}
+          {/* Leading empty cells so day 1 lands on the right column */}
+          {Array.from({ length: new Date(year, month - 1, 1).getDay() }).map((_, i) => (
+            <div key={`empty-${i}`} />
+          ))}
+          {/* Day cells for actual days in month */}
+          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+            const entry = dailyMarks[day];
             const status = entry?.status ?? "";
             return (
               <div
@@ -287,8 +295,7 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
                   borderRadius: "2px",
                   padding: "3px 2px",
                   textAlign: "center",
-                  backgroundColor: inMonth ? dayMarkColor(status) : "#f9fafb",
-                  opacity: inMonth ? 1 : 0.35,
+                  backgroundColor: dayMarkColor(status),
                   minWidth: 0,
                 }}
               >
@@ -299,7 +306,7 @@ export function MonthlyReportRenderer({ data }: { data: ReportRendererData }) {
                   lineHeight: 1.4,
                   color: status === "P" ? "#16a34a" : status === "S" ? "#ca8a04" : status === "V" ? "#1d4ed8" : status === "A" ? "#dc2626" : "#9ca3af",
                 }}>
-                  {inMonth ? (status || "—") : ""}
+                  {status || "—"}
                 </div>
               </div>
             );

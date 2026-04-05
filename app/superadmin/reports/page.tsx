@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { ReportOverrideEditor } from "@/components/superadmin/ReportOverrideEditor";
+import { AddHoursForm } from "@/components/superadmin/AddHoursForm";
 
 const MONTH_NAMES = [
   "", "January", "February", "March", "April", "May", "June",
@@ -13,6 +14,15 @@ export default async function SuperadminReportsPage() {
   // @ts-ignore
   const role = session?.user?.realRole || session?.user?.role;
   if (role !== "SUPERADMIN") redirect("/dashboard");
+
+  const students = await db.student.findMany({
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      parent: { select: { name: true } },
+    },
+  });
 
   const reports = await db.monthlyReport.findMany({
     where: { submittedAt: { not: null } },
@@ -44,12 +54,20 @@ export default async function SuperadminReportsPage() {
     superadminOverride: overrideMap[r.id] ?? null,
   }));
 
+  const studentList = students.map((s) => ({ id: s.id, name: s.name, parentName: s.parent?.name ?? null }));
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Report Overrides</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Paste a partial JSON object to override fields in the PDF renderer. Merged on top of live data at render time.
+        <h1 className="text-2xl font-bold">Reports</h1>
+      </div>
+
+      <AddHoursForm students={studentList} />
+
+      <div>
+        <h2 className="text-lg font-semibold mb-3">PDF Overrides</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Paste partial JSON to override fields in the PDF renderer for submitted reports.
         </p>
       </div>
       <div className="space-y-4">
